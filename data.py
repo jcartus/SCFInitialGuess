@@ -1,19 +1,20 @@
-"""In this module al components needed to assemble and process input data will
+"""In this module all components needed to assemble and process input data will
 be stored
 
 Authors:
  - Johannes Cartus, QCIEP, TU Graz"""
 
-from os.path import exists, isdir, isfile, join, splitext
+from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir
 import argparse
 import numpy as np
+from warnings import warn
 
 import pyQChem as qc
 
 
 class Molecule(object):
-    """Class that contains all relavant data about a molecule"""
+    """Class that contains all relevant data about a molecule"""
 
     def __init__(self, species, positions, full_name=""):
         
@@ -126,8 +127,17 @@ class PyQChemDBReader(object):
         molecules = []
 
         for file_name in files:
-            molecules.append(cls.read_molecule_from_file)
-            
+            try:
+                molecules.append(
+                    cls.read_molecule_from_file(join(folder, file_name))
+                )
+            except Exception as ex:
+                warn(
+                    "Could not parse from file {0}: ".format(file_name) + str(ex),
+                    RuntimeWarning
+                )
+
+        return molecules            
 
     @staticmethod                
     def read_molecule_from_file(file_name, name=""):
@@ -139,9 +149,9 @@ class PyQChemDBReader(object):
 
         # use file name if nothing specified
         if not name:
-            name = splitext(file_name)[0]
+            name = splitext(basename(file_name))[0]
 
-        with f = open(file_name, 'r'):
+        with open(file_name, 'r') as f:
 
             # read file and omitt first lines
             lines = f.readlines()[2:]
@@ -151,11 +161,11 @@ class PyQChemDBReader(object):
             for line in lines:
                 sep = line.split()
                 species.append(sep[0])
-                positions.append(sep[1:])
+                positions.append(list(map(float, sep[1:])))
 
             return Molecule(species, positions, full_name=name)
 
-def produce_randomized_geometries(molecules, amplification)
+def produce_randomized_geometries(molecules, amplification):
     """Will create a list of geometries similar to the ones given in molecules
     but with some random noise added. for each given geometry a 
     amplification times as much random ones are created. They will have the same
@@ -175,7 +185,7 @@ def produce_randomized_geometries(molecules, amplification)
             random_molecules.append(
                 Molecule(
                     mol.species,
-                    positions * (1 + np.random.rand(postions.shape) * max_noise),
+                    positions * (1 + np.random.rand(*positions.shape) * max_noise),
                     full_name=mol.full_name + "_" + str(i)
                 )
             )
@@ -193,16 +203,20 @@ def main():
 
     parser.add_argument(
         "-s", "--source", 
-        required=True,
+        required=False,
         help="The (path to the) data base folder, which contains the original molecules",
-        metavar="source directory"
+        metavar="source directory",
+        dest="source",
+        default=normpath("data_base/s22/")
     )
 
     parser.add_argument(
         "-d", "--destination", 
-        required=True,
+        required=False,
         help="The (path to the) results folder, where the calculationresults can be stored in",
-        metavar="destination directory"
+        metavar="destination directory",
+        dest="destination",
+        default=normpath("result/")
     )
 
     parser.add_argument(
@@ -210,13 +224,15 @@ def main():
         default=10,
         required=False,
         help="The number of randomized geometries generated for every molecule in the data base",
+        type=int,
+        dest="amplification"
     )
 
     args = parser.parse_args()
 
     # todo args richtig umsetzen
-    molecules = PyQChemDBReader().read_database(args[0])
-    random_molecules = produce_randomized_geometries(molecules, args[1])
+    molecules = PyQChemDBReader.read_database(args.source)
+    random_molecules = produce_randomized_geometries(molecules, args.amplification)
 
     for mol in random_molecules:
         run = QChemMDRun(mol.full_name, mol)
@@ -224,6 +240,7 @@ def main():
         # add path for result as opton to qChemmdrun!!
         run.run()
 
-        # todo vlt bissi parallelisieren auch noch!.ö
+        # todo vlt bissi parallelisieren auch noch!
 
-
+if __name__ == '__main__':
+    main()
