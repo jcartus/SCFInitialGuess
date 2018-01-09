@@ -4,3 +4,4 @@ pyQChem/
 data_base/
 
 \.vscode/
+result_*
