@@ -6,6 +6,7 @@ Authors:
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir
+from shutil import move
 import argparse
 import numpy as np
 from warnings import warn
@@ -51,10 +52,12 @@ class QChemJob(object):
         self._molecule = molecule
         self._rem_array = None
 
+        raise NotImplementedError("QChemJob is an abstract class!")
+
     def run(self):
         job = qc.inputfile()
         job.add(self._rem_array)
-        job.add(self._molecule)
+        job.add(self._molecule.get_QChem_molecule())
 
         if exists(self._job_name + ".out"):
             raise FileExistsError("Output file already exists for job: {0}".format(
@@ -62,7 +65,15 @@ class QChemJob(object):
                 ))
         else:
             job.run(name=self._job_name)
-            
+
+    @property
+    def job_name(self):        
+        return self._job_name
+    
+    @property
+    def molecule(self):        
+        return self._molecule
+
 class QChemMDRun(QChemJob):
     """Warpper for pyQChem for ab initio md runs. 
     See https://www.q-chem.com/qchem-website/manual/qchem43_manual/sect-aimd.html
@@ -103,10 +114,6 @@ class QChemMDRun(QChemJob):
         self._rem_array.aimd_temperature(str(aimd_temperature))
         self._rem_array.aimd_time_step(str(time_step))
         self._rem_array.aimd_initial_velocities(aimd_init_veloc)
-
-
-        super(QChemMDRun, self).__init__(job_name, molecule)
-
 
 class PyQChemDBReader(object):
     """This will read all the molecules from the database files that are
@@ -214,12 +221,12 @@ def main():
         help="The (path to the) results folder, where the calculationresults can be stored in",
         metavar="destination directory",
         dest="destination",
-        default=normpath("result")
+        default=normpath("result/")
     )
 
     parser.add_argument(
-        "--multiplication-factor", 
-        default=10,
+        "-f", "--multiplication-factor", 
+        default=1,
         required=False,
         help="The number of randomized geometries generated for every molecule in the data base",
         type=int,
@@ -233,10 +240,15 @@ def main():
     random_molecules = produce_randomized_geometries(molecules, args.amplification)
 
     for mol in random_molecules:
-        run = QChemMDRun(args.destination + "_" + mol.full_name, mol)
+        run = QChemMDRun(mol.full_name, mol)
 
         # add path for result as opton to qChemmdrun!!
         run.run()
+        for ext in ["in", "out", "sh"]:
+            
+            fname = run.job_name + "." + ext
+            move(fname, join(args.destination,fname))
+        
 
         # todo vlt bissi parallelisieren auch noch!
 
