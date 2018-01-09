@@ -50,8 +50,6 @@ class QChemJob(object):
         self._job_name = job_name
         self._molecule = molecule
         self._rem_array = None
-        
-        raise NotImplementedError("QChemJob is an abstract class!")
 
     def run(self):
         job = qc.inputfile()
@@ -98,16 +96,16 @@ class QChemMDRun(QChemJob):
         self._rem_array = qc.rem_array()
         self._rem_array.jobtype("aimd")
         self._rem_array.method(method)
-        self._rem_array.basis_set(basis_set)
+        self._rem_array.basis(basis_set)
 
         self._rem_array.aimd_method(aimd_method)
-        self._rem_array.aimd_steps(aimd_steps)
-        self._rem_array.aimd_temperature(aimd_temperature)
-        self._rem_array.aimd_time_step(time_step)
+        self._rem_array.aimd_steps(str(aimd_steps))
+        self._rem_array.aimd_temperature(str(aimd_temperature))
+        self._rem_array.aimd_time_step(str(time_step))
         self._rem_array.aimd_initial_velocities(aimd_init_veloc)
 
 
-        super.__init__(job_name, molecule)
+        super(QChemMDRun, self).__init__(job_name, molecule)
 
 
 class PyQChemDBReader(object):
@@ -216,7 +214,7 @@ def main():
         help="The (path to the) results folder, where the calculationresults can be stored in",
         metavar="destination directory",
         dest="destination",
-        default=normpath("result/")
+        default=normpath("result")
     )
 
     parser.add_argument(
@@ -235,7 +233,7 @@ def main():
     random_molecules = produce_randomized_geometries(molecules, args.amplification)
 
     for mol in random_molecules:
-        run = QChemMDRun(mol.full_name, mol)
+        run = QChemMDRun(args.destination + "_" + mol.full_name, mol)
 
         # add path for result as opton to qChemmdrun!!
         run.run()
