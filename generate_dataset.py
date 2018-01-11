@@ -7,7 +7,7 @@ Authors:
 """
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
-from os import listdir
+from os import listdir, makedirs
 from shutil import move
 from warnings import warn
 
@@ -59,6 +59,10 @@ def main():
     # todo args richtig umsetzen
     molecules = PyQChemDBReader.read_database(args.source)
     random_molecules = produce_randomized_geometries(molecules, args.amplification)
+
+    # prepare result dir if not exists
+    if not isdir(args.destination):
+        makedirs(args.destination)
 
 
 
