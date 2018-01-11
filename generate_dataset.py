@@ -7,7 +7,7 @@ Authors:
 """
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
-from os import listdir, makedirs
+from os import listdir, makedirs, remove
 from shutil import move
 from warnings import warn
 
@@ -15,7 +15,7 @@ import multiprocessing as mp
 import argparse
 
 
-from data import PyQChemDBReader, QChemMDRun, produce_randomized_geometries
+from utilities.data import PyQChemDBReader, QChemMDRun, produce_randomized_geometries
 
 
 def main():
@@ -83,11 +83,15 @@ def qchem_execution_section(mol, args):
     # add path for result as opton to qChemmdrun!!
     run.run()
     for ext in ["in", "out", "sh"]:
+        
+        fname = run.job_name + "." + ext
         try:
-            fname = run.job_name + "." + ext
             move(fname, join(args.destination,fname))
         except Exception as ex:
             warn("Could not move {0}: ".format(fname) + str(ex))    
+        finally:
+            if isfile(fname):
+                remove(fname)
 
 if __name__ == '__main__':
     main()
