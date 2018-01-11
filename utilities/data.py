@@ -113,6 +113,9 @@ class QChemMDRun(QChemJob):
         self._rem_array.aimd_time_step(str(time_step))
         self._rem_array.aimd_initial_velocities(aimd_init_veloc)
 
+        self._rem_array.scf_print("3")
+        self._rem_array.scf_final_print("3")
+
 class PyQChemDBReader(object):
     """This will read all the molecules from the database files that are
     in a specified folder"""
