@@ -6,6 +6,7 @@ Authors:
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir
+import multiprocessing as mp
 from shutil import move
 import argparse
 import numpy as np
@@ -60,7 +61,7 @@ class QChemJob(object):
         job.add(self._molecule.get_QChem_molecule())
 
         if exists(self._job_name + ".out"):
-            raise FileExistsError("Output file already exists for job: {0}".format(
+            raise IOError("Output file already exists for job: {0}".format(
                     self._job_name
                 ))
         else:
@@ -84,8 +85,8 @@ class QChemMDRun(QChemJob):
         molecule, 
         aimd_method="BOMD",
         aimd_temperature=300,
-        time_step=10,
-        aimd_steps=1000,
+        time_step=100,
+        aimd_steps=100,
         aimd_init_veloc="THERMAL",
         basis_set="6-311++G**",
         method="b3lyp"
@@ -96,7 +97,7 @@ class QChemMDRun(QChemJob):
          - aimd_method: name of the md run method ('BOMD' or 'CURVY').
          - aimd_temperature: temperature in K the md run is performed at
          - aimd_steps: number of md steps.
-         - time_step: time step in atomic units. 1 a.u. = 0.00242 fs.
+         - time_step: time step in hartree atomic units. 1 a.u. = 0.0242 fs.
          - aimd_init_veloc: how the volcities should be initialized 
            ('THERMAL', 'ZPE', 'QUASICLASSICAL')
         """
@@ -239,18 +240,30 @@ def main():
     molecules = PyQChemDBReader.read_database(args.source)
     random_molecules = produce_randomized_geometries(molecules, args.amplification)
 
-    for mol in random_molecules:
-        run = QChemMDRun(mol.full_name, mol)
 
-        # add path for result as opton to qChemmdrun!!
-        run.run()
-        for ext in ["in", "out", "sh"]:
-            
+
+    # todo get num of trherads dynamically. evtl as argument?
+    pool = mp.Pool(processes=4)
+    for mol in random_molecules:
+        pool.apply_async(qchem_execution_section(mol, args))
+    pool.close()
+    pool.join()
+
+
+
+
+# define paralell section    
+def qchem_execution_section(mol, args):
+    run = QChemMDRun(mol.full_name, mol)
+
+    # add path for result as opton to qChemmdrun!!
+    run.run()
+    for ext in ["in", "out", "sh"]:
+        try:
             fname = run.job_name + "." + ext
             move(fname, join(args.destination,fname))
-        
-
-        # todo vlt bissi parallelisieren auch noch!
+        except Exception as ex:
+            warn("Could not move {0}: ".format(fname) + str(ex))    
 
 if __name__ == '__main__':
     main()
