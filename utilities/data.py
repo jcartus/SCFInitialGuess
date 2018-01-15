@@ -166,8 +166,11 @@ class PyQChemDBReader(object):
             species, positions = [], []
             for line in lines:
                 sep = line.split()
-                species.append(sep[0])
-                positions.append(list(map(float, sep[1:])))
+
+                # if not an empty line
+                if len(sep) > 0:
+                    species.append(sep[0])
+                    positions.append(list(map(float, sep[1:])))
 
             return Molecule(species, positions, full_name=name)
 
