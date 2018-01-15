@@ -49,10 +49,31 @@ def main():
         "-f", "--multiplication-factor", 
         default=1,
         required=False,
-        help="The number of randomized geometries generated for every molecule in the data base",
+        help="The number of randomized geometries generated for every " + \
+            "molecule in the data base",
         type=int,
         dest="amplification"
     )
+
+    parser.add_argument(
+        "-p", "--processes", 
+        default=4,
+        required=False,
+        help="The number of worker processes used " + \
+            "to set up worker pool for parallelisation",
+        type=int,
+        dest="number_of_processes"
+    )
+
+    parser.add_argument(
+        "--aimd-steps", 
+        default=1,
+        required=False,
+        help="The number md steps to be done in each aimd run",
+        type=int,
+        dest="aimd_steps"
+    )
+
 
     args = parser.parse_args()
 
@@ -67,7 +88,7 @@ def main():
 
 
     # todo get num of trherads dynamically. evtl as argument?
-    pool = mp.Pool(processes=4)
+    pool = mp.Pool(processes=args.number_of_processes)
     for mol in random_molecules:
         pool.apply_async(qchem_execution_section(mol, args))
     pool.close()
@@ -78,7 +99,7 @@ def main():
 
 # define paralell section    
 def qchem_execution_section(mol, args):
-    run = QChemMDRun(mol.full_name, mol)
+    run = QChemMDRun(mol.full_name, mol, aimd_steps=args.aimd_steps)
 
     # add path for result as opton to qChemmdrun!!
     run.run()
