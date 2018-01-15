@@ -74,6 +74,8 @@ def main():
         dest="aimd_steps"
     )
 
+    
+
 
     args = parser.parse_args()
 
@@ -99,7 +101,12 @@ def main():
 
 # define paralell section    
 def qchem_execution_section(mol, args):
-    run = QChemMDRun(mol.full_name, mol, aimd_steps=args.aimd_steps)
+    run = QChemMDRun(
+        mol.full_name, 
+        mol, 
+        aimd_steps=args.aimd_steps,
+        scf_convergence=5
+        )
 
     # add path for result as opton to qChemmdrun!!
     run.run()
