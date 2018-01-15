@@ -72,7 +72,45 @@ class QChemJob(object):
     def molecule(self):        
         return self._molecule
 
-class QChemMDRun(QChemJob):
+class QChemSCFJob(QChemJob):
+    """Abstract super class for all jobs that have scf cycles (sp, aimd, etc.)"""
+
+    def __init__(self, 
+        job_name,
+        molecule,
+        basis_set,
+        method,
+        scf_print=3, 
+        scf_final_print=3,
+        scf_convergence=8
+        ):
+        """QChemSCFJob constructor.
+
+        Args:
+            job_name (str): name of the job
+            molecue (Molecule object): molecule job should be done on (geometry etc.)
+            basis_set (str): name of the basis to be used
+            method (str): evaluation mathod (e.g. B3LYP)
+            scf_convergence (int): convergence criterium (diff of energies must be 
+                lower 10^scf_convergence)
+            scf_print (int): print level for every scf step
+            scf_final_print (int): print level for final scf step
+        """
+
+        
+        self._job_name = job_name
+        self._molecule = molecule
+
+        self._rem_array = qc.rem_array()
+        
+        self._rem_array.method(method)
+        self._rem_array.basis(basis_set)
+        self._rem_array.scf_convergence(str(scf_convergence))
+
+        self._rem_array.scf_print(str(scf_print))
+        self._rem_array.scf_final_print(str(scf_final_print))
+
+class QChemMDRun(QChemSCFJob):
     """Warpper for pyQChem for ab initio md runs. 
     See https://www.q-chem.com/qchem-website/manual/qchem43_manual/sect-aimd.html
     """
@@ -86,7 +124,8 @@ class QChemMDRun(QChemJob):
         aimd_steps=100,
         aimd_init_veloc="THERMAL",
         basis_set="6-311++G**",
-        method="b3lyp"
+        method="b3lyp",
+        **kwargs
         ):
         """Constructor:
 
@@ -99,22 +138,23 @@ class QChemMDRun(QChemJob):
            ('THERMAL', 'ZPE', 'QUASICLASSICAL')
         """
 
-        self._job_name = job_name
-        self._molecule = molecule
+        super(QChemMDRun, self).__init__(
+            job_name=job_name,
+            molecule=molecule,
+            basis_set=basis_set,
+            method=method,
+            scf_print=3,
+            scf_final_print=3,
+            **kwargs
+        )
 
-        self._rem_array = qc.rem_array()
         self._rem_array.jobtype("aimd")
-        self._rem_array.method(method)
-        self._rem_array.basis(basis_set)
 
         self._rem_array.aimd_method(aimd_method)
         self._rem_array.aimd_steps(str(aimd_steps))
         self._rem_array.aimd_temperature(str(aimd_temperature))
         self._rem_array.aimd_time_step(str(time_step))
         self._rem_array.aimd_initial_velocities(aimd_init_veloc)
-
-        self._rem_array.scf_print("3")
-        self._rem_array.scf_final_print("3")
 
 class PyQChemDBReader(object):
     """This will read all the molecules from the database files that are
