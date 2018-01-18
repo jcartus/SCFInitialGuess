@@ -143,8 +143,6 @@ class QChemMDRun(QChemSCFJob):
             molecule=molecule,
             basis_set=basis_set,
             method=method,
-            scf_print=3,
-            scf_final_print=3,
             **kwargs
         )
 
