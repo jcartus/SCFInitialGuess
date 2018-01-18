@@ -79,6 +79,7 @@ class QChemSCFJob(QChemJob):
     def __init__(self, 
         job_name,
         molecule,
+        job_type,
         basis_set,
         method,
         scf_print=3, 
@@ -101,6 +102,7 @@ class QChemSCFJob(QChemJob):
         
         self._job_name = job_name
         self._molecule = molecule
+        self._job_type = job_type
 
         self._rem_array = qc.rem_array()
         
@@ -125,7 +127,7 @@ class QChemMDRun(QChemSCFJob):
         aimd_steps=100,
         aimd_init_veloc="THERMAL",
         basis_set="6-311++G**",
-        method="b3lyp",
+        method="HF",
         **kwargs
         ):
         """Constructor:
@@ -142,12 +144,11 @@ class QChemMDRun(QChemSCFJob):
         super(QChemMDRun, self).__init__(
             job_name=job_name,
             molecule=molecule,
+            job_type="AIMD",
             basis_set=basis_set,
             method=method,
             **kwargs
         )
-
-        self._job_type = "AIMD"
 
         self._rem_array.jobtype("aimd")
 
@@ -156,6 +157,31 @@ class QChemMDRun(QChemSCFJob):
         self._rem_array.aimd_temperature(str(aimd_temperature))
         self._rem_array.aimd_time_step(str(time_step))
         self._rem_array.aimd_initial_velocities(aimd_init_veloc)
+
+class QChemSinglePointCalculation(QChemSCFJob):
+    """This class controlls a qchem job of the type sp.
+    See also here: https://www.q-chem.com/qchem-website/manual/qchem44_manual/sec-SCF_job-control.html
+    """
+
+    def __init__(self,
+        job_name,
+        molecule,
+        basis_set="6-311++G**",
+        nethod="HF"
+    ):
+
+        super(QChemMDRun, self).__init__(
+            job_name=job_name,
+            molecule=molecule,
+            job_type="SP",
+            basis_set=basis_set,
+            method=method,
+            **kwargs
+        )
+
+        
+        self._rem_array.jobtype("SP")
+
 
 class PyQChemDBReader(object):
     """This will read all the molecules from the database files that are
