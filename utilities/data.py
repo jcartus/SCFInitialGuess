@@ -7,10 +7,9 @@ Authors:
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir
 import numpy as np
-from warnings import warn
 
 import pyQChem as qc
-
+from utilities.usermessages import Messenger as msg
 
 class Molecule(object):
     """Class that contains all relevant data about a molecule"""
@@ -49,6 +48,7 @@ class QChemJob(object):
         self._job_name = job_name
         self._molecule = molecule
         self._rem_array = None
+        self._job_type = None
 
         raise NotImplementedError("QChemJob is an abstract class!")
 
@@ -58,10 +58,11 @@ class QChemJob(object):
         job.add(self._molecule.get_QChem_molecule())
 
         if exists(self._job_name + ".out"):
-            raise IOError("Output file already exists for job: {0}".format(
+            raise IOError("Output file already exists for job: {0}.".format(
                     self._job_name
                 ))
         else:
+            msg.info("Starting " + self._job_type + ": " + self._job_name, 1)
             job.run(name=self._job_name)
 
     @property
@@ -146,6 +147,8 @@ class QChemMDRun(QChemSCFJob):
             **kwargs
         )
 
+        self._job_type = "AIMD"
+
         self._rem_array.jobtype("aimd")
 
         self._rem_array.aimd_method(aimd_method)
@@ -163,8 +166,11 @@ class PyQChemDBReader(object):
         
         if not isdir(folder):
             raise OSError(
-                "Could not read database. There is no folder {0}".format(folder)
+                "Could not read database. There is no folder {0}.".format(folder)
             )
+
+        
+        msg.info("Reading database: " + folder, 1)
 
         files = [x for x in listdir(folder) if isfile(join(folder, x))]
 
@@ -176,10 +182,12 @@ class PyQChemDBReader(object):
                     cls.read_molecule_from_file(join(folder, file_name))
                 )
             except Exception as ex:
-                warn(
+                msg.error(
                     "Could not parse from file {0}: ".format(file_name) + str(ex),
                     RuntimeWarning
                 )
+
+        msg.info("Done reading database.", 1)
 
         return molecules            
 
@@ -190,6 +198,8 @@ class PyQChemDBReader(object):
             raise OSError(
                 "File could not be read. It does not exist at {0}!".format(file_name)
             )
+
+        msg.info("Reading file: " + file_name)
 
         # use file name if nothing specified
         if not name:
@@ -220,6 +230,12 @@ def produce_randomized_geometries(molecules, amplification):
 
     from scipy.spatial.distance import pdist
     
+    msg.info(
+        "Generating randomized geometries " + \
+            "({0} for every source geometry).".format(amplification),
+        1
+    )
+
     random_molecules = []
 
     for mol in molecules:

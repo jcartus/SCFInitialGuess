@@ -4,6 +4,8 @@ and do some md runs with it to generate an input data set.
 
 Authors:
     - Johannes Cartus, QCIEP, TU Graz
+TODO:
+    - print some info about progress of program, i.e. via  a Printer class.s
 """
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
@@ -14,6 +16,7 @@ from warnings import warn
 import multiprocessing as mp
 import argparse
 
+from utilities.usermessages import Messenger as msg
 
 from utilities.data import PyQChemDBReader, QChemMDRun, produce_randomized_geometries
 
@@ -75,10 +78,11 @@ def main():
     )
 
     
-
-
     args = parser.parse_args()
 
+    msg.info("Welcome! Let's do some AIMD runs.", 2)
+
+    
     # todo args richtig umsetzen
     molecules = PyQChemDBReader.read_database(args.source)
     random_molecules = produce_randomized_geometries(molecules, args.amplification)
@@ -87,14 +91,21 @@ def main():
     if not isdir(args.destination):
         makedirs(args.destination)
 
-
-
     # todo get num of trherads dynamically. evtl as argument?
     pool = mp.Pool(processes=args.number_of_processes)
+    msg.info(
+        "Create worker pool of " + str(args.number_of_processes) + " processes."
+    )
     for mol in random_molecules:
         pool.apply_async(qchem_execution_section(mol, args))
+    msg.info("Finished all calculations. Cleaning up ...", 2)
     pool.close()
     pool.join()
+    msg.info("Closed worker pool.")
+
+
+
+    msg.info("All done. See you later ...", 2)
 
 
 
@@ -105,18 +116,29 @@ def qchem_execution_section(mol, args):
         mol.full_name, 
         mol, 
         aimd_steps=args.aimd_steps,
-        scf_convergence=5
+        scf_convergence=5,
+        scf_print=1,
+        scf_final_print=1
         )
 
     # add path for result as opton to qChemmdrun!!
     run.run()
+
+    msg.info("Finished run.")
+    msg.info("Cleaning up and Moving results to: " + args.destination)
     for ext in ["in", "out", "sh"]:
         
         fname = run.job_name + "." + ext
         try:
-            move(fname, join(args.destination,fname))
+            if ext == "out":
+                move(fname, join(args.destination,fname))
+            else:
+                remove(fname)
         except Exception as ex:
-            warn("Could not move {0}: ".format(fname) + str(ex))    
+            if ext == "out":
+                msg.warn("Could not move {0}: ".format(fname) + str(ex))    
+            else:
+                msg.warn("Could not delete {0}: ".format(fname) + str(ex))    
         finally:
             if isfile(fname):
                 remove(fname)

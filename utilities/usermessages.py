@@ -32,7 +32,11 @@ class MarkerTheme(object):
     @classmethod
     def info(cls, level):
         """Info marker for given level: 0 lowest, 2 highest"""
-        return [cls._info_low, cls._info_medium, cls._info_high][level]
+        return [
+            cls._info_low + " ", 
+            cls._info_medium + " ", 
+            cls._info_high + " "
+        ][level]
 
 class BracketMarkers(MarkerTheme):
     """A marker theme for logging that uses brackes"""
@@ -61,10 +65,10 @@ class Messenger(object):
     """
 
     marker_theme = BracketMarkers
-    print_level = 1
+    print_level = 3
 
     @classmethod
-    def info(cls, message, level):
+    def info(cls, message, level=0):
         """Write a user info to prompt, if it is important enough (specifed by 
         print_level)"""
 
@@ -73,16 +77,16 @@ class Messenger(object):
             print(cls.marker_theme.info(level) + message)
 
     @classmethod
-    def warn(cls, message):
+    def warn(cls, message, *args, **kwargs):
         """Raise a warning if printlevel is 2 or higher"""
 
         if cls.print_level > 1:
-            warnings.warn(cls.marker_theme.warning + message)
+            warnings.warn(cls.marker_theme.warning() + message, *args, **kwargs)
 
     @classmethod
-    def error(cls, message):
+    def error(cls, message, *args, **kwargs):
         """Write /raise? an error"""
-        warnings.warn(cls.marker_theme.error + message)
+        warnings.warn(cls.marker_theme.error() + message, *args, **kwargs)
 
 
 
