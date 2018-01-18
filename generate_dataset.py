@@ -50,7 +50,7 @@ def main():
 
     parser.add_argument(
         "-f", "--multiplication-factor", 
-        default=1,
+        default=0,
         required=False,
         help="The number of randomized geometries generated for every " + \
             "molecule in the data base",
@@ -80,12 +80,14 @@ def main():
     
     args = parser.parse_args()
 
+    #--- the actual program ---
     msg.info("Welcome! Let's do some AIMD runs.", 2)
 
     
-    # todo args richtig umsetzen
+    # fetch data from data base
     molecules = PyQChemDBReader.read_database(args.source)
-    random_molecules = produce_randomized_geometries(molecules, args.amplification)
+    if args.amplification:
+        molecules = produce_randomized_geometries(molecules, args.amplification)
 
     # prepare result dir if not exists
     if not isdir(args.destination):
@@ -96,16 +98,14 @@ def main():
     msg.info(
         "Create worker pool of " + str(args.number_of_processes) + " processes."
     )
-    for mol in random_molecules:
+    for mol in molecules:
         pool.apply_async(qchem_execution_section, (mol, args))
     pool.close()
     pool.join()
     msg.info("Closed worker pool.")
 
-
-
     msg.info("All done. See you later ...", 2)
-
+    #---
 
 
 
