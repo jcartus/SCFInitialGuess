@@ -97,8 +97,7 @@ def main():
         "Create worker pool of " + str(args.number_of_processes) + " processes."
     )
     for mol in random_molecules:
-        pool.apply_async(qchem_execution_section(mol, args))
-    msg.info("Finished all calculations. Cleaning up ...", 2)
+        pool.apply_async(qchem_execution_section, (mol, args))
     pool.close()
     pool.join()
     msg.info("Closed worker pool.")
