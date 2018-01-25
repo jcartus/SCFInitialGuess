@@ -107,19 +107,10 @@ def main():
         "Create worker pool of " + str(args.number_of_processes) + " processes."
     )
 
-
-    try:
-        # run calculations in parallel
-        pool.map(run_job_pickle_warpper, jobs)
-        msg.info("Calculations finished")
-    except Exception as ex:
-        msg.warn("There was a problem: " + str(ex))
-    finally:
-        # okay as map has an implicit barrier
-        for job in jobs:
-            clean_up(job, args.destination)
-            #pool.map_async(clean_up, (job, args.destination))
-
+    # run calculations in parallel
+    for job in jobs:
+        pool.apply_async(parallel_job, (job, args.destination, ))
+    
     # clean up pool
     pool.close()
     pool.join()
@@ -128,20 +119,28 @@ def main():
     msg.info("All done. See you later ...", 2)
     #---
 
-def run_job_pickle_warpper(job):
+def parallel_job(job, destination_folder):
     """This warpper is reqire as the instance method cannot be pickled """
-    job.run()
+
+    try:
+        job.run()
+        msg.info("Finished calculation of " + job.job_name)
+    except Exception as ex:
+        msg.warn("There was a problem: " + str(ex))
+    finally:
+        clean_up(job, destination_folder)
+    
 
 def clean_up(job, destination_folder):
     """Delete temporary files and move results to restults folder"""
 
     msg.info("Cleaning up and Moving results to: " + destination_folder)
 
-    for ext in ["in", "out", "sh"]:
+    for ext in ["in", "out", "sh", "dat"]:
         
         fname = job.job_name + "." + ext
         try:
-            if ext == "out":
+            if ext in ["out", "dat"]:
                 move(fname, join(destination_folder,fname))
             else:
                 remove(fname)
