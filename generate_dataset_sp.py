@@ -16,7 +16,7 @@ import argparse
 
 from utilities.usermessages import Messenger as msg
 
-from utilities.data import PyQChemDBReader, produce_randomized_geometries
+from utilities.dataset import PyQChemDBReader, produce_randomized_geometries
 from utilities.qChem import QChemSinglePointCalculation
 
 

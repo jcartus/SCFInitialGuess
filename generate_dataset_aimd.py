@@ -18,7 +18,7 @@ import argparse
 
 from utilities.usermessages import Messenger as msg
 
-from utilities.data import PyQChemDBReader, QChemMDRun, produce_randomized_geometries
+from utilities.dataset import PyQChemDBReader, QChemMDRun, produce_randomized_geometries
 
 
 def main():
