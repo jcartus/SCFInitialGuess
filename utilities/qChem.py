@@ -55,7 +55,8 @@ class QChemSCFJob(QChemJob):
         method,
         scf_print=3, 
         scf_final_print=3,
-        scf_convergence=8
+        scf_convergence=8,
+        scf_save_matrices=1
         ):
         """QChemSCFJob constructor.
 
@@ -83,6 +84,7 @@ class QChemSCFJob(QChemJob):
 
         self._rem_array.scf_print(str(scf_print))
         self._rem_array.scf_final_print(str(scf_final_print))
+        self._rem_array.scf_save_matrices(str(scf_save_matrices))
 
 class QChemMDRun(QChemSCFJob):
     """Warpper for pyQChem for ab initio md runs. 
