@@ -117,7 +117,8 @@ def main():
     finally:
         # okay as map has an implicit barrier
         for job in jobs:
-            pool.map_async(clean_up, (job, args.destination))
+            clean_up(job, args.destination)
+            #pool.map_async(clean_up, (job, args.destination))
 
     # clean up pool
     pool.close()
