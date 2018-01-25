@@ -121,15 +121,12 @@ def main():
 
 def parallel_job(job, destination_folder):
     """This warpper is reqire as the instance method cannot be pickled """
-
+    
     try:
-        job.run()
+        job.run_in_directory(join(destination_folder, job.job_name))
         msg.info("Finished calculation of " + job.job_name)
     except Exception as ex:
         msg.warn("There was a problem: " + str(ex))
-    finally:
-        clean_up(job, destination_folder)
-    
 
 def clean_up(job, destination_folder):
     """Delete temporary files and move results to restults folder"""

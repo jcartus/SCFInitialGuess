@@ -5,11 +5,28 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
-from os.path import exists
+import os
+from os.path import exists, isdir
 
 import pyQChem as qc
 
 from utilities.usermessages import Messenger as msg
+
+
+class cd:
+    """Context manager for changing the current working directory
+    Got this snippet from stackoverflow:
+    https://stackoverflow.com/questions/431684/how-do-i-cd-in-python
+    """
+    def __init__(self, newPath):
+        self.newPath = os.path.expanduser(newPath)
+
+    def __enter__(self):
+        self.savedPath = os.getcwd()
+        os.chdir(self.newPath)
+
+    def __exit__(self, etype, value, traceback):
+        os.chdir(self.savedPath)
 
 class QChemJob(object):
     """Base model for QCHem Jobs. Implements functions to run a job, 
@@ -35,6 +52,24 @@ class QChemJob(object):
         else:
             msg.info("Starting " + self._job_type + ": " + self._job_name, 1)
             job.run(name=self._job_name)
+
+    def run_in_directory(self, path, create_dir=True):
+        """run a qchem job in a directory specified by path. If create_dir 
+        is set True, the directory will be created.
+        """
+
+        # see if directory to run in exists and create if thats desired        
+        if not exists(path):
+            if create_dir:
+                os.mkdir(path)
+            else:
+                raise IOError("Run directory does not exist!")
+
+        # goto directory and run
+        with cd(path):
+            self.run()
+
+
 
     @property
     def job_name(self):        
