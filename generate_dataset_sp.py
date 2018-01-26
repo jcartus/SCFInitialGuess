@@ -20,7 +20,92 @@ from utilities.dataset import PyQChemDBReader, produce_randomized_geometries
 from utilities.qChem import QChemSinglePointCalculation
 
 
-def main():
+def main(
+    source, 
+    destination,
+    amplification=0,
+    number_of_processes=4,
+    ):
+
+    #--- the actual program ---
+    msg.info("Welcome! Let's do some SP calculations.", 2)
+
+    
+    # fetch data from data base
+    molecules = PyQChemDBReader.read_database(source)
+    if amplification:
+        molecules = produce_randomized_geometries(molecules, amplification)
+
+    # assemble jobs
+    jobs = []
+
+    for mol in molecules:
+        jobs.append(
+            QChemSinglePointCalculation(
+                mol.full_name,
+                mol,
+                scf_convergence=5,
+                scf_print=1,
+                scf_final_print=1
+            )
+        )
+    
+
+    # prepare result dir if not exists
+    if not isdir(destination):
+        makedirs(destination)
+
+    # todo get num of trherads dynamically. evtl as argument?
+    pool = mp.Pool(processes=number_of_processes)
+    msg.info(
+        "Create worker pool of " + str(number_of_processes) + " processes."
+    )
+
+    # run calculations in parallel
+    for job in jobs:
+        pool.apply_async(parallel_job, (job, destination, ))
+    
+    # clean up pool
+    pool.close()
+    pool.join()
+    msg.info("Closed worker pool.")
+
+    msg.info("All done. See you later ...", 2)
+    #---
+
+def parallel_job(job, destination_folder):
+    """This warpper is reqire as the instance method cannot be pickled """
+    
+    try:
+        job.run_in_directory(join(destination_folder, job.job_name))
+        msg.info("Finished calculation of " + job.job_name, 1)
+    except Exception as ex:
+        msg.warn("There was a problem: " + str(ex))
+
+def clean_up(job, destination_folder):
+    """Delete temporary files and move results to restults folder"""
+
+    msg.info("Cleaning up and Moving results to: " + destination_folder)
+
+    for ext in ["in", "out", "sh", "dat"]:
+        
+        fname = job.job_name + "." + ext
+        try:
+            if ext in ["out", "dat"]:
+                move(fname, join(destination_folder,fname))
+            else:
+                remove(fname)
+        except Exception as ex:
+            if ext == "out":
+                msg.warn("Could not move {0}: ".format(fname) + str(ex))    
+            else:
+                msg.warn("Could not delete {0}: ".format(fname) + str(ex))    
+        finally:
+            if isfile(fname):
+                remove(fname)
+
+
+if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         prog='PROG',
@@ -68,87 +153,12 @@ def main():
         type=int,
         dest="number_of_processes"
     )
-
-
     
     args = parser.parse_args()
-
-    #--- the actual program ---
-    msg.info("Welcome! Let's do some SP calculations.", 2)
-
     
-    # fetch data from data base
-    molecules = PyQChemDBReader.read_database(args.source)
-    if args.amplification:
-        molecules = produce_randomized_geometries(molecules, args.amplification)
-
-    # assemble jobs
-    jobs = []
-
-    for mol in molecules:
-        jobs.append(
-            QChemSinglePointCalculation(
-                mol.full_name,
-                mol,
-                scf_convergence=5,
-                scf_print=1,
-                scf_final_print=1
-            )
-        )
-    
-
-    # prepare result dir if not exists
-    if not isdir(args.destination):
-        makedirs(args.destination)
-
-    # todo get num of trherads dynamically. evtl as argument?
-    pool = mp.Pool(processes=args.number_of_processes)
-    msg.info(
-        "Create worker pool of " + str(args.number_of_processes) + " processes."
+    main(
+        source=args.source,
+        destination=args.destination,
+        amplification=args.amplification,
+        number_of_processes=args.number_of_processes,
     )
-
-    # run calculations in parallel
-    for job in jobs:
-        pool.apply_async(parallel_job, (job, args.destination, ))
-    
-    # clean up pool
-    pool.close()
-    pool.join()
-    msg.info("Closed worker pool.")
-
-    msg.info("All done. See you later ...", 2)
-    #---
-
-def parallel_job(job, destination_folder):
-    """This warpper is reqire as the instance method cannot be pickled """
-    
-    try:
-        job.run_in_directory(join(destination_folder, job.job_name))
-        msg.info("Finished calculation of " + job.job_name)
-    except Exception as ex:
-        msg.warn("There was a problem: " + str(ex))
-
-def clean_up(job, destination_folder):
-    """Delete temporary files and move results to restults folder"""
-
-    msg.info("Cleaning up and Moving results to: " + destination_folder)
-
-    for ext in ["in", "out", "sh", "dat"]:
-        
-        fname = job.job_name + "." + ext
-        try:
-            if ext in ["out", "dat"]:
-                move(fname, join(destination_folder,fname))
-            else:
-                remove(fname)
-        except Exception as ex:
-            if ext == "out":
-                msg.warn("Could not move {0}: ".format(fname) + str(ex))    
-            else:
-                msg.warn("Could not delete {0}: ".format(fname) + str(ex))    
-        finally:
-            if isfile(fname):
-                remove(fname)
-
-if __name__ == '__main__':
-    main()
