@@ -5,6 +5,7 @@ data_base/
 
 \.vscode/
 result/*
+input_data/*
 pathtable
 
 *.pyc
