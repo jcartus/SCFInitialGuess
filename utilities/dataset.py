@@ -19,7 +19,7 @@ class Molecule(object):
     def __init__(self, species, positions, full_name=""):
         
         if len(species) != len(positions):
-            raise ValueError("")
+            raise ValueError("There have to be as many positions as atoms!")
         
         self.species = species
         self.positions = positions
