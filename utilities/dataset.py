@@ -7,8 +7,11 @@ Authors:
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir
 import numpy as np
+import re
 
 import pyQChem as qc
+
+from utilities.constants import number_of_basis_functions as N_BASIS
 
 from utilities.usermessages import Messenger as msg
 
@@ -141,4 +144,183 @@ def produce_randomized_geometries(molecules, amplification):
             )
 
     return random_molecules
+
+class Result(object):
+    """The result of a single point calculation done on a molecule by qchem
+    with scf_matrix print on
+
+    Attributes:
+        S <np.array<double>>: overlap matrix
+        H <np.array<double>>: core hamiltonian
+        F <np.array<double>>: fock matrix from last SCF step.
+        P <np.array<double>>: density matrix from last SCF step
+    """
+
+    def __init__(self, root_dir, job_name=None ):
+        """Constructor.
+
+        Args: 
+            - root_dir <str>: full path to the directory in which the results
+            can be found.
+            - job name <str>: the name of the job (which as given to the
+            qChem job for calculation). If none given it will be assumed to be
+            the name of the root directory.
+        
+        TODO:
+            - maybe turn this into a context
+        """
+        
+        if not isdir(root_dir):
+            raise ValueError("The folder " + str(root_dir) + " does not exist!")
+
+        self._root_dir = root_dir
+
+        # if no job name is given it is assumed to be the name of the directory
+        if job_name is None:
+            self._job_name = basename(normpath(root_dir))
+        
+        # read atoms from outfile
+        self.atoms = self._discover_atoms()
+
+        self._H = None
+        self._S = None
+        self._F = None
+        self._P = None
+
+    @staticmethod
+    def _read_matrix_from_print_file(file_path):
+        """reads matrix from scf matrix print file and returns it as numpy array """        
+        with open(file, 'r') as f:
+            lines = f.readlines()[2:]
+
+        return np.array(map(float, map(lambda x: x.split(), lines)))
+
+    # TODO vlt einfach im Konstruktor laden instead of lazy calls..
+    @property
+    def S(self):
+        if self._S is None:
+            self._S = \
+                self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
+        return self._S
+        
+
+    @property
+    def H(self):
+        if self._H is None:
+            self._H = \
+                self._read_matrix_from_print_file(join(self._root_dir, "H.dat"))
+        return self._H
+
+    @property
+    def P(self):
+        if self._P is None:
+            self._P = \
+                self._read_matrix_from_print_file(join(self._root_dir, "P.dat"))
+        return self._P
+
+    @property
+    def F(self):
+        if self._F is None:
+            self._F = \
+                self._read_matrix_from_print_file(join(self._root_dir, "F.dat"))
+        return self._F
+
+    def _discover_atoms(self):
+        """Check out file to see which atoms there were in the molecule"""
+
+        with open(join(self._root_dir, self._job_name + "out")) as f:
+            
+            molecule = re.search(r"\$molecule.*\$end", f.read(), re.DOTALL)
+            if molecule is None:
+                raise ValueError("No molecule found in " + f.name)
+            else:
+                molecule = molecule.group(0)
+
+                # cut out geometries
+                geometries = molecule.splitlines()[2:-1]
+
+                # from geometries take the species
+                atoms = [line.split()[0] for line in geometries]
+        
+        return atoms
+
+
+    def _index_range(self, atom_id):
+        """Calculate the range of matrix elements for atom specified by index in
+        atoms list."""
+
+        # summ up the numer of basis functions of previous atoms
+        start = 0
+        for i in range(atom_id):
+            start += N_BASIS[self.atoms[i]]
+        
+        end = start + N_BASIS[self.atoms[atom_id]]
+
+        return range(start, end)
+        
+    def create_batch(self, atom_type):
+        """This will check for all atoms of the given type in the molecule and 
+        create a set of inputs and expected outputs for each
+        
+        Args:
+            atom_type <str>: element symbol for atom type for which input/output
+            data shall be put together.
+
+        Returns:
+            A list of tuples that contains the descriptors x_i and and elements
+            of the fock matrix that correspond to the atom in question. One 
+            list element per instance of atom_type atoms found in the molecule.
+
+        Example:
+            let atom_type be C. Then the function will check for all C atoms in
+            the molecule and return descriptors & sections of the fock matrix
+            for each instance found.
+        """
+
+        from utilities.constants import electronegativites as chi
+
+        try:
+            atom_indices = self.atoms.find(atom_type)
+        except ValueError as ex:
+            msg.info(
+                "No atoms of type " + atom_type + " found in " + self._job_name
+            )
+
+            # if nothing found just return an empty list
+            return []
+
+
+        result = []
+
+        for ind in atom_indices:
+            
+            index_range = self._index_range(ind)
+
+            #--- get descriptros (network inputs) ---
+            x = np.zeros(N_BASIS[atom_type])
+
+            # add contribution to descriptor from every other atom in the 
+            # molecule (weighted by electronegativity)
+            for i, atom in enumerate(self.atoms):
+                
+                # an atom should not influence itself
+                if i != ind:
+
+                    # add weighted summand
+                    x += np.sum(
+                        self.S[index_range, self._index_range(i)], 
+                        1
+                    ) * chi[atom]
+            #---
+
+            F = self.F[index_range, index_range]
+            
+            result.append((x, F))
+        
+        return F
+
+
+
+    
+
 
