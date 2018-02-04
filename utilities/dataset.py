@@ -181,49 +181,26 @@ class Result(object):
         
         # read atoms from outfile
         self.atoms = self._discover_atoms()
+    
+    def __enter__(self):
 
-        self._H = None
-        self._S = None
-        self._F = None
-        self._P = None
+        self.S = \
+            self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
+        self.H = \
+                self._read_matrix_from_print_file(join(self._root_dir, "H.dat"))
+        self.P = \
+                self._read_matrix_from_print_file(join(self._root_dir, "P.dat"))
+        self.F = \
+                self._read_matrix_from_print_file(join(self._root_dir, "F.dat"))
+
 
     @staticmethod
     def _read_matrix_from_print_file(file_path):
         """reads matrix from scf matrix print file and returns it as numpy array """        
-        with open(file, 'r') as f:
+        with open(file_path, 'r') as f:
             lines = f.readlines()[2:]
 
         return np.array(map(float, map(lambda x: x.split(), lines)))
-
-    # TODO vlt einfach im Konstruktor laden instead of lazy calls..
-    @property
-    def S(self):
-        if self._S is None:
-            self._S = \
-                self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
-        return self._S
-        
-
-    @property
-    def H(self):
-        if self._H is None:
-            self._H = \
-                self._read_matrix_from_print_file(join(self._root_dir, "H.dat"))
-        return self._H
-
-    @property
-    def P(self):
-        if self._P is None:
-            self._P = \
-                self._read_matrix_from_print_file(join(self._root_dir, "P.dat"))
-        return self._P
-
-    @property
-    def F(self):
-        if self._F is None:
-            self._F = \
-                self._read_matrix_from_print_file(join(self._root_dir, "F.dat"))
-        return self._F
 
     def _discover_atoms(self):
         """Check out file to see which atoms there were in the molecule"""
