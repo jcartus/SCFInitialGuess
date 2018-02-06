@@ -1,0 +1,1 @@
+qchem 05_fluoromethane-methane_mono1.in 05_fluoromethane-methane_mono1.out 05_fluoromethane-methane_mono1.dir 

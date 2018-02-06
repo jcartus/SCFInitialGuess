@@ -1,0 +1,1 @@
+qchem 40_methanol-chloromethane_mono2.in 40_methanol-chloromethane_mono2.out 40_methanol-chloromethane_mono2.dir 

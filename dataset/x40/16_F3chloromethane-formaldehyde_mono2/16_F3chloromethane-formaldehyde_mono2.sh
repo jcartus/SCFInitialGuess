@@ -1,0 +1,1 @@
+qchem 16_F3chloromethane-formaldehyde_mono2.in 16_F3chloromethane-formaldehyde_mono2.out 16_F3chloromethane-formaldehyde_mono2.dir 

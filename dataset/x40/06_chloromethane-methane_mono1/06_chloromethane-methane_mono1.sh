@@ -1,0 +1,1 @@
+qchem 06_chloromethane-methane_mono1.in 06_chloromethane-methane_mono1.out 06_chloromethane-methane_mono1.dir 

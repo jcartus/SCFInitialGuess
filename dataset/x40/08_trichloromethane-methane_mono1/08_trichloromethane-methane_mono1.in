@@ -1,0 +1,20 @@
+$rem
+SCF_PRINT                     1
+BASIS                         6-311++g**
+SCF_SAVE_MATRICES             1
+SCF_CONVERGENCE               5
+SCF_FINAL_PRINT               1
+METHOD                        hf
+JOBTYPE                       sp
+$end
+
+$molecule
+0 1
+C    -2.8509e-05    -0.000461929    2.158149022
+Cl    -1.454063734    0.838777303    1.616235012
+Cl    1.454144531    0.838659727    1.616208515
+Cl    -8.74e-05    -1.679795034    1.617802938
+H    5.696e-06    0.000267325    3.239305949
+$end
+
+

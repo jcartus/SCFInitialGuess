@@ -1,0 +1,1 @@
+qchem 18_F3iodomethane-formaldehyde_mono2.in 18_F3iodomethane-formaldehyde_mono2.out 18_F3iodomethane-formaldehyde_mono2.dir 

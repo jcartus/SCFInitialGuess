@@ -1,0 +1,1 @@
+qchem 17_F3bromomethane-formaldehyde_mono1.in 17_F3bromomethane-formaldehyde_mono1.out 17_F3bromomethane-formaldehyde_mono1.dir 

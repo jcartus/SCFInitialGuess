@@ -1,0 +1,1 @@
+qchem 07_trifluoromethane-methane_mono2.in 07_trifluoromethane-methane_mono2.out 07_trifluoromethane-methane_mono2.dir 
