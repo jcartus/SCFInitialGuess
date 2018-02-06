@@ -11,7 +11,7 @@ import re
 
 import pyQChem as qc
 
-from utilities.constants import number_of_basis_functions as N_BASIS
+from utilities.constants import number_of_basis_functions as N_BASIS # todo: this is inconsitent. constantprovider class should be used.
 
 from utilities.usermessages import Messenger as msg
 
@@ -181,9 +181,7 @@ class Result(object):
         
         # read atoms from outfile
         self.atoms = self._discover_atoms()
-    
-    def __enter__(self):
-
+  
         self.S = \
             self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
         self.H = \
@@ -193,19 +191,18 @@ class Result(object):
         self.F = \
                 self._read_matrix_from_print_file(join(self._root_dir, "F.dat"))
 
-
     @staticmethod
     def _read_matrix_from_print_file(file_path):
         """reads matrix from scf matrix print file and returns it as numpy array """        
         with open(file_path, 'r') as f:
             lines = f.readlines()[2:]
 
-        return np.array(map(float, map(lambda x: x.split(), lines)))
+        return np.array(map(lambda x: map(float, x.split()), lines))
 
     def _discover_atoms(self):
         """Check out file to see which atoms there were in the molecule"""
 
-        with open(join(self._root_dir, self._job_name + "out")) as f:
+        with open(join(self._root_dir, self._job_name + ".out")) as f:
             
             molecule = re.search(r"\$molecule.*\$end", f.read(), re.DOTALL)
             if molecule is None:
@@ -233,11 +230,11 @@ class Result(object):
         
         end = start + N_BASIS[self.atoms[atom_id]]
 
-        return range(start, end)
+        return start, end
         
     def create_batch(self, atom_type):
         """This will check for all atoms of the given type in the molecule and 
-        create a set of inputs and expected outputs for each
+        create a set of inputs (x) and expected outputs (y) for each instance.
         
         Args:
             atom_type <str>: element symbol for atom type for which input/output
@@ -254,24 +251,33 @@ class Result(object):
             for each instance found.
         """
 
-        from utilities.constants import electronegativites as chi
+        from utilities.constants import electronegativities as chi
 
         try:
-            atom_indices = self.atoms.find(atom_type)
+            atom_instance_indices = \
+                [i for i, atom in enumerate(self.atoms) if atom == atom_type]
+
+            if len(atom_instance_indices) == 0:
+                raise ValueError("No atoms of this type found")
         except ValueError as ex:
             msg.info(
                 "No atoms of type " + atom_type + " found in " + self._job_name
             )
 
             # if nothing found just return an empty list
-            return []
+            return ([], [])
 
+        # dataset that will be returned
+        x_list = []
+        y_list = []
 
-        result = []
-
-        for ind in atom_indices:
+        for ind in atom_instance_indices:
             
-            index_range = self._index_range(ind)
+            # start/end index of range of elements in e.g. S-Matrix
+            # that correspond to current atom. Using the range object would 
+            # trigger advanced indexing ...
+            start, end = self._index_range(ind)
+            
 
             #--- get descriptros (network inputs) ---
             x = np.zeros(N_BASIS[atom_type])
@@ -285,16 +291,39 @@ class Result(object):
 
                     # add weighted summand
                     x += np.sum(
-                        self.S[index_range, self._index_range(i)], 
+                        self.S[start:end, range(*self._index_range(i))], 
                         1
                     ) * chi[atom]
+
+            x_list.append(x)
             #---
 
-            F = self.F[index_range, index_range]
-            
-            result.append((x, F))
+            #--- get target (network output)---
+            y_list.append(self.F[start:end, start:end])
+            #---
         
-        return F
+        return x_list, y_list
+
+
+def normalize(x):
+    """Will trans form a dataset with elements x_ij, where j is the index
+    that labels the example and i the index that labels to which input
+    the value corresponds, in the following way:
+
+        x_ij = x_ij - mean(x_ij, j) / var(x_ij, j)
+
+    where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
+    """
+
+    mean = np.average(x, 0)
+    std = np.std(x, 0)
+
+    return (x - mean) / std, mean, std
+
+def denormalize(x, mean, std):
+    """The inverse trans formation to normalize"""
+
+    return x * std + mean
 
 
 
