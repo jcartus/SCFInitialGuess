@@ -8,50 +8,6 @@ from utilities.usermessages import Messenger as msg
 from os.path import normpath, join, isfile, isdir
 
 
-class ConstantProvider(object):
-    """This class will be a wrapper to all canstants and fetch them from the 
-    right files / variables in this module.
-    
-    Attributes:
-        - chi <dict<str, float>>: electronegativies of the atoms. Keys are atom 
-        symbols. Alias: electronegativity
-        - number_of_basis_functions <dict<str, int>>: the number of basis 
-        functions for each atom in the 6-311++G(d,p) basis set. Key are the 
-        atom symbols.
-    """
-
-    def __init__(self, data_folder):
-        """Constructor:
-
-        Args:
-            data_folder <str>: the full path to the folder in which data files
-            from which some of the constants are read are stored.
-        """
-
-        if not isdir(data_folder):
-            raise ValueError("Data folder was not found at " + data_folder)
-
-        self._data_folder = data_folder
-
-    #--- electro negativity ---
-    @property
-    def chi(self):
-        return fetch_electronegativites_from_file(
-            join(self._data_folder, "Electronegativities.txt")
-        )
-
-    @property
-    def electronegativites(self):
-         return self.chi
-    #---
-
-    #--- basis fnctions ---
-    @property
-    def number_of_basis_functions(self):
-        return number_of_basis_functions
-    #---
-
-
 # electronegativity values (pauling scala)
 #https://en.wikipedia.org/wiki/Electronegativities_of_the_elements_(data_page)
 electronegativities = {
