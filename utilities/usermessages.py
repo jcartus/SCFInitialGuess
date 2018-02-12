@@ -6,6 +6,7 @@ Author:
 """
 
 import warnings
+from datetime import datetime
 
 
 class MarkerTheme(object):
@@ -68,25 +69,33 @@ class Messenger(object):
     print_level = 3
 
     @classmethod
+    def time(cls):
+        return datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ": "
+
+    @classmethod
     def info(cls, message, level=0):
         """Write a user info to prompt, if it is important enough (specifed by 
         print_level)"""
 
         if cls.print_level == 3 or (cls.print_level == 2 and level >= 1) or \
             (cls.print_level == 1 and level >= 2):
-            print(cls.marker_theme.info(level) + message)
+            print(cls.marker_theme.info(level) + cls.time() + message)
 
     @classmethod
     def warn(cls, message, *args, **kwargs):
         """Raise a warning if printlevel is 2 or higher"""
 
         if cls.print_level > 1:
-            warnings.warn(cls.marker_theme.warning() + message, *args, **kwargs)
+            warnings.warn(
+                cls.marker_theme.warning() + cls.time() + message, *args, **kwargs
+            )
 
     @classmethod
     def error(cls, message, *args, **kwargs):
         """Write /raise? an error"""
-        warnings.warn(cls.marker_theme.error() + message, *args, **kwargs)
+        warnings.warn(
+            cls.marker_theme.error() + cls.time() + message, *args, **kwargs
+        )
 
 
 
