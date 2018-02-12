@@ -2,10 +2,11 @@
 be stored
 
 Authors:
- - Johannes Cartus, QCIEP, TU Graz"""
+ - Johannes Cartus, QCIEP, TU Graz
+"""
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
-from os import listdir
+from os import listdir, walk
 import numpy as np
 import re
 
@@ -326,7 +327,74 @@ def denormalize(x, mean, std):
     return x * std + mean
 
 
+def assemble_batch(folder_list, species="C"):
+    """Looks in all folders for results to create a large batch to test the 
+    network on.
 
+    Args:
+        - folder_list <list<str>>: a list of full paths to data base folders 
+        w/ molecule results in them as subfolders.
+        - species <str>: atomic species for which data shall be assembled
+        - protion_stest <float>: the fraction how much of data shall be reserved 
+        for testing.
+
+    Returns (as tuple):
+        - the normalized batch inputs
+        - the batch ouput
+        - the mean of the unnormalized batch
+        - the stanard deviation of the unnormalized batch
+    """
+
+    msg.info("Assembling batch for: " + species, 1)
+
+    x, y = [], []
+    for data_base in folder_list:
+        
+        msg.info("Fetching data from " + data_base)
+
+        tree = walk(data_base)
+            
+        # logg how many points were found
+        points_found = 0
+
+        # go through all molecules in this data base
+        for directory, _, files in list(tree)[1:]:
+            try:
+                result = Result(directory)
+                data = result.create_batch(species)
+                x += data[0] 
+                y += list(map(np.diag, data[1])) #todo: maybe the cast to list is not necessary
+                points_found += len(data[0])
+            except Exception as ex:
+                msg.warn("There was a problem " + str(ex))
+        
+
+        msg.info("Found " + str(points_found) + " points.")
+
+        
+    msg.info("Done assembling. Found " + str(len(x)) + " points.", 1)
+
+    x_raw, x_mean, x_std = normalize(np.array(x))
+    y_raw = np.array(y)
+
+    return x_raw, y_raw, x_mean, x_std
+
+def split_dataset(x_raw, y_raw, fraction=0.8):
+    """Splits a data set into two subsets (e.g. test and training data)"""
     
+    ind_train = int(np.floor(fraction * len(x_raw)))
+    x_train, y_train = x_raw[:ind_train], y_raw[:ind_train]
+    x_test, y_test = x_raw[ind_train:], y_raw[ind_train:]
 
+    return x_train, y_train, x_test, y_test
 
+def random_subset(x, y, size=1):
+    """Cut out size random values from the batch (x,y)"""
+    indices = np.arange(len(x))
+    np.random.shuffle(indices)
+    indices = indices[:int(size)] 
+    return x[indices], y[indices]
+
+def random_subset_by_fraction(x, y, fraction):
+    """Get a subset of the batch (x,y) with a fraction of the values"""
+    return random_subset(x, y, int(np.ceil(fraction * len(x))))
