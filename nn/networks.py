@@ -22,6 +22,11 @@ class AbstractNeuralNetwork(object):
         self.weights = []
         self.biases = []
 
+        self._name_string = ""
+
+    def __str__(self):
+        return self._name_string + "x".join(self.structure[1:-1]) 
+
     def run(self, session):
         """Evaluate the neural network"""
         session.run(self._graph)
@@ -96,9 +101,6 @@ class AbstractNeuralNetwork(object):
     def _activation(self, preactivation):
         raise NotImplementedError("This is just an abstract class")
 
-
-
-
 class TruncatedNormalEluNN(AbstractNeuralNetwork):
     """This is a Neural Network with weights/biases initialized truncated normal
     and the activations being elus
@@ -115,15 +117,11 @@ class TruncatedNormalEluNN(AbstractNeuralNetwork):
             initialisation
         """
 
+        super(TruncatedNormalEluNN, self).__init__(structure, log_histograms)
 
         self.mu = mu
         self.std = std
-
-        super(TruncatedNormalEluNN, self).__init__(structure, log_histograms)
-
-        self._graph = None
-        self.weights = []
-        self.biases = []
+        self._name_string = "TruncN-{0}-{1}_Elu_".format(mu, std)
 
     def _initialization(self, shape, **kwargs):
         return tf.truncated_normal(
