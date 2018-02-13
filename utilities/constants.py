@@ -24,7 +24,10 @@ electronegativities = {
     'Si': 1.9,
     'P': 2.19,
     'S': 2.58,
-    'Cl': 3.16
+    'Cl': 3.16,
+    'Br': 2.96,
+    'I': 2.66,
+    'Ar': None
 }
 
 
