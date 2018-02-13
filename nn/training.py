@@ -42,13 +42,19 @@ class Model(object):
         
 
 
-def network_benchmark(models, dataset, logdir, max_training_steps=100000):
+def network_benchmark(
+        models, 
+        dataset, 
+        logdir, 
+        steps_report=250,
+        max_training_steps=100000,
+        convergence_eps=1e-7
+    ):
 
     for model in models:
 
-        msg.info("Investigating model " + model.name, 1)
+        msg.info("Investigating model " + str(model), 2)
 
-        print(str(model))
         save_path = join(logdir, str(model))
         
         # make new session and build graph
@@ -63,14 +69,15 @@ def network_benchmark(models, dataset, logdir, max_training_steps=100000):
         f = model.network.setup(x)
 
         with tf.name_scope("loss"):
-            error = tf.losses.mean_squared_error(y, f) # sum_i (f8(x_i) - y_i)^2
+            error = tf.losses.mean_squared_error(y, f) / dim_out # sum_i (f8(x_i) - y_i)^2
             weight_decay = tf.contrib.layers.apply_regularization(
-                tf.contrib.layers.l2_regularizer(0.1),
+                tf.contrib.layers.l2_regularizer(0.001),
                 model.network.weights
             )
             loss = error +  weight_decay
 
-            tf.summary.scalar("error", error)
+            tf.summary.scalar("weight_decay", weight_decay)
+            tf.summary.scalar("error/element", error)
             tf.summary.scalar("total_loss", loss)
 
         # define loss
@@ -91,26 +98,30 @@ def network_benchmark(models, dataset, logdir, max_training_steps=100000):
             batch = dataset.sample_minibatch(0.2) 
 
             # log progress
-            if step % 10 == 0:
+            if step % 50 == 0:
                 writer.add_summary(sess.run(
                     summary, 
                     feed_dict={x: batch[0], y: batch[1]}
-                ))
+                ), step)
 
             # save graph and report error
-            if step % 200 == 0:
+            if step % steps_report == 0:
                 validation_error = sess.run(
                     error, 
                     feed_dict={x: dataset.validation[0], y: dataset.validation[1]}
-                )
+                ) / dim_out
                 #saver.save(sess, log_dir, step)
 
                 diff = np.abs(old_error - validation_error)
-                msg.info("Error difference to prev. step: {:0.4E}".format(diff))
-                if diff < 1e-5:
+                msg.info("Error: {:0.4E}. Diff to before: {:0.4E}".format(
+                    validation_error,
+                    diff
+                ))
+                if diff < convergence_eps:
                     msg.info(
                         "Convergence reached after " + str(step) + " steps.", 1
                     )
+                    break
                 else:
                     old_error = validation_error
             
@@ -122,8 +133,8 @@ def network_benchmark(models, dataset, logdir, max_training_steps=100000):
         test_error = sess.run(
             error, 
             feed_dict={x: dataset.validation[0], y: dataset.validation[1]}
-        )
-        msg.info("Test error: " + str(test_error))
+        ) / dim_out
+        msg.info("Test error: {:0.1E}".format(test_error))
 
 
 
