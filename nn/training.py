@@ -49,7 +49,7 @@ def network_benchmark(models, dataset, logdir, max_training_steps=100000):
 
         msg.info("Investigating model " + model.name, 1)
 
-        save_path = join(logdir, model.name)
+        save_path = join(logdir, str(model))
         
         # make new session and build graph
         tf.reset_default_graph()
