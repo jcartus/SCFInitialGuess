@@ -306,25 +306,118 @@ class Result(object):
         return x_list, y_list
 
 
-def normalize(x):
-    """Will trans form a dataset with elements x_ij, where j is the index
-    that labels the example and i the index that labels to which input
-    the value corresponds, in the following way:
-
-        x_ij = x_ij - mean(x_ij, j) / var(x_ij, j)
-
-    where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
+class Dataset(object):
+    """This class will govern the whole dataset and has methods to process and 
+    split it.
     """
+    def __init__(self, x, y, split_test=0.1, split_validation=0.2):
+        """Ctor
 
-    mean = np.average(x, 0)
-    std = np.std(x, 0)
+        Args:
+            - x <np.array>: input data that result in target values/labels
+            - y <np.array>: the target values/labels
+            - split_test <float>: the fraction how much of the dataset shall
+                be used for testing
+            - split_validation <float>: the fraction how much of the dataset -test
+                set shall be used for validation.
+        """
 
-    return (x - mean) / std, mean, std
+        # normalize the dataset
+        x, self.x_mean, self.x_std = self.normalize(x)
 
-def denormalize(x, mean, std):
-    """The inverse trans formation to normalize"""
+        # shuffle dataset
+        dataset = self.shuffle_batch(x, y)
 
-    return x * std + mean
+        # extract test data
+        dataset, self.testing = self.split_dataset(
+            dataset[0], 
+            dataset[1], 
+            split_test
+        )
+
+
+        # split rest in test and validation
+        self.training, self.validation = self.split_dataset(
+            dataset[0], 
+            dataset[1], 
+            split_validation
+        )
+
+    def sample_minibatch(self, size):
+        """returns a sub set of the training data 
+        
+        Args:
+            size <int/float>: if size is int it will be assumed as the number
+            of points required, if float it will be assumed as the
+            fraction of the training data to be used.
+        """
+
+        if isinstance(size, int):
+            return self.random_subset(*self.training, size=size)
+        elif isinstance(size, float):
+            return self.random_subset_by_fraction(*self.training, fraction=size)
+        else:
+            raise TypeError(
+                "Size parameter must be either int or float, but was " + \
+                str(type(size)) + "."
+            )
+        
+    @staticmethod
+    def shuffle_batch(x, y):
+        """randomly shuffles the elements of x, y, so the the elements still
+        correspond to each other"""
+        indices = range(len(x))
+        np.random.shuffle(indices)
+        return x[indices], y[indices]
+
+    @staticmethod
+    def random_subset(x, y, size=1):
+        """Cut out size random values from the batch (x,y)"""
+        indices = np.arange(len(x))
+        np.random.shuffle(indices)
+        indices = indices[:int(size)] 
+        return x[indices], y[indices]    
+
+    @classmethod
+    def random_subset_by_fraction(cls, x, y, fraction):
+        """Get a subset of the batch (x,y) with a fraction of the values"""
+        return cls.random_subset(x, y, int(np.ceil(fraction * len(x))))
+
+    @staticmethod
+    def split_dataset(x_raw, y_raw, fraction=0.2):
+        """Splits a data set into two subsets (e.g. test and training data)
+        
+        Args:
+            - fraction <float>: the fraction of the ds that should be split off
+        """
+
+        ind_train = int(np.floor(fraction * len(x_raw)))
+        x_train, y_train = x_raw[ind_train:], y_raw[ind_train:]
+        x_test, y_test = x_raw[:ind_train], y_raw[:ind_train]
+
+        return (x_train, y_train), (x_test, y_test)
+    
+    @staticmethod
+    def normalize(x):
+        """Will trans form a dataset with elements x_ij, where j is the index
+        that labels the example and i the index that labels to which input
+        the value corresponds, in the following way:
+
+            x_ij = x_ij - mean(x_ij, j) / var(x_ij, j)
+
+        where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
+        """
+
+        mean = np.average(x, 0)
+        std = np.std(x, 0)
+
+        return (x - mean) / std, mean, std
+
+    @staticmethod
+    def denormalize(x, mean, std):
+        """The inverse trans formation to normalize"""
+
+        return x * std + mean
 
 
 def assemble_batch(folder_list, species="C"):
@@ -348,11 +441,11 @@ def assemble_batch(folder_list, species="C"):
     msg.info("Assembling batch for: " + species, 1)
 
     x, y = [], []
-    for data_base in folder_list:
+    for database in folder_list:
         
-        msg.info("Fetching data from " + data_base)
+        msg.info("Fetching data from " + database)
 
-        tree = walk(data_base)
+        tree = walk(database)
             
         # logg how many points were found
         points_found = 0
@@ -374,27 +467,8 @@ def assemble_batch(folder_list, species="C"):
         
     msg.info("Done assembling. Found " + str(len(x)) + " points.", 1)
 
-    x_raw, x_mean, x_std = normalize(np.array(x))
-    y_raw = np.array(y)
+    return np.array(x), np.array(y)
 
-    return x_raw, y_raw, x_mean, x_std
 
-def split_dataset(x_raw, y_raw, fraction=0.8):
-    """Splits a data set into two subsets (e.g. test and training data)"""
-    
-    ind_train = int(np.floor(fraction * len(x_raw)))
-    x_train, y_train = x_raw[:ind_train], y_raw[:ind_train]
-    x_test, y_test = x_raw[ind_train:], y_raw[ind_train:]
 
-    return x_train, y_train, x_test, y_test
 
-def random_subset(x, y, size=1):
-    """Cut out size random values from the batch (x,y)"""
-    indices = np.arange(len(x))
-    np.random.shuffle(indices)
-    indices = indices[:int(size)] 
-    return x[indices], y[indices]
-
-def random_subset_by_fraction(x, y, fraction):
-    """Get a subset of the batch (x,y) with a fraction of the values"""
-    return random_subset(x, y, int(np.ceil(fraction * len(x))))
