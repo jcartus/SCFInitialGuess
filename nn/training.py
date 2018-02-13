@@ -37,7 +37,6 @@ class Model(object):
         self.network = network
         self.optimizer = optimizer
 
-    @property
     def __str__(self):
         return self.name  + "_" + str(self.network) + "_" + self.optimizer.print_name
         
@@ -49,6 +48,7 @@ def network_benchmark(models, dataset, logdir, max_training_steps=100000):
 
         msg.info("Investigating model " + model.name, 1)
 
+        print(str(model))
         save_path = join(logdir, str(model))
         
         # make new session and build graph
