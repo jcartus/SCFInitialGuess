@@ -25,8 +25,13 @@ class AbstractNeuralNetwork(object):
         self._name_string = ""
 
     def __str__(self):
-        return self._name_string + "x".join(self.structure[1:-1]) 
 
+        if len(self.structure) == 2:
+            structure = str(self.structure[-1])
+        else:
+            structure = "x".join(map(str, self.structure[1:-1]))
+
+        return self._name_string + structure
     def run(self, session):
         """Evaluate the neural network"""
         session.run(self._graph)
@@ -101,9 +106,9 @@ class AbstractNeuralNetwork(object):
     def _activation(self, preactivation):
         raise NotImplementedError("This is just an abstract class")
 
-class TruncatedNormalEluNN(AbstractNeuralNetwork):
-    """This is a Neural Network with weights/biases initialized truncated normal
-    and the activations being elus
+
+class TruncatedNormalNN(AbstractNeuralNetwork):
+    """This is a Neural Network with weights/biases initialized truncated normal.
     """
 
     def __init__(self, structure, log_histograms=False, mu=0, std=0.01):
@@ -117,11 +122,11 @@ class TruncatedNormalEluNN(AbstractNeuralNetwork):
             initialisation
         """
 
-        super(TruncatedNormalEluNN, self).__init__(structure, log_histograms)
+        super(TruncatedNormalNN, self).__init__(structure, log_histograms)
 
         self.mu = mu
         self.std = std
-        self._name_string = "TruncN-{0}-{1}_Elu_".format(mu, std)
+        self._name_string += "TrN_mu-{0}_std-{1}_Elu_".format(mu, std)
 
     def _initialization(self, shape, **kwargs):
         return tf.truncated_normal(
@@ -131,5 +136,25 @@ class TruncatedNormalEluNN(AbstractNeuralNetwork):
             **kwargs
         )
 
+class EluTrNNN(TruncatedNormalNN):
+    """This is a Neural Network with weights/biases initialized truncated normal
+    and the activations being elus
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(EluTrNNN, self).__init__(*args, **kwargs)
+        self._name_string = "Elu_" + self._name_string
+
     def _activation(self, preactivation):
         return tf.nn.elu(preactivation)
+
+class ReluTrNNN(TruncatedNormalNN):
+    """This is a Neural Network with weights/biases initialized truncated normal
+    and the activations being Relus
+    """
+    def __init__(self, *args, **kwargs):
+        super(ReluTrNNN, self).__init__(*args, **kwargs)
+        self._name_string = "Relu_" + self._name_string
+
+    def _activation(self, preactivation):
+        return tf.nn.relu(preactivation)
