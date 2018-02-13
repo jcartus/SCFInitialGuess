@@ -182,15 +182,40 @@ class Result(object):
         
         # read atoms from outfile
         self.atoms = self._discover_atoms()
-  
-        self.S = \
-            self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
-        self.H = \
+
+        self._S = None
+        self._H = None
+        self._P = None
+        self._F = None
+
+    @property
+    def S(self):
+        if self._S is None:
+            self._S = \
+                self._read_matrix_from_print_file(join(self._root_dir, "S.dat"))
+        
+        return self._S
+
+    @property
+    def H(self):
+        if self._H is None:
+            self._H = \
                 self._read_matrix_from_print_file(join(self._root_dir, "H.dat"))
-        self.P = \
+        return self._H
+
+    @property
+    def P(self):
+        if self._P is None:
+            self._P = \
                 self._read_matrix_from_print_file(join(self._root_dir, "P.dat"))
-        self.F = \
+        return self._P
+    
+    @property
+    def F(self):
+        if self._F is None:
+            self._F = \
                 self._read_matrix_from_print_file(join(self._root_dir, "F.dat"))
+        return self._F
 
     @staticmethod
     def _read_matrix_from_print_file(file_path):
@@ -438,12 +463,12 @@ def assemble_batch(folder_list, species="C"):
         - the stanard deviation of the unnormalized batch
     """
 
-    msg.info("Assembling batch for: " + species, 1)
+    msg.info("Assembling batch for: " + species, 2)
 
     x, y = [], []
     for database in folder_list:
         
-        msg.info("Fetching data from " + database)
+        msg.info("Fetching data from " + database, 1)
 
         tree = walk(database)
             
@@ -459,13 +484,13 @@ def assemble_batch(folder_list, species="C"):
                 y += list(map(np.diag, data[1])) #todo: maybe the cast to list is not necessary
                 points_found += len(data[0])
             except Exception as ex:
-                msg.warn("There was a problem " + str(ex))
+                msg.warn("There was a problem: " + str(ex))
         
 
-        msg.info("Found " + str(points_found) + " points.")
+        msg.info("Found " + str(points_found) + " points.", 1)
 
         
-    msg.info("Done assembling. Found " + str(len(x)) + " points.", 1)
+    msg.info("Done assembling. Found " + str(len(x)) + " points.", 2)
 
     return np.array(x), np.array(y)
 
