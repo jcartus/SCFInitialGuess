@@ -86,9 +86,7 @@ class Messenger(object):
         """Raise a warning if printlevel is 2 or higher"""
 
         if cls.print_level > 1:
-            warnings.warn(
-                cls.marker_theme.warning() + cls.time() + message, *args, **kwargs
-            )
+            print(cls.marker_theme.warning() + cls.time() + message)
 
     @classmethod
     def error(cls, message, *args, **kwargs):
