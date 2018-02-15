@@ -24,6 +24,9 @@ class AbstractNeuralNetwork(object):
 
         self._name_string = ""
 
+        #todo: maybe a property for input too.
+        self.input_tensor = None
+
     def __str__(self):
 
         if len(self.structure) == 2:
@@ -32,15 +35,38 @@ class AbstractNeuralNetwork(object):
             structure = "x".join(map(str, self.structure[1:-1]))
 
         return self._name_string + structure
-    def run(self, session):
-        """Evaluate the neural network"""
-        session.run(self._graph)
+    
+    @property
+    def output_tensor(self):
+        if self._graph is None:
+            self.setup()
 
-    def setup(self, input_tensor):
-        
+        return self._graph
+
+    def weights_values(self, session):
+        if self._graph is None:
+            raise RuntimeError("Notwork not initialized!")
+        return [session.run(w) for w in self.weights]
+    
+    def biases_values(self, session):
+        if self._graph is None:
+            raise RuntimeError("Notwork not initialized!")
+        return [session.run(b) for b in self.biases]
+
+    def run(self, session, inputs):
+        """Evaluate the neural network"""
+        session.run(self._graph, feed_dict={self.input_tensor: inputs})
+
+    def setup(self):
+
+        # set up input placeholder    
+        self.input_tensor = tf.placeholder(
+                dtype="float32", shape=[None, self.structure[0]]
+            )
+    
         # set up input layer
         with tf.name_scope("input_layer"):
-            self._graph = input_tensor
+            self._graph = self.input_tensor
 
 
         # hidden layers
