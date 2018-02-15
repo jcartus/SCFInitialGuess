@@ -223,7 +223,7 @@ class Result(object):
         with open(file_path, 'r') as f:
             lines = f.readlines()[2:]
 
-        return np.array(map(lambda x: map(float, x.split()), lines))
+        return np.array(list(map(lambda x: list(map(float, x.split())), lines)))
 
     def _discover_atoms(self):
         """Check out file to see which atoms there were in the molecule"""
@@ -330,7 +330,6 @@ class Result(object):
         
         return x_list, y_list
 
-
 class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 
     split it.
@@ -391,7 +390,7 @@ class Dataset(object):
     def shuffle_batch(x, y):
         """randomly shuffles the elements of x, y, so the the elements still
         correspond to each other"""
-        indices = range(len(x))
+        indices = np.arange(len(x))
         np.random.shuffle(indices)
         return x[indices], y[indices]
 
@@ -444,7 +443,6 @@ class Dataset(object):
 
         return x * std + mean
 
-
 def assemble_batch(folder_list, species="C"):
     """Looks in all folders for results to create a large batch to test the 
     network on.
@@ -476,7 +474,7 @@ def assemble_batch(folder_list, species="C"):
         points_found = 0
 
         # go through all molecules in this data base
-        for directory, _, files in list(tree)[1:]:
+        for directory, _, _ in list(tree)[1:]:
             try:
                 result = Result(directory)
                 data = result.create_batch(species)
