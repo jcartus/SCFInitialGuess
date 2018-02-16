@@ -90,11 +90,17 @@ class AbstractNeuralNetwork(object):
 
         return self._graph
 
-    def _add_layer(self, x, dim_in, dim_out, name="hidden_layer"):
+    def _add_layer(self, x, dim_in, dim_out, name="hidden_layer", **kwargs):
         
         with tf.name_scope(name):
-            w = tf.Variable(self._initialization([dim_in, dim_out]), name="w")
-            b = tf.Variable(self._initialization([dim_out]), name="b")
+            w = tf.Variable(
+                self._initialization([dim_in, dim_out], **kwargs), 
+                name="w"
+            )
+            b = tf.Variable(
+                self._initialization([dim_out], **kwargs), 
+                name="b"
+            )
 
             tf.summary.histogram("weights", w)
             tf.summary.histogram("biases", b)
@@ -106,12 +112,18 @@ class AbstractNeuralNetwork(object):
             return act, w, b
 
 
-    def _add_output_layer(self, x, dim_in, dim_out):
+    def _add_output_layer(self, x, dim_in, dim_out, **kwargs):
         
         with tf.name_scope("output_layer"):
 
-            w = tf.Variable(self._initialization([dim_in, dim_out]), name="w")
-            b = tf.Variable(self._initialization([dim_out]), name="b")
+            w = tf.Variable(
+                self._initialization([dim_in, dim_out], **kwargs), 
+                name="w"
+            )
+            b = tf.Variable(
+                self._initialization([dim_out], **kwargs), 
+                name="b"
+            )
 
             tf.summary.histogram("weights", w)
             tf.summary.histogram("biases", b)
@@ -132,6 +144,80 @@ class AbstractNeuralNetwork(object):
     def _activation(self, preactivation):
         raise NotImplementedError("This is just an abstract class")
 
+class FixedValueNN(AbstractNeuralNetwork):
+    """This neural network is initialized by values not by specifying the 
+    distribution.
+    """
+
+
+    def __init__(self, structure, weights, biases, log_histograms=False):
+        """Ctor
+
+        Args:
+            - structure <list<int>>: list of number of nodes. First used for 
+            input, last element for output.
+            - weights <list<np.array<float>>>: list of values to initialize 
+            weights by.
+            - biases <list<np.array<float>>>: list of values to initialize 
+            biases by.
+        """
+
+        super(FixedValueNN, self).__init__(structure, log_histograms)
+
+        self._weight_values = weights
+        self._biases_values = biases
+
+        self._name_string += "Loaded_Model_"
+
+    def setup(self):
+
+        # set up input placeholder    
+        self.input_tensor = tf.placeholder(
+                dtype="float32", shape=[None, self.structure[0]]
+            )
+    
+        # set up input layer
+        with tf.name_scope("input_layer"):
+            self._graph = self.input_tensor
+
+
+        # hidden layers
+        for layer in range(1, len(self.structure) - 1):
+            self._graph, w, b = self._add_layer(
+                self._graph, 
+                self.structure[layer - 1], 
+                self.structure[layer],
+                layer=layer
+            )
+            self.weights.append(w)
+            self.biases.append(b)    
+
+        # output layer
+        self._graph, w, b = self._add_output_layer(
+            self._graph,
+            self.structure[-2],
+            self.structure[-1],
+            layer=-1
+        )
+        self.weights.append(w)
+        self.biases.append(b)
+
+        return self._graph
+
+    def _initialization(self, shape, **kwargs):
+        if len(shape) == 1:
+            return self._biases_values[kwargs["layer"]]
+        elif len(shape) == 2:
+            return self._weight_values[kwargs["layer"]]
+
+
+class EluFixedValue(FixedValueNN):
+    def __init__(self, *args, **kwargs):
+        super(EluFixedValue, self).__init__(*args, **kwargs)
+        self._name_string = "Elu_" + self._name_string
+
+    def _activation(self, preactivation):
+        return tf.nn.elu(preactivation)    
 
 class TruncatedNormalNN(AbstractNeuralNetwork):
     """This is a Neural Network with weights/biases initialized truncated normal.
