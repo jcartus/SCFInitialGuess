@@ -14,7 +14,7 @@ from utilities.dataset import assemble_batch, Dataset
 from utilities.constants import number_of_basis_functions as N_BASIS
 from utilities.usermessages import Messenger as msg
 
-from nn.networks import EluTrNNN
+from nn.networks import EluTrNNN, EluFixedValue
 from nn.training import train_network
 
 
@@ -60,6 +60,13 @@ def main(species="C"):
         save_path,
         save_object
     )
+    #---
+
+    #--- load and reinitialize model ---
+    model = np.load(save_path)
+
+    new_network = EluFixedValue(*model)
+    print(new_network)
     #---
 
 if __name__ == '__main__':
