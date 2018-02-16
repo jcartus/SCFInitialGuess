@@ -11,22 +11,7 @@ from os.path import exists, isdir
 import pyQChem as qc
 
 from utilities.usermessages import Messenger as msg
-
-
-class cd:
-    """Context manager for changing the current working directory
-    Got this snippet from stackoverflow:
-    https://stackoverflow.com/questions/431684/how-do-i-cd-in-python
-    """
-    def __init__(self, newPath):
-        self.newPath = os.path.expanduser(newPath)
-
-    def __enter__(self):
-        self.savedPath = os.getcwd()
-        os.chdir(self.newPath)
-
-    def __exit__(self, etype, value, traceback):
-        os.chdir(self.savedPath)
+from utilities import cd
 
 class QChemJob(object):
     """Base model for QCHem Jobs. Implements functions to run a job, 
