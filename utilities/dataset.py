@@ -10,8 +10,6 @@ from os import listdir, walk
 import numpy as np
 import re
 
-import pyQChem as qc
-
 from utilities.constants import number_of_basis_functions as N_BASIS # todo: this is inconsitent. constantprovider class should be used.
 
 from utilities.usermessages import Messenger as msg
@@ -31,7 +29,7 @@ class Molecule(object):
 
 
     @property
-    def geometries(self):
+    def geometry(self):
         """The geometries as used by A. Fuchs in his NN Project """
         for x in zip(self.species, self.positions):
             yield x
@@ -41,6 +39,9 @@ class Molecule(object):
 
     def get_QChem_molecule(self):
         """Get a pyqchem molecule object representation of the molecule"""
+
+        import pyQChem as qc
+
         xyz = qc.cartesian()
 
         for (s,p) in zip(self.species, self.positions):
@@ -49,8 +50,8 @@ class Molecule(object):
         return qc.mol_array(xyz)
 
 class PyQChemDBReader(object):
-    """This will read all the molecules from the database files that are
-    in a specified folder"""
+    """This will read all the molecules from the database files (which were 
+    downloaded from the pyqChem repository) that are in a specified folder"""
 
     @classmethod
     def read_database(cls, folder):
