@@ -68,16 +68,16 @@ class AbstractNeuralNetwork(object):
         with tf.name_scope("input_layer"):
             self._graph = self.input_tensor
 
-
         # hidden layers
-        for layer in range(1, len(self.structure) - 1):
-            self._graph, w, b = self._add_layer(
-                self._graph, 
-                self.structure[layer - 1], 
-                self.structure[layer],
-            )
-            self.weights.append(w)
-            self.biases.append(b)    
+        if len(self.structure) > 2:
+            for layer in range(1, len(self.structure) - 1):
+                self._graph, w, b = self._add_layer(
+                    self._graph, 
+                    self.structure[layer - 1], 
+                    self.structure[layer],
+                )
+                self.weights.append(w)
+                self.biases.append(b)    
 
         # output layer
         self._graph, w, b = self._add_output_layer(
