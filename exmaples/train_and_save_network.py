@@ -4,7 +4,7 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from os.path import normpath, join
+from os.path import normpath, join, realpath, dirname
 from os import listdir
 
 import tensorflow as tf
@@ -21,9 +21,8 @@ from nn.training import train_network
 def main(species="C"):
 
     #--- assemble the dataset ---
-    dataset_source_folder = normpath(
-        "/home/jo/Documents/SCFInitialGuess/dataset/"
-    )
+    root_directory = normpath(join(dirname(realpath(__file__)), "../"))
+    dataset_source_folder = join(root_directory, "dataset/")
     sources = [
         join(dataset_source_folder, directory) \
             for directory in listdir(dataset_source_folder)
@@ -43,12 +42,7 @@ def main(species="C"):
     #---
 
     #--- save trained model ---
-    save_path = join(
-        normpath(
-            "/home/jo/Documents/SCFInitialGuess/models/"
-        ),
-        species + ".npy"
-    )
+    save_path = join(root_directory, "models", species + ".npy")
 
     save_object = [
         network.structure,
