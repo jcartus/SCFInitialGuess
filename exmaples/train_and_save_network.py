@@ -1,4 +1,4 @@
-"""This is a demo script to train a neural network and to store the result
+"""This is a demo script to train a neural network and to store the result.
 
 Author:
     - Johannes Cartus, QCIEP, TU Graz
@@ -10,15 +10,14 @@ from os import listdir
 import tensorflow as tf
 import numpy as np
 
-from utilities.dataset import assemble_batch, Dataset
-from utilities.constants import number_of_basis_functions as N_BASIS
-from utilities.usermessages import Messenger as msg
+from SCFInitialGuess.utilities.dataset import assemble_batch, Dataset
+from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
+from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
+from SCFInitialGuess.nn.training import train_network
 
-from nn.networks import EluTrNNN, EluFixedValue
-from nn.training import train_network
 
-
-def main(species="C"):
+def main(species="H"):
 
     #--- assemble the dataset ---
     root_directory = normpath(join(dirname(realpath(__file__)), "../"))
