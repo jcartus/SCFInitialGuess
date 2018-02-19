@@ -331,7 +331,7 @@ class Result(object):
             #---
 
             #--- get target (network output)---
-            y_list.append(self.F[start:end, start:end])
+            y_list.append(self.P[start:end, start:end])
             #---
         
         return x_list, y_list
