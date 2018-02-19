@@ -10,3 +10,5 @@ log/*
 pathtable
 
 *.pyc
+
+Notebooks/
