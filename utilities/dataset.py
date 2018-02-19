@@ -54,6 +54,18 @@ class Molecule(object):
 
         return qc.mol_array(xyz)
 
+    def get_pyscf_molecule(self):
+        """Get a pyscf mole representation of the  molecule"""
+        from pyscf.gto import Mole
+
+        mol = Mole()
+        mol.atom = self.geometry
+        mol.basis = "6-311++g**"
+        mol.build()
+
+        return mol
+
+
 class PyQChemDBReader(object):
     """This will read all the molecules from the database files (which were 
     downloaded from the pyqChem repository) that are in a specified folder"""
