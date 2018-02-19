@@ -55,7 +55,7 @@ class AbstractNeuralNetwork(object):
 
     def run(self, session, inputs):
         """Evaluate the neural network"""
-        session.run(self._graph, feed_dict={self.input_tensor: inputs})
+        return session.run(self._graph, feed_dict={self.input_tensor: inputs})
 
     def setup(self):
 
