@@ -5,13 +5,18 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
-import os
+import os, sys
 from os.path import exists, isdir
 
-import pyQChem as qc
 
 from utilities.usermessages import Messenger as msg
 from utilities import cd
+
+# only import pyqchem if python version is 2 or lower!
+if sys.version_info[0] >= 3:
+    raise ImportError("PyQChem cannot be used with python 3 or higher!")
+else:
+    import pyQChem as qc
 
 class QChemJob(object):
     """Base model for QCHem Jobs. Implements functions to run a job, 

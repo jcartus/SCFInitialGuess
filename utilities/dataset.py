@@ -7,6 +7,8 @@ Authors:
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir, walk
+
+import sys
 import numpy as np
 import re
 
@@ -39,7 +41,10 @@ class Molecule(object):
 
     def get_QChem_molecule(self):
         """Get a pyqchem molecule object representation of the molecule"""
-
+        
+        if sys.version_info[0] >= 3:
+            raise ImportError("PyQChem cannot be used with python 3 or higher!")
+        
         import pyQChem as qc
 
         xyz = qc.cartesian()
