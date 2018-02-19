@@ -227,7 +227,7 @@ def network_benchmark(
             loss = error +  weight_decay
 
             tf.summary.scalar("weight_decay", weight_decay)
-            tf.summary.scalar("error/element", error)
+            tf.summary.scalar("error_per_element", error)
             tf.summary.scalar("total_loss", loss)
 
         # define loss
