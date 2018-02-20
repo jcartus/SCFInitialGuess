@@ -42,16 +42,27 @@ class RHFJob(object):
 
     @property
     def S(self):
-        # todo: fork pyscf to get a version that caches the calculated matrices..
-        return self._job.get_ovlp()
+        if self._S is None
+            self._S = self._job.get_ovlp()
+        return self._S
 
     @property
     def H(self):
-        return self._job.get_hcore()
+        if self._H is None
+            self._H = self._job.get_hcore()
+        return self._H
+
+    @property
+    def P(self):
+        if self._P is None:
+            self._P = self._job.make_rdm1()
+        return self._P
 
     @property
     def F(self):
-        return self._job.get_fock()
+        if self._F is None:
+            self._F = self._job.get_fock()
+        return self._F
 
     def _setup(self):
         """set up the pyscf job"""

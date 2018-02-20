@@ -1,29 +1,27 @@
-"""This is a demo script to train a neural network and to store the result
+"""This is a demo script to train a neural network and to store the result.
 
 Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from os.path import normpath, join
+from os.path import normpath, join, realpath, dirname
 from os import listdir
 
 import tensorflow as tf
 import numpy as np
 
-from utilities.dataset import assemble_batch, Dataset
-from utilities.constants import number_of_basis_functions as N_BASIS
-from utilities.usermessages import Messenger as msg
+from SCFInitialGuess.utilities.dataset import assemble_batch, Dataset
+from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
+from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
+from SCFInitialGuess.nn.training import train_network
 
-from nn.networks import EluTrNNN, EluFixedValue
-from nn.training import train_network
 
-
-def main(species="C"):
+def main(species="H"):
 
     #--- assemble the dataset ---
-    dataset_source_folder = normpath(
-        "/home/jo/Documents/SCFInitialGuess/dataset/"
-    )
+    root_directory = normpath(join(dirname(realpath(__file__)), "../"))
+    dataset_source_folder = join(root_directory, "dataset/")
     sources = [
         join(dataset_source_folder, directory) \
             for directory in listdir(dataset_source_folder)
@@ -43,12 +41,7 @@ def main(species="C"):
     #---
 
     #--- save trained model ---
-    save_path = join(
-        normpath(
-            "/home/jo/Documents/SCFInitialGuess/models/"
-        ),
-        species + ".npy"
-    )
+    save_path = join(root_directory, "models", species + ".npy")
 
     save_object = [
         network.structure,

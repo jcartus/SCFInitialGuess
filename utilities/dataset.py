@@ -7,6 +7,8 @@ Authors:
 
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir, walk
+
+import sys
 import numpy as np
 import re
 
@@ -39,7 +41,10 @@ class Molecule(object):
 
     def get_QChem_molecule(self):
         """Get a pyqchem molecule object representation of the molecule"""
-
+        
+        if sys.version_info[0] >= 3:
+            raise ImportError("PyQChem cannot be used with python 3 or higher!")
+        
         import pyQChem as qc
 
         xyz = qc.cartesian()
@@ -48,6 +53,18 @@ class Molecule(object):
             xyz.add_atom(s, *map(str,p))
 
         return qc.mol_array(xyz)
+
+    def get_pyscf_molecule(self):
+        """Get a pyscf mole representation of the  molecule"""
+        from pyscf.gto import Mole
+
+        mol = Mole()
+        mol.atom = self.geometry
+        mol.basis = "6-311++g**"
+        mol.build()
+
+        return mol
+
 
 class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
@@ -326,7 +343,7 @@ class Result(object):
             #---
 
             #--- get target (network output)---
-            y_list.append(self.F[start:end, start:end])
+            y_list.append(self.P[start:end, start:end])
             #---
         
         return x_list, y_list
