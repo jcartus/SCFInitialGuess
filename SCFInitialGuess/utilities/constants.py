@@ -4,7 +4,7 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
-from usermessages import Messenger as msg
+from .usermessages import Messenger as msg
 from os.path import normpath, join, isfile, isdir
 
 

@@ -12,8 +12,8 @@ import sys
 import numpy as np
 import re
 
-from constants import number_of_basis_functions as N_BASIS
-from usermessages import Messenger as msg
+from .constants import number_of_basis_functions as N_BASIS
+from .usermessages import Messenger as msg
 
 
 class Molecule(object):

@@ -4,6 +4,6 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from misc import *
+from .misc import *
 
-from dataset import XYZFileReader, Molecule
+from .dataset import XYZFileReader, Molecule
