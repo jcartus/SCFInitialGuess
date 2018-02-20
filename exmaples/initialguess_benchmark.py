@@ -14,8 +14,7 @@ from SCFInitialGuess.diagonal import nn_guess
 def main():
     msg.info("Welcome to the method benchmark.", 2)
 
-
-    # set up a H2 molecule
+    #--- set up a H2 molecule ---
     msg.info("Setting up molecule: H_2")
     positions = [
         [0, 0, 0.0],
@@ -25,24 +24,28 @@ def main():
     ]
     mol = Molecule(['H' for i in range(4)], positions, 'H4')
     pyscf_mol = mol.get_pyscf_molecule()
+    #---
 
-    # test pyscf methods
+    #--- test network model ---
+    msg.info("Starting SCF with method: nn guess")
+    mf = scf.RHF(pyscf_mol)
+    mf.init_guess = "nn"
+    S = mf.get_ovlp()
+    dm = nn_guess(mol, S)
+    mf.verbose = 4 # todo instead extract number of cycles and plot it with msg
+    mf.kernel(dm)
+    #---
+
+    #--- test pyscf methods ---
     for method in ['minao', 'atom', '1e']:
         msg.info("Starting SCF with method: " + method, 1)
         mf = scf.RHF(pyscf_mol)
         mf.verbose = 4 # todo instead extract number of cycles and plot it with msg
         mf.init_guess = method
         mf.run()
+    #---
 
-
-    # test network model
     
-
-    mf = scf.RHF(pyscf_mol)
-    S = mf.get_ovlp()
-    dm = nn_guess(mol, S)
-    mf.verbose = 4 # todo instead extract number of cycles and plot it with msg
-    mf.kernel(dm)
 
 if __name__ == '__main__':
     main()
