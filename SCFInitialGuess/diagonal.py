@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 
 from SCFInitialGuess.nn.networks import EluFixedValue
-from pyscf.scf.hf import init_guess_by_minao
+from pyscf.scf.hf import init_guess_by_minao 
 
 class Descriptor(object):
     """This class contains all method required to calculate descriptor values.
@@ -24,7 +24,7 @@ class Descriptor(object):
         """Calculate the range of matrix elements for atom specified by index in
         atoms list."""
 
-        from utilities.constants import number_of_basis_functions as N_BASIS
+        from .utilities.constants import number_of_basis_functions as N_BASIS
 
         # summ up the numer of basis functions of previous atoms
         start = 0
@@ -46,7 +46,7 @@ class Descriptor(object):
             - ind <int>: index of current atom in the molecule
         """
 
-        from utilities.constants import electronegativities as chi
+        from .utilities.constants import electronegativities as chi
 
 
         atom_type = atoms[ind]       
@@ -102,21 +102,23 @@ def nn_guess(mol, S, P0=None):
     networks = {}
 
     for species in list(set(atoms)):
-        model = np.load(join(model_database, species + ".npy"))
+        model = np.load(join(model_database, species + ".npy"), encoding="bytes")
         nn = EluFixedValue(*model)
         nn.setup()
-        networks.update(species=nn)
+        networks[species] = nn
+
+    sess.run(tf.global_variables_initializer())
     #---
 
     # if no init guess is given used pyscf default guess
     if P0 is None:
-        P0 = init_guess_by_minao(mol)
+        P0 = init_guess_by_minao(mol.get_pyscf_molecule())
 
     
     dm = []
     for atom_index, atom in enumerate(atoms):
-        inputs = Descriptor.values(S, atoms, atom_index)
-        dm.append(list(networks[atom].run(sess, inputs)))
+        inputs = [Descriptor.values(S, atoms, atom_index)]
+        dm += (list(networks[atom].run(sess, inputs)))
 
     # overwrite the diag of P0
     np.fill_diagonal(P0, dm)
