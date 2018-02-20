@@ -9,4 +9,4 @@ Below you find the status on [Travis-CI](https://travis-ci.org/jcartus/SCFInitia
 
 | Branch   |      Status   | 
 |:--------:|:-------------:|
-| master   | [![Build Status](https://travis-ci.org/jcartus/SCFInitialGuess.svg?branch=master)](https://travis-ci.org/jcartus/NeuralNetworks) |
+| master   | [![Build Status](https://travis-ci.org/jcartus/SCFInitialGuess.svg?branch=master)](https://travis-ci.org/jcartus/SCFInitialGuess) |
