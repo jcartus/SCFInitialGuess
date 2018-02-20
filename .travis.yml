@@ -8,3 +8,6 @@ install:
   - python setup.py install
 
 script: python tests/run_all_tests.py
+
+notification:
+  email: false
