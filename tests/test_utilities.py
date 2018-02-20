@@ -10,7 +10,8 @@ from os.path import normpath, join
 import unittest
 from helper import AbstractTest
 
-from SCFInitialGuess.utilities import XYZFileReader
+from SCFInitialGuess.utilities import Molecule, XYZFileReader
+
 
     
 
@@ -60,7 +61,25 @@ class TestXYZFileReader(AbstractTest):
         self.assertListEqual(self.reference_positions, mols[0].positions)
         self.assertListEqual(self.reference_positions, mols[1].positions)
 
+class TestMolecule(AbstractTest):
 
+    def setUp(self):
+        self.reference_species = ["C", "O", "O"]
+
+        self.reference_positions = [
+            [0.0, 0.0,  0.0],
+            [0.0, 0.0, -2.0],
+            [0.0, 0.0,  2.0]
+        ]
+
+
+    def test_geometry(self):
+        mol = Molecule(self.reference_species, self.reference_positions)
+
+        self.assert_geometries_match(
+            zip(self.reference_species, self.reference_positions),
+            mol.geometry
+        )
 
 if __name__ == '__main__':
     unittest.main()

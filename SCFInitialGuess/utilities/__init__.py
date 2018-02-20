@@ -6,4 +6,4 @@ Author:
 
 from misc import *
 
-from dataset import XYZFileReader
+from dataset import XYZFileReader, Molecule
