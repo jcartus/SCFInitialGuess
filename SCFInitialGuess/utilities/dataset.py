@@ -265,16 +265,16 @@ class Result(object):
         return atoms
 
 
-    def _index_range(self, atom_id):
+    def _index_range(self, atom_index):
         """Calculate the range of matrix elements for atom specified by index in
         atoms list."""
 
         # summ up the numer of basis functions of previous atoms
         start = 0
-        for i in range(atom_id):
+        for i in range(atom_index):
             start += N_BASIS[self.atoms[i]]
         
-        end = start + N_BASIS[self.atoms[atom_id]]
+        end = start + N_BASIS[self.atoms[atom_index]]
 
         return start, end
         
@@ -297,7 +297,7 @@ class Result(object):
             for each instance found.
         """
 
-        from utilities.constants import electronegativities as chi
+        from constants import electronegativities as chi
 
         try:
             atom_instance_indices = \
@@ -471,8 +471,6 @@ def assemble_batch(folder_list, species="C"):
         - folder_list <list<str>>: a list of full paths to data base folders 
         w/ molecule results in them as subfolders.
         - species <str>: atomic species for which data shall be assembled
-        - protion_stest <float>: the fraction how much of data shall be reserved 
-        for testing.
 
     Returns (as tuple):
         - the normalized batch inputs
