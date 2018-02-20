@@ -80,7 +80,10 @@ class XYZFileReader(object):
         
         msg.info("Reading database: " + folder, 1)
 
-        files = [x for x in listdir(folder) if isfile(join(folder, x))]
+        files = filter(
+            lambda x: isfile(join(folder, x)) and x.endswith(".xyz"),
+            listdir(folder)
+        )
 
         molecules = []
 
