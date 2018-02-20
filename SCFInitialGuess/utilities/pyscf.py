@@ -42,13 +42,13 @@ class RHFJob(object):
 
     @property
     def S(self):
-        if self._S is None
+        if self._S is None:
             self._S = self._job.get_ovlp()
         return self._S
 
     @property
     def H(self):
-        if self._H is None
+        if self._H is None:
             self._H = self._job.get_hcore()
         return self._H
 
