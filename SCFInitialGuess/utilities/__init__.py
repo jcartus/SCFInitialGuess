@@ -4,4 +4,4 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from utilities.misc import *
+from misc import *
