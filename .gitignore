@@ -12,3 +12,5 @@ pathtable
 *.pyc
 
 Notebooks/
+
+database/

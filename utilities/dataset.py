@@ -66,7 +66,7 @@ class Molecule(object):
         return mol
 
 
-class PyQChemDBReader(object):
+class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
     downloaded from the pyqChem repository) that are in a specified folder"""
 
