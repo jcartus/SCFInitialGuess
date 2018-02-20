@@ -42,5 +42,6 @@ number_of_basis_functions = {
     "Si": 30,
     "Cl": 30,
     "P": 30,
-    "Br": 48
+    "Br": 48,
+    "I": 62
 }
