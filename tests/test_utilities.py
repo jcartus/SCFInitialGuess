@@ -10,7 +10,7 @@ from os.path import normpath, join
 import unittest
 from helper import AbstractTest
 
-from SCFInitialGuess.utilities.dataset import XYZFileReader
+from SCFInitialGuess.utilities import XYZFileReader
 
     
 

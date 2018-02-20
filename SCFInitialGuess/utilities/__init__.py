@@ -5,3 +5,5 @@ Author:
 """
 
 from misc import *
+
+from dataset import XYZFileReader
