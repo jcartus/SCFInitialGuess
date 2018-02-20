@@ -119,5 +119,6 @@ def nn_guess(mol, S, P0=None):
         dm.append(list(networks[atom].run(sess, inputs)))
 
     # overwrite the diag of P0
-
+    np.fill_diagonal(P0, dm)
+        
     return P0
