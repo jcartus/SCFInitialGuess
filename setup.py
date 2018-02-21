@@ -13,10 +13,14 @@ setup(
     version='0.0',
     description='A neural network approach to create initial guesses for scf calculations',
     author='Johannes Cartus',
-    packages=[name, name + '.utilities', name + '.nn'],
+    packages=[
+        name, 
+        name + '.utilities', 
+        name + '.nn'
+    ],
     package_dir={
         name: 'SCFInitialGuess',
         name + '.utilities': 'SCFInitialGuess/utilities',
-        name + '.utilities': 'SCFInitialGuess/nn'
+        name + '.nn': 'SCFInitialGuess/nn'
     }
 )
