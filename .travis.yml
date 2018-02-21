@@ -9,7 +9,6 @@ install:
 
 script: 
   - python tests/run_all_tests.py
-  - python examples/test_examples.py
 
 notification:
   email: false
