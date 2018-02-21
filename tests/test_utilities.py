@@ -45,10 +45,26 @@ class TestXYZFileReader(AbstractTest):
         #check Name
         self.assertEqual("TestName", mol.full_name)
 
-    def test_read_database(self):
+    def test_read_folder(self):
         
-        mols = XYZFileReader.read_database(self.data_folder)
-        
+        mols = XYZFileReader.read_folder(self.data_folder)
+
+        # check names
+        self.assertEqual("CO2", mols[0].full_name)
+        self.assertEqual("water", mols[1].full_name)
+
+        # check species
+        self.assertListEqual(["C", "O", "O"], mols[0].species)
+        self.assertListEqual(["O", "H", "H"], mols[1].species)
+
+        # check positions
+        self.assertListEqual(self.reference_positions, mols[0].positions)
+        self.assertListEqual(self.reference_positions, mols[1].positions)
+
+    def test_read_tree(self):
+
+        mols = XYZFileReader.read_tree("tests")
+
         # check names
         self.assertEqual("CO2", mols[0].full_name)
         self.assertEqual("water", mols[1].full_name)

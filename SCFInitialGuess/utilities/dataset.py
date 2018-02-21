@@ -68,17 +68,38 @@ class Molecule(object):
 class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
     downloaded from the pyqChem repository) that are in a specified folder"""
+    
+    @classmethod
+    def read_tree(cls, database_root):
+        """This method locates all xyz in the root folder and all its
+        sub folders and creates a molecule for each of them.
+        """
+
+        if not isdir(database_root):
+            raise OSError("Could not find database root. There is no " + \
+                " folder {0}.".format(database_root))
+
+        # read files in root dir
+        molecules = cls.read_folder(database_root)
+
+        # walk down the tree
+        for root, dirs, _ in walk(database_root):
+            for directory in dirs:
+                molecules += cls.read_folder(join(root, directory))
+
+        return molecules
 
     @classmethod
-    def read_database(cls, folder):
+    def read_folder(cls, folder):
+        """This method locates all xyz files in a folder and creates a molecule
+        for each of it (returned as a list). All other files or subfolders are
+        ignored.
+        """
         
         if not isdir(folder):
             raise OSError(
                 "Could not read database. There is no folder {0}.".format(folder)
             )
-
-        
-        msg.info("Reading database: " + folder, 1)
 
         files = sorted(list(filter(
             lambda x: isfile(join(folder, x)) and x.endswith(".xyz"),
@@ -98,8 +119,6 @@ class XYZFileReader(object):
                     RuntimeWarning
                 )
 
-        msg.info("Done reading database.", 1)
-
         return molecules            
 
     @staticmethod                
@@ -109,8 +128,6 @@ class XYZFileReader(object):
             raise OSError(
                 "File could not be read. It does not exist at {0}!".format(file_name)
             )
-
-        msg.info("Reading file: " + file_name)
 
         # use file name if nothing specified
         if not name:

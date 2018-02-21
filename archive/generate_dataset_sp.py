@@ -14,10 +14,10 @@ from warnings import warn
 import multiprocessing as mp
 import argparse
 
-from utilities.usermessages import Messenger as msg
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
 
-from utilities.dataset import PyQChemDBReader, produce_randomized_geometries
-from utilities.qChem import QChemSinglePointCalculation
+from SCFInitialGuess.utilities.dataset import XYZFileReader, produce_randomized_geometries
+from SCFInitialGuess.utilities.qChem import QChemSinglePointCalculation
 
 
 def main(
@@ -32,7 +32,7 @@ def main(
 
     
     # fetch data from data base
-    molecules = PyQChemDBReader.read_database(source)
+    molecules = XYZFileReader.read_folder(source)
     if amplification:
         molecules = produce_randomized_geometries(molecules, amplification)
 
