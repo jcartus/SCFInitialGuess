@@ -1,11 +1,12 @@
-"""This is a demo script to train a neural network and to store the result.
+"""This is a demo script to train a neural network and to store the result
+and load it again.
 
 Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from os.path import normpath, join, realpath, dirname
-from os import listdir
+from os.path import normpath, join, realpath, dirname, isfile
+from os import listdir, remove
 
 import tensorflow as tf
 import numpy as np
@@ -40,26 +41,28 @@ def main(species="H"):
     network, sess = train_network(network, dataset)
     #---
 
-    #--- save trained model ---
-    save_path = join(root_directory, "models", species + ".npy")
+    save_path = join(root_directory, "tmp" + species + ".npy")
+    try:
+        #--- save trained model ---      
+        save_object = [
+            network.structure,
+            network.weights_values(sess),
+            network.biases_values(sess)
+        ]
 
-    save_object = [
-        network.structure,
-        network.weights_values(sess),
-        network.biases_values(sess)
-    ]
+        np.save(
+            save_path,
+            save_object
+        )
+        #---
 
-    np.save(
-        save_path,
-        save_object
-    )
-    #---
+        #--- load and reinitialize model ---
+        model = np.load(save_path)
 
-    #--- load and reinitialize model ---
-    model = np.load(save_path)
-
-    new_network = EluFixedValue(*model)
-    print(new_network)
+        new_network = EluFixedValue(*model)
+    finally:
+        if isfile(save_path):
+            remove(save_path)
     #---
 
 if __name__ == '__main__':
