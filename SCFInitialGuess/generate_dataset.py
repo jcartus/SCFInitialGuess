@@ -32,13 +32,15 @@ def main(
 
     
     # fetch data from data base
+    msg.info("Fetching molecules ...", 2)
     molecules = XYZFileReader.read_tree(source)
     if amplification:
         molecules = produce_randomized_geometries(molecules, amplification)
 
     # assemble jobs
-    jobs = []
+    msg.info("Assembling jobs ...", 2)
 
+    jobs = []
     for mol in molecules:
         jobs.append(
             QChemSinglePointCalculation(
@@ -53,8 +55,10 @@ def main(
 
     # prepare result dir if not exists
     if not isdir(destination):
+        msg.info("Create destination folder at : " + destination)
         makedirs(destination)
 
+    msg.info("Starting calculations ...", 2)
     # todo get num of trherads dynamically. evtl as argument?
     pool = mp.Pool(processes=number_of_processes)
     msg.info(
@@ -70,7 +74,7 @@ def main(
     pool.join()
     msg.info("Closed worker pool.")
 
-    msg.info("All done. See you later ...", 2)
+    msg.info("All done. See you later :*", 2)
     #---
 
 def parallel_job(job, destination_folder):
@@ -83,7 +87,7 @@ def parallel_job(job, destination_folder):
         msg.warn("There was a problem: " + str(ex))
 
 def clean_up(job, destination_folder):
-    """Delete temporary files and move results to restults folder"""
+    """Delete temporary files and move results to results folder"""
 
     msg.info("Cleaning up and Moving results to: " + destination_folder)
 
