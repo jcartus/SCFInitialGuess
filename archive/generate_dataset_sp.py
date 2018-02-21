@@ -32,7 +32,7 @@ def main(
 
     
     # fetch data from data base
-    molecules = XYZFileReader.read_folder(source)
+    molecules = XYZFileReader.read_tree(source)
     if amplification:
         molecules = produce_randomized_geometries(molecules, amplification)
 
