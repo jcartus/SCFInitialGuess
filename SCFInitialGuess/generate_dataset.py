@@ -14,10 +14,9 @@ from warnings import warn
 import multiprocessing as mp
 import argparse
 
-from SCFInitialGuess.utilities.usermessages import Messenger as msg
-
-from SCFInitialGuess.utilities.dataset import XYZFileReader, produce_randomized_geometries
-from SCFInitialGuess.utilities.qChem import QChemSinglePointCalculation
+from .utilities.usermessages import Messenger as msg
+from .utilities.dataset import XYZFileReader, produce_randomized_geometries
+from .utilities.qChem import QChemSinglePointCalculation
 
 
 def main(
