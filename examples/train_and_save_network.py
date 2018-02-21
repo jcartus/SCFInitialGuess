@@ -25,7 +25,7 @@ def main(species="H"):
     dataset_source_folder = join(root_directory, "dataset/")
     sources = [
         join(dataset_source_folder, directory) \
-            for directory in listdir(dataset_source_folder)
+            for directory in ["s22"]
     ]
 
     dataset = Dataset(*assemble_batch(sources, species))
