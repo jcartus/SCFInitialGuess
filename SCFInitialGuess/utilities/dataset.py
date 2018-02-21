@@ -369,6 +369,10 @@ class Dataset(object):
         # normalize the dataset
         x, self.x_mean, self.x_std = self.normalize(x)
 
+        msg.info("Data set initialized. Mean value std: {2.4f}".format(
+            np.mean(self.x_std)
+        ), 1)
+
         # shuffle dataset
         dataset = self.shuffle_batch(x, y)
 
