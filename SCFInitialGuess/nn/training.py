@@ -9,7 +9,7 @@ from os.path import join
 import tensorflow as tf
 import numpy as np
 
-from utilities.usermessages import Messenger as msg
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
 
 class CustomAdam(tf.train.AdamOptimizer):
     """A custom verison of tensorflow's AdamOptimizer. The only

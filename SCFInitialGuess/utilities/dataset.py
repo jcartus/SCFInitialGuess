@@ -297,7 +297,7 @@ class Result(object):
             for each instance found.
         """
 
-        from constants import electronegativities as chi
+        from .constants import electronegativities as chi
 
         try:
             atom_instance_indices = \
@@ -369,9 +369,9 @@ class Dataset(object):
         # normalize the dataset
         x, self.x_mean, self.x_std = self.normalize(x)
 
-        msg.info("Data set initialized. Mean value std: {2.4f}".format(
-            np.mean(self.x_std)
-        ), 1)
+        msg.info("Data set initialized. Mean value std: {0}".format(
+                np.mean(self.x_std)
+            ), 1)
 
         # shuffle dataset
         dataset = self.shuffle_batch(x, y)
