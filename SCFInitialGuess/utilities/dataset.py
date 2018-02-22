@@ -501,6 +501,9 @@ def assemble_batch(folder_list, species="C"):
     """
 
     msg.info("Assembling batch for: " + species, 2)
+    
+    if not isinstance(folder_list, list):
+        folder_list = [folder_list]
 
     x, y = [], []
     for database in folder_list:
