@@ -11,7 +11,9 @@ def main(
     species,
     structure,
     save_path=None,
-    source=None
+    source=None,
+    convergence_threshold=1e-7,
+    learning_rate=0.0005
     ):
 
 
@@ -32,7 +34,12 @@ def main(
     
     msg.info("Training model ...", 2)
     network = EluTrNNN(structure)
-    network, sess = train_network(network, dataset)
+    network, sess = train_network(
+        network, 
+        dataset,
+        convergence_threshold=convergence_threshold,
+        learning_rate=learning_rate
+    )
 
     if not save_path is None:    
         msg.info("Storing model ...", 2)
@@ -93,11 +100,29 @@ if __name__ == '__main__':
         dest="source"
     )
 
+    parser.add_argument(
+        "--convergence-threshold", 
+        required=False,
+        default=1e-7,
+        type=float,
+        dest="convergence_threshold"
+    )
+
+    parser.add_argument(
+        "--learning-rate",
+        required=False, 
+        type=float,
+        default=0.0005,
+        dest="learning_rate"
+    )
+
     args = parser.parse_args()
 
     main(
         species=args.species,
         structure=args.structure,
         save_path=args.save_path,
-        source=args.source
+        source=args.source,
+        convergence_threshold=args.convergence_threshold,
+        learning_rate=args.learning_rate
     )
