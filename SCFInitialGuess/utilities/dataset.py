@@ -295,7 +295,7 @@ class Result(object):
 
         return start, end
         
-    def create_batch(self, atom_type):
+    def create_batch(self, atom_type, descriptor):
         """This will check for all atoms of the given type in the molecule and 
         create a set of inputs (x) and expected outputs (y) for each instance.
         
@@ -313,8 +313,6 @@ class Result(object):
             the molecule and return descriptors & sections of the fock matrix
             for each instance found.
         """
-
-        from .constants import electronegativities as chi
 
         try:
             atom_instance_indices = \
@@ -335,37 +333,14 @@ class Result(object):
         y_list = []
 
         for ind in atom_instance_indices:
-            
-            # start/end index of range of elements in e.g. S-Matrix
-            # that correspond to current atom. Using the range object would 
-            # trigger advanced indexing ...
-            start, end = self._index_range(ind)
-            
-
-            #--- get descriptros (network inputs) ---
-            x = np.zeros(N_BASIS[atom_type])
-
-            # add contribution to descriptor from every other atom in the 
-            # molecule (weighted by electronegativity)
-            for i, atom in enumerate(self.atoms):
-                
-                # an atom should not influence itself
-                if i != ind:
-
-                    # add weighted summand
-                    x += np.sum(
-                        self.S[start:end, range(*self._index_range(i))], 
-                        1
-                    ) * chi[atom]
-
-            x_list.append(x)
-            #---
-
-            #--- get target (network output)---
-            y_list.append(self.P[start:end, start:end])
-            #---
-        
+            x_list.append(descriptor.input_values(self.S, self.atoms, ind))
+            y_list.append(descriptor.target_values(self, ind))
+           
         return x_list, y_list
+
+
+
+
 
 class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 
@@ -484,7 +459,7 @@ class Dataset(object):
 
         return x * std + mean
 
-def assemble_batch(folder_list, species="C"):
+def assemble_batch(folder_list, species="C", descriptor=None):
     """Looks in all folders for results to create a large batch to test the 
     network on.
 
@@ -495,12 +470,15 @@ def assemble_batch(folder_list, species="C"):
 
     Returns (as tuple):
         - the normalized batch inputs
-        - the batch ouput
-        - the mean of the unnormalized batch
-        - the stanard deviation of the unnormalized batch
+        - the batch output
     """
 
     msg.info("Assembling batch for: " + species, 2)
+
+    if descriptor is None:
+        from SCFInitialGuess.nn.descriptors \
+            import SumWithElectronegativities as descriptor
+        
     
     if not isinstance(folder_list, list):
         folder_list = [folder_list]
@@ -509,20 +487,20 @@ def assemble_batch(folder_list, species="C"):
     for database in folder_list:
         
         msg.info("Fetching data from " + database, 1)
-
-        tree = walk(database)
             
         # logg how many points were found
         points_found = 0
 
         # go through all molecules in this data base
-        for directory, _, _ in list(tree)[1:]:
+        for directory, _, files in list(walk(database)):
             try:
-                result = Result(directory)
-                data = result.create_batch(species)
-                x += data[0] 
-                y += list(map(np.diag, data[1])) #todo: maybe the cast to list is not necessary
-                points_found += len(data[0])
+                # search for results if there is an .out file
+                if ".out" in "".join(files):
+                    result = Result(directory)
+                    data = result.create_batch(species, descriptor)
+                    x += data[0] 
+                    y += list(map(np.diag, data[1])) #todo: maybe the cast to list is not necessary
+                    points_found += len(data[0])
             except Exception as ex:
                 msg.warn("There was a problem: " + str(ex))
         
