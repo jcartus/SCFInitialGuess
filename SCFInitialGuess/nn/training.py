@@ -167,16 +167,10 @@ def train_network(
                     1
                 )
 
-                test_error = sess.run(
-                    mse,
-                    feed_dict={x: dataset.testing[0], y: dataset.testing[1]}
-                )
-                msg.info("Test error: {:0.5E}".format(test_error), 1)
-
                 break
             else:
                 msg.info(
-                    "Validation error: {:0.5E}. Diff to prev.: {:0.1E}".format(
+                    "Validation cost: {:0.5E}. Diff to prev.: {:0.1E}".format(
                         error,
                         diff
                     )
@@ -188,6 +182,12 @@ def train_network(
         # do training step
         sess.run(train_step, feed_dict={x: mini_batch[0], y: mini_batch[1]})
     #---
+
+    test_error = sess.run(
+        mse,
+        feed_dict={x: dataset.testing[0], y: dataset.testing[1]}
+    )
+    msg.info("Test error: {:0.5E}".format(test_error), 1)
 
     return network, sess
 
