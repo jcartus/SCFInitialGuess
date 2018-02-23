@@ -13,9 +13,10 @@ def main(
     save_path=None,
     source=None,
     convergence_threshold=1e-7,
-    learning_rate=0.0005
+    learning_rate=0.0005,
+    regularisation_parameter=0.01,
+    mini_batch_size=0.2
     ):
-
 
     if structure[0] != N_BASIS[species] or structure[-1] != N_BASIS[species]:
         raise ValueError(
@@ -24,6 +25,11 @@ def main(
                 N_BASIS[species], structure[0], structure[-1]
             ) 
         )
+
+    #if minibatch is not given in absolute size
+    if int(mini_batch_size) == mini_batch_size:
+        mini_batch_size = int(mini_batch_size)
+
 
     if source is None:
         source = ["../dataset/PyQChem/s22"]
@@ -38,7 +44,9 @@ def main(
         network, 
         dataset,
         convergence_threshold=convergence_threshold,
-        learning_rate=learning_rate
+        learning_rate=learning_rate,
+        regularisation_parameter=regularisation_parameter,
+        mini_batch_size=mini_batch_size
     )
 
     if not save_path is None:    
@@ -116,6 +124,22 @@ if __name__ == '__main__':
         dest="learning_rate"
     )
 
+    parser.add_argument(
+        "--regularisation",
+        required=False, 
+        type=float,
+        default=0.01,
+        dest="regularisation_parameter"
+    )
+
+    parser.add_argument(
+        "--batch-size",
+        required=False, 
+        type=float,
+        default=0.02,
+        dest="mini_batch_size"
+    )
+
     args = parser.parse_args()
 
     main(
@@ -124,5 +148,7 @@ if __name__ == '__main__':
         save_path=args.save_path,
         source=args.source,
         convergence_threshold=args.convergence_threshold,
-        learning_rate=args.learning_rate
+        learning_rate=args.learning_rate,
+        regularisation_parameter=args.regularisation_parameter,
+        mini_batch_size=args.mini_batch_size
     )
