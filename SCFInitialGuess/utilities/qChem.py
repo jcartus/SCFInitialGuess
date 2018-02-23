@@ -9,8 +9,8 @@ import os, sys
 from os.path import exists, isdir
 
 
-from utilities.usermessages import Messenger as msg
-from utilities import cd
+from .usermessages import Messenger as msg
+from .misc import cd
 
 # only import pyqchem if python version is 2 or lower!
 if sys.version_info[0] >= 3:
