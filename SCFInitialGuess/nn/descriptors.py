@@ -127,3 +127,43 @@ class SumWithValenceElectrons(WeightedSum):
         from SCFInitialGuess.utilities.constants \
             import valence_electrons as z
         return z[species]
+
+
+class SumWithInputCombinations(WeightedSum):
+
+    @classmethod
+    def input_values(cls, S, atoms, index):
+
+        # start/end index of range of elements in e.g. S-Matrix
+        # that correspond to current atom. Using the range object would 
+        # trigger advanced indexing ...
+        start, end = cls.index_range(atoms, index)
+        
+
+        x = np.zeros(N_BASIS[atoms[index]])
+
+        # add contribution to descriptor from every other atom
+        for i, atom in enumerate(atoms):
+            
+            # an atom should not influence itself
+            if i != index:
+                
+                x = cls.outer_contraction(
+                    x, 
+                    cls.inner_contraction(
+                        S[start:end, range(*cls.index_range(atoms, i))],
+                        atom
+                    )
+                )
+
+        #add xi * x_j
+
+        combinations = [ cls.combination(xi, xj) for xi in x for xj in x]
+
+        x = np.array(list(x) + combinations)
+
+        return x
+
+    @classmethod
+    def combination(cls, xi, xj):
+        return xi * xj
