@@ -89,13 +89,41 @@ class ContractionDescriptor(AbstractDescriptor):
 
         return x
 
-class SumWithElectronegativities(ContractionDescriptor):
+class WeightedSum(ContractionDescriptor):
 
     @classmethod
     def inner_contraction(cls, S_section, species):
+
+        # electronegativity weighted summand
+        return np.sum(S_section, 1) / N_BASIS[species] * cls.weights(species)
+    
+    @classmethod
+    def weights(cls, species):
+        return 1
+
+class SumWithElectronegativities(WeightedSum):
+
+    @classmethod
+    def weights(cls, species):
         from SCFInitialGuess.utilities.constants \
             import electronegativities as chi
 
         # electronegativity weighted summand
-        return np.sum(S_section, 1) * chi[species] / N_BASIS[species]
+        return chi[species]
 
+class SumWithAtomicNumber(WeightedSum):
+
+    @classmethod
+    def weights(cls, species):
+        from SCFInitialGuess.utilities.constants \
+            import atomic_numbers as Z
+
+        return Z[species]
+
+class SumWithValenceElectrons(WeightedSum):
+
+    @classmethod
+    def weights(cls, species):
+        from SCFInitialGuess.utilities.constants \
+            import valence_electrons as z
+        return z[species]
