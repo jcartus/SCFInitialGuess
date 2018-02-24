@@ -8,6 +8,55 @@ from .usermessages import Messenger as msg
 from os.path import normpath, join, isfile, isdir
 
 
+# valence electrons
+valence_electrons = {
+    'H':  1,
+    'Li': 1,
+    'Na': 1,
+    'Be': 2,
+    'Mg': 2,
+    'B':  3,
+    'Al': 3,
+    'C':  4,
+    'Si': 4,
+    'N':  5,
+    'P':  5,
+    'O':  6,
+    'S':  6,
+    'F':  7,
+    'Cl': 7,
+    'I':  7,
+    'Br': 7,
+    'He': 8,
+    'Ne': 8,
+    'Ar': 8
+}
+
+
+# atomic number of the lements in the periodic table.
+atomic_numbers = {
+    'H': 1,
+    'He': 2,
+    'Li': 3, 
+    'Be': 4,
+    'B': 5, 
+    'C': 6,
+    'N': 7,
+    'O': 8,
+    'F': 9,
+    'Ne': 10,
+    'Na': 11,
+    'Mg': 12,
+    'Al': 13,
+    'Si': 14, 
+    'P': 15,
+    'S': 16,
+    'Cl': 17,
+    'Ar': 18,
+    'Br': 35,
+    'I': 53
+}
+
 # electronegativity values (pauling scala)
 #https://en.wikipedia.org/wiki/Electronegativities_of_the_elements_(data_page)
 electronegativities = {
