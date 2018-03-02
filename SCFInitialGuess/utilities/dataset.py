@@ -358,6 +358,16 @@ class Dataset(object):
                 set shall be used for validation.
         """
 
+        if not isinstance(x, np.ndarray):
+            raise TypeError(
+                "x-dataset is not a numpy array but: " + str(type(x))
+            )
+        
+        if not isinstance(y, np.ndarray):
+            raise TypeError(
+                "y-dataset is not a numpy array but: " + str(type(y))
+            )
+
         # normalize the dataset
         x, self.x_mean, self.x_std = self.normalize(x)
 
@@ -406,7 +416,7 @@ class Dataset(object):
     def shuffle_batch(x, y):
         """randomly shuffles the elements of x, y, so the the elements still
         correspond to each other"""
-        indices = np.arange(len(x))
+        indices = range(len(x))
         np.random.shuffle(indices)
         return x[indices], y[indices]
 
@@ -438,7 +448,7 @@ class Dataset(object):
         return (x_train, y_train), (x_test, y_test)
     
     @staticmethod
-    def normalize(x):
+    def normalize(x, std_tolerance=1e-20):
         """Will trans form a dataset with elements x_ij, where j is the index
         that labels the example and i the index that labels to which input
         the value corresponds, in the following way:
@@ -451,7 +461,12 @@ class Dataset(object):
         mean = np.average(x, 0)
         std = np.std(x, 0)
 
-        return (x - mean) / std, mean, std
+        # handle dvision by zero if std == 0
+        return (
+            (x - mean) / np.where(np.abs(std) < std_tolerance, 1, std),
+            mean,
+            std
+        )
 
     @staticmethod
     def denormalize(x, mean, std):
