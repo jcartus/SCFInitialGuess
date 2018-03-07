@@ -10,9 +10,9 @@ from os.path import join
 
 import numpy as np
 
-from pyscf import gto, scf
+from pyscf import scf
 
-from utilities.usermessages import Messenger as msg
+from .utilities.usermessages import Messenger as msg
 
 
 
@@ -68,11 +68,7 @@ class RHFJob(object):
         """set up the pyscf job"""
 
         # create pyscf molecule
-        pyscf_molecule = gto.Mole()
-        pyscf_molecule.build(
-            atom=self.molecule.geometry,
-            basis=self.basis
-        )
+        pyscf_molecule = self.molecule.get_pyscf_molecule()
 
         #--- create job and set detail settings if desired ---
         job = scf.RHF(pyscf_molecule)
