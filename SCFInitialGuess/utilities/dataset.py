@@ -28,6 +28,7 @@ class Molecule(object):
         self.positions = positions
         self.full_name = full_name
 
+        self.basis = "6-311++g**"
 
     @property
     def geometry(self):
@@ -59,7 +60,7 @@ class Molecule(object):
 
         mol = Mole()
         mol.atom = self.geometry
-        mol.basis = "6-311++g**"
+        mol.basis = self.basis
         mol.build()
 
         return mol
