@@ -12,6 +12,7 @@ pathtable
 *.pyc
 
 Notebooks/
+notebooks/*
 
 database/
 
