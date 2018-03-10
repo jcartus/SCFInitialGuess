@@ -6,6 +6,7 @@ Author:
 """
 
 import tensorflow as tf
+import numpy as np
 
 class AbstractNeuralNetwork(object):
     """This is an abstract template for a neural network. Components like
@@ -89,6 +90,19 @@ class AbstractNeuralNetwork(object):
         self.biases.append(b)
 
         return self._graph
+
+    def export(self, sess, path):
+        
+        save_object = [
+            self.structure,
+            self.weights_values(sess),
+            self.biases_values(sess)
+        ]
+
+        np.save(
+            path,
+            save_object
+        )
 
     def _add_layer(self, x, dim_in, dim_out, name="hidden_layer", **kwargs):
         
@@ -197,7 +211,7 @@ class FixedValueNN(AbstractNeuralNetwork):
             self._graph,
             self.structure[-2],
             self.structure[-1],
-            layer=-1
+            layer=len(self.structure)-1
         )
         self.weights.append(w)
         self.biases.append(b)
@@ -206,15 +220,17 @@ class FixedValueNN(AbstractNeuralNetwork):
 
     def _initialization(self, shape, **kwargs):
         if len(shape) == 1:
-            return self._biases_values[kwargs["layer"]]
+            return self._biases_values[kwargs["layer"] - 1]
         elif len(shape) == 2:
-            return self._weight_values[kwargs["layer"]]
+            return self._weight_values[kwargs["layer"] - 1]
 
 
 class EluFixedValue(FixedValueNN):
     def __init__(self, *args, **kwargs):
         super(EluFixedValue, self).__init__(*args, **kwargs)
         self._name_string = "Elu_" + self._name_string
+
+
 
     def _activation(self, preactivation):
         return tf.nn.elu(preactivation)    

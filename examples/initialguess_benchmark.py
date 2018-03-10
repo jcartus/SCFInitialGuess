@@ -5,7 +5,7 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
-from pyscf import gto, scf
+from pyscf import scf
 
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities import Molecule

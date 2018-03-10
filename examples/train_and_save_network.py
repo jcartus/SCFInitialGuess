@@ -25,7 +25,7 @@ def main(species="H"):
     dataset_source_folder = join(root_directory, "dataset/")
     sources = [
         join(dataset_source_folder, directory) \
-            for directory in ["s22"]
+            for directory in ["GMTKN55"]
     ]
 
     dataset = Dataset(*assemble_batch(sources, species))
@@ -34,7 +34,7 @@ def main(species="H"):
     #--- setup and train the network ---
     dim = N_BASIS[species]
 
-    structure = [dim, dim, dim]
+    structure = [dim, 25, dim]
 
     network = EluTrNNN(structure)
 
@@ -42,27 +42,35 @@ def main(species="H"):
     #---
 
     save_path = join(root_directory, "tmp" + species + ".npy")
-    try:
-        #--- save trained model ---      
-        save_object = [
-            network.structure,
-            network.weights_values(sess),
-            network.biases_values(sess)
-        ]
+    #try:
+    #--- save trained model ---      
+    save_object = [
+        network.structure,
+        network.weights_values(sess),
+        network.biases_values(sess)
+    ]
 
-        np.save(
-            save_path,
-            save_object
-        )
-        #---
+    np.save(
+        save_path,
+        save_object
+    )
+    sess.close()
+    msg.info("Session closed", 1)
+    #---
 
-        #--- load and reinitialize model ---
-        model = np.load(save_path)
 
-        new_network = EluFixedValue(*model)
-    finally:
-        if isfile(save_path):
-            remove(save_path)
+    #--- load and reinitialize model ---
+    msg.info("Starting new session and loading the model ...", 1)
+    sess = tf.Session()
+    model = np.load(save_path)
+
+    new_network = EluFixedValue(*model)
+    new_network.setup()
+    sess.run(tf.global_variables_initializer())
+
+    #finally:
+    if isfile(save_path):
+        remove(save_path)
     #---
 
 if __name__ == '__main__':
