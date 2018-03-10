@@ -5,13 +5,13 @@ data_base/
 
 \.vscode/
 result/*
-dataset/*
 log/*
 pathtable
 
 *.pyc
 
 Notebooks/
+notebooks/*
 
 database/
 
