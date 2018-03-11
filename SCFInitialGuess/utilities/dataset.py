@@ -449,7 +449,7 @@ class Dataset(object):
         return (x_train, y_train), (x_test, y_test)
     
     @staticmethod
-    def normalize(x, std_tolerance=1e-20):
+    def normalize(x, std_tolerance=1e-20, mean=None, std=None):
         """Will trans form a dataset with elements x_ij, where j is the index
         that labels the example and i the index that labels to which input
         the value corresponds, in the following way:
@@ -459,8 +459,9 @@ class Dataset(object):
         where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
         """
 
-        mean = np.average(x, 0)
-        std = np.std(x, 0)
+        if mean is None or std is None:
+            mean = np.average(x, 0)
+            std = np.std(x, 0)
 
         # handle dvision by zero if std == 0
         return (
