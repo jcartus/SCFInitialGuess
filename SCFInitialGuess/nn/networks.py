@@ -123,14 +123,12 @@ class AbstractNeuralNetwork(object):
                 name="b"
             )
 
-
-
-            tf.summary.histogram("weights", w)
-            tf.summary.histogram("biases", b)
-
             act = self._activation(self._preactivation(x, w, b))
 
-            tf.summary.histogram("activations", act)
+            if self._log_histograms:            
+                tf.summary.histogram("weights", w)
+                tf.summary.histogram("biases", b)
+                tf.summary.histogram("activations", act)
 
             return act, w, b
 
@@ -147,13 +145,13 @@ class AbstractNeuralNetwork(object):
                 self._initialization([dim_out], **kwargs), 
                 name="b"
             )
-
-            tf.summary.histogram("weights", w)
-            tf.summary.histogram("biases", b)
-
+            
             out = self._output_activation(self._preactivation(x, w, b))
 
-            tf.summary.histogram("outputs", out)
+            if self._log_histograms:    
+                tf.summary.histogram("weights", w)
+                tf.summary.histogram("biases", b)
+                tf.summary.histogram("outputs", out)
 
             return out, w, b
 
