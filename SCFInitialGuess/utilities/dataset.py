@@ -417,7 +417,7 @@ class Dataset(object):
     def shuffle_batch(x, y):
         """randomly shuffles the elements of x, y, so the the elements still
         correspond to each other"""
-        indices = range(len(x))
+        indices = np.arange(len(x))
         np.random.shuffle(indices)
         return x[indices], y[indices]
 
