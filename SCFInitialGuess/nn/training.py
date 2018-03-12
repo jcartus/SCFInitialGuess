@@ -70,6 +70,7 @@ def mse_with_l2_regularisation(
 def train_network(
     network,
     dataset,
+    sess=None,
     learning_rate=0.001,
     regularisation_parameter=0.01,
     max_steps=100000,
@@ -104,13 +105,18 @@ def train_network(
         - the session
     """
 
-    sess = tf.Session()
+    if sess is None:
+        sess = tf.Session()
 
     #--- set up the graph ---
     msg.info("Setting up the graph ...", 1)
     network_output = network.setup()
     x = network.input_tensor
-    y = tf.placeholder(dtype="float32", shape=[None, network.structure[-1]])
+    y = tf.placeholder(
+            dtype="float32", 
+            shape=[None, network.structure[-1]],
+            name="y"
+        )
 
 
     # cost is mse w/ l2 regularisation
