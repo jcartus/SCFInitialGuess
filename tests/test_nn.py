@@ -4,11 +4,13 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
+from os import remove
+
 import tensorflow as tf
 import numpy as np
 import unittest
 
-from SCFInitialGuess.nn.networks import EluTrNNN
+from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
 
 class TestNetworks(unittest.TestCase):
 
@@ -49,7 +51,50 @@ class TestNetworks(unittest.TestCase):
             self.assertListEqual([dim_in, dim_out], list(weights[layer].shape))
             self.assertEqual(dim_out, biases[layer].shape[0])
 
+    def test_save_model(self):
 
+        structures = [
+            [5, 5],
+            [5, 10, 5]
+        ]
+
+        for structure in structures:
+            with tf.Session() as sess:
+                network = EluTrNNN(structure)
+                network.setup()
+                sess.run(tf.global_variables_initializer())
+
+                save_path = "tmp.npy"
+
+                try:
+                    network.export(sess, save_path)
+                except Exception as ex:
+                    self.fail("Export failed: " + str(ex))
+                finally:
+                    remove(save_path)
+
+    def test_load_model(self):
+
+        model_path = "tests/data/C_model.npy"
+
+
+        try:
+
+            sess = tf.Session()            
+
+            #load model
+            structure, weights, biases = np.load(model_path)
+
+            network = EluFixedValue(structure, weights, biases)
+            y = network.setup()
+            x = network.input_tensor
+
+            # try to run the network
+            x_result = sess.run(y, feed_dict={y: np.random.rand(1, structure[0])})
+            
+
+        except Exception as ex:
+            self.fail("Network could not be loaded: " + str(ex))
 
 
     def test_linear_EluTrNNN(self):
@@ -85,6 +130,7 @@ class TestNetworks(unittest.TestCase):
             sess.run(y, feed_dict={x: x_test})
         )
 
+    
 
 
         
