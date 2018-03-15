@@ -1,3 +1,9 @@
+"""This is a script to train a network on a dataset stored in a certain folder
+
+Author:
+    Johannes Cartus, QCIEP, TU Graz
+"""
+
 import numpy as np
 import argparse
 
