@@ -79,7 +79,6 @@ class TestNetworks(unittest.TestCase):
 
 
         try:
-
             sess = tf.Session()            
 
             #load model
@@ -90,12 +89,13 @@ class TestNetworks(unittest.TestCase):
             x = network.input_tensor
 
             # try to run the network
-            x_result = sess.run(y, feed_dict={y: np.random.rand(1, structure[0])})
-            
+            x_result = sess.run(
+                y, 
+                feed_dict={y: np.random.rand(1, structure[0])}
+            )
 
         except Exception as ex:
             self.fail("Network could not be loaded: " + str(ex))
-
 
     def test_linear_EluTrNNN(self):
 
@@ -130,7 +130,52 @@ class TestNetworks(unittest.TestCase):
             sess.run(y, feed_dict={x: x_test})
         )
 
-    
+    def test_two_networks(self):    
 
+        #--- setup tf and network
+        sess = tf.Session()
 
+        structure = [2, 2]
+        network_1 = EluTrNNN(structure)
+        y1 = network_1.setup()
+        x1 = network_1.input_tensor
+        sess.run(tf.global_variables_initializer())
+
+        network_2 = EluTrNNN(structure)
+        y2 = network_2.setup()
+        x2 = network_2.input_tensor
+        sess.run(tf.global_variables_initializer())        
+        #---    
         
+        #--- extract ----
+        w_1_list = network_1.weights_values(sess)
+        b_1_list = network_1.biases_values(sess)
+        w_2_list = network_2.weights_values(sess)
+        b_2_list = network_2.biases_values(sess)
+
+        self.assertEqual(1, len(w_1_list))
+        self.assertEqual(1, len(b_1_list))
+        self.assertEqual(1, len(w_2_list))
+        self.assertEqual(1, len(b_2_list))
+
+        w_1 = w_1_list[0]
+        b_1 = b_1_list[0]
+        w_2 = w_2_list[0]
+        b_2 = b_2_list[0]
+        #---
+
+        #--- assert if the calculation output the right values ---
+        x_test = np.random.rand(1,2)
+        y_test_1 = x_test.dot(w_1) + b_1
+        y_test_2 = x_test.dot(w_2) + b_2
+
+        np.testing.assert_almost_equal(
+            y_test_1, 
+            sess.run(y1, feed_dict={x1: x_test})
+        )
+
+        np.testing.assert_almost_equal(
+            y_test_2, 
+            sess.run(y2, feed_dict={x2: x_test})
+        )
+        #---
