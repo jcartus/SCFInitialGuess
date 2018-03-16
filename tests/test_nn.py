@@ -83,7 +83,7 @@ class TestNetworks(unittest.TestCase):
             sess = tf.Session()            
 
             #load model
-            structure, weights, biases = np.load(model_path)
+            structure, weights, biases = np.load(model_path, encoding="latin1")
 
             network = EluFixedValue(structure, weights, biases)
             y = network.setup()
