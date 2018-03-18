@@ -4,13 +4,18 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
-from os import remove
+from os import remove, mkdir
+from os.path import isdir
+from shutil import rmtree
 
 import tensorflow as tf
 import numpy as np
 import unittest
 
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
+from SCFInitialGuess.utilities.dataset import Dataset
 from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
+from SCFInitialGuess.nn.training import train_network, MSE
 
 class TestNetworks(unittest.TestCase):
 
@@ -179,3 +184,142 @@ class TestNetworks(unittest.TestCase):
             sess.run(y2, feed_dict={x2: x_test})
         )
         #---
+
+
+class NeuralNetworkMock(object):
+
+    def __init__(self, structure, function=None):
+        
+        # not that it is good for anythin
+        self.structure = structure
+
+        # if no special mapping is stated just return output again
+        if function is None:
+            self.function = self.function_in_out
+        else:
+            self.function = function
+
+        self.input_tensor = None
+
+    @staticmethod
+    def function_in_out(x):
+        return x
+
+    @property
+    def output_tensor(self):
+        if self._graph is None:
+            self.setup()
+        return self._graph
+
+    def setup(self):
+
+        # set up input placeholder    
+        self.input_tensor = tf.placeholder(
+                dtype="float32", 
+                shape=[None, self.structure[0]],
+                name="x"
+            )        
+
+        # put in simulated mapping
+        self._graph = self.function(self.input_tensor)
+
+        return self._graph
+
+
+    def run(self, session, inputs):
+        """Evaluate the neural network"""
+        return session.run(self._graph, feed_dict={self.input_tensor: inputs})
+
+class TestErrorFunctions(unittest.TestCase):
+
+    def setUp(self):
+        self.structure = [1, 1]
+
+    def test_MSE(self):
+        
+        expected = 4
+        x_values = np.random.rand(100, self.structure[0])
+        y_values = x_values + np.sqrt(expected)
+
+        mse = MSE()
+
+        with tf.Session() as sess:
+            network = NeuralNetworkMock(self.structure)
+            network.setup()
+            x = network.input_tensor
+            f = network.output_tensor
+            y = tf.placeholder(
+                dtype="float32", 
+                shape=[None, network.structure[-1]],
+                name="y"
+            )
+
+            error = mse.function(network, y)
+
+            actual = sess.run(
+                error,
+                feed_dict={x: x_values, y: y_values}
+            )
+            
+        self.assertEqual(expected, actual)
+
+class TestTraining(unittest.TestCase):
+
+    def setUp(self):
+
+        msg.print_level = 0
+
+        self.input_dim = 5
+        self.output_dim = 5
+        nsamples = 100
+        
+        x = np.linspace(-2, 2, nsamples * self.input_dim)
+        y = np.sin(x)
+
+
+        self.dataset = Dataset(
+            x.reshape(nsamples, self.input_dim), 
+            y.reshape(nsamples, self.output_dim)
+        )
+
+    def test_train_network(self):
+        
+
+        structure = [self.input_dim, 10, self.output_dim]
+        network = EluTrNNN(structure)
+
+        try:
+            _, sess = train_network(
+                network,
+                self.dataset,
+                convergence_threshold=1e-1
+            )
+            sess.close()
+        except Exception as ex:
+            self.fail("Traning failed: " + str(ex))
+
+    def _test_train_network_w_logging(self):
+
+        structure = [self.input_dim, 10, self.output_dim]
+        network = EluTrNNN(structure)
+
+        save_dir = "tests/tmp_log/"
+        
+        if not isdir(save_dir):
+            mkdir(save_dir)
+
+        try:
+            _, sess = train_network(
+                network,
+                self.dataset,
+                summary_save_path=save_dir
+            )   
+            sess.close()
+        except Exception as ex:
+            self.fail("Training failed!")
+        finally:
+            rmtree(save_dir)
+
+
+if __name__ == '__main__':
+    unittest.main()
