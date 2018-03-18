@@ -139,6 +139,7 @@ class Trainer(object):
 
 
         self.training_step = None
+        self.test_error = None
 
     def setup(self):
 
@@ -278,6 +279,9 @@ class Trainer(object):
                 self.target_placeholder: dataset.testing[1]
             }
         )
+
+        self.test_error = test_error
+
         msg.info("Test error: {:0.5E}".format(test_error), 1)
 
         return self.network, sess
