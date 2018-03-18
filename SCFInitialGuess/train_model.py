@@ -41,7 +41,7 @@ def main(
         source = ["../dataset/PyQChem/s22"]
     
 
-    msg.info("Assmbling dataset ...", 2)
+    msg.info("Assembling dataset ...", 2)
     dataset = Dataset(*assemble_batch(source, species))
     
     msg.info("Training model ...", 2)
