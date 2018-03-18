@@ -15,7 +15,7 @@ import unittest
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import Dataset
 from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
-from SCFInitialGuess.nn.training import train_network, MSE
+from SCFInitialGuess.nn.training import train_network, MSE, Trainer
 
 class TestNetworks(unittest.TestCase):
 
@@ -262,6 +262,38 @@ class TestErrorFunctions(unittest.TestCase):
             )
             
         self.assertEqual(expected, actual)
+
+class TestTrainer(unittest.TestCase):
+
+    def setUp(self):
+        
+        msg.print_level = 0
+
+        self.structure = [2, 4, 1]
+        self.nsamples = 100
+
+        x = np.random.rand(self.nsamples, self.structure[0]) * 10
+        y = np.sum(x**2, axis=1)
+
+        self.dataset = Dataset(x, y)
+
+
+    def _test_training_default_options(self):
+
+        try:
+            trainer = Trainer(EluTrNNN(self.structure))
+        except:
+            self.fail("Instantiation of trainer failed")
+        
+        try:
+            trainer.setup()
+        except:
+            self.fail("Trainer setup failed")
+        
+        try:
+            trainer.train(self.dataset)
+        except:
+            self.fail("Trainer with trainer failed.")
 
 class TestTraining(unittest.TestCase):
 
