@@ -8,8 +8,6 @@ Author:
 import tensorflow as tf
 import numpy as np
 
-from uuid import uuid4
-
 class AbstractNeuralNetwork(object):
     """This is an abstract template for a neural network. Components like
     the activation function or the initialization method can be replace
@@ -26,8 +24,6 @@ class AbstractNeuralNetwork(object):
         self.biases = []
 
         self._name_string = ""
-
-        self._uuid = str(uuid4())
 
         #todo: maybe a property for input too.
         self.input_tensor = None
@@ -75,7 +71,7 @@ class AbstractNeuralNetwork(object):
             self.input_tensor = input_tensor
     
         # set up input layer
-        with tf.name_scope(self._uuid + "_input_layer"):
+        with tf.name_scope("input_layer"):
             self._graph = self.input_tensor
 
         # hidden layers
@@ -85,7 +81,7 @@ class AbstractNeuralNetwork(object):
                     self._graph, 
                     self.structure[layer - 1], 
                     self.structure[layer],
-                    name=self._uuid + "_hidden_layer_" + str(layer)
+                    name="hidden_layer_" + str(layer)
                 )
                 self.weights.append(w)
                 self.biases.append(b)    
@@ -138,7 +134,7 @@ class AbstractNeuralNetwork(object):
 
     def _add_output_layer(self, x, dim_in, dim_out, **kwargs):
         
-        with tf.name_scope(self._uuid + "output_layer"):
+        with tf.name_scope("output_layer"):
 
             w = tf.Variable(
                 self._initialization([dim_in, dim_out], **kwargs), 
@@ -205,7 +201,7 @@ class FixedValueNN(AbstractNeuralNetwork):
             )
     
         # set up input layer
-        with tf.name_scope(self._uuid + "_input_layer"):
+        with tf.name_scope("input_layer"):
             self._graph = self.input_tensor
 
 
@@ -216,7 +212,7 @@ class FixedValueNN(AbstractNeuralNetwork):
                 self.structure[layer - 1], 
                 self.structure[layer],
                 layer=layer,
-                name=self._uuid +  "_hidden_layer_" + str(layer)
+                name="hidden_layer_" + str(layer)
             )
             self.weights.append(w)
             self.biases.append(b)    
