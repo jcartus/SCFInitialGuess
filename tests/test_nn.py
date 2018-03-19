@@ -19,6 +19,9 @@ from SCFInitialGuess.nn.training import train_network, MSE, Trainer
 
 class TestNetworks(unittest.TestCase):
 
+    def setUp(self):
+        msg.print_level = 1
+    
     def test_EluTrNNN_setup(self):
 
         sess = tf.Session()
@@ -101,6 +104,71 @@ class TestNetworks(unittest.TestCase):
 
         except Exception as ex:
             self.fail("Network could not be loaded: " + str(ex))
+
+    def test_learn_cos_EluTrNNN(self):
+        self._test_train_network_for_1d_function(np.cos)
+
+    def test_learn_constant_function_EluTrNNNN(self):
+        def constant_function(x, value):
+            return x * 0 + value
+
+        self._test_train_network_for_1d_function(
+            lambda x: constant_function(x, 3)
+        )
+
+    def _test_train_network_for_1d_function(self, function):
+        x = np.random.rand(200, 1) * 2
+        y = function(x)
+        
+        dataset = Dataset(x, y)
+
+        with tf.Session() as sess:
+            x = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="x")
+            y = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="y")
+
+            network = EluTrNNN([1,5,1])
+            network.setup(input_tensor=x)
+
+
+            optimizer = tf.train.AdamOptimizer()
+            cost = tf.losses.mean_squared_error(y, network.output_tensor)
+            training = optimizer.minimize(cost)
+
+            sess.run(tf.global_variables_initializer())
+
+            old_error = 1e16
+            n = 0
+            n_max = 1e3
+            converged = False
+            while not converged and n < n_max:
+                
+                for i in range(200):
+                    sess.run(
+                        training, 
+                        {x: dataset.training[0], y: dataset.training[1]}
+                    )
+                
+                error = sess.run(
+                    cost, 
+                    {x: dataset.validation[0], y: dataset.validation[1]}
+                )
+
+                if np.abs(old_error-error) < 1e-8:
+                    converged = True
+                else:
+                    old_error = error
+                    n += 1
+
+
+            
+            if not converged:
+                self.fail("Training unsuccessfull, max iteration exceeded")
+
+            np.testing.assert_almost_equal(
+                0.0,
+                sess.run(cost, {x: dataset.testing[0], y: dataset.testing[1]}),
+                decimal=6
+            )
 
     def test_linear_EluTrNNN(self):
 
@@ -234,6 +302,7 @@ class TestErrorFunctions(unittest.TestCase):
 
     def setUp(self):
         self.structure = [1, 1]
+        msg.print_level = 1
 
     def test_MSE(self):
         
