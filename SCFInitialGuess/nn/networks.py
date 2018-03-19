@@ -62,14 +62,17 @@ class AbstractNeuralNetwork(object):
         """Evaluate the neural network"""
         return session.run(self._graph, feed_dict={self.input_tensor: inputs})
 
-    def setup(self):
-
-        # set up input placeholder    
-        self.input_tensor = tf.placeholder(
-                dtype="float32", 
-                shape=[None, self.structure[0]],
-                name="x"
-            )
+    def setup(self, input_tensor=None):
+        
+        # set up network input    
+        if input_tensor is None:
+            self.input_tensor = tf.placeholder(
+                    dtype="float32", 
+                    shape=[None, self.structure[0]],
+                    name="x"
+                )
+        else:
+            self.input_tensor = input_tensor
     
         # set up input layer
         with tf.name_scope(self._uuid + "_input_layer"):
