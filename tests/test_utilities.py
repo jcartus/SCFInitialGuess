@@ -7,10 +7,13 @@ Author:
 
 from os.path import normpath, join
 
+import numpy as np
+
 import unittest
 from helper import AbstractTest
 
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
+from SCFInitialGuess.utilities.dataset import Dataset
 
 
     
@@ -96,6 +99,47 @@ class TestMolecule(AbstractTest):
             zip(self.reference_species, self.reference_positions),
             mol.geometry
         )
+
+class TestDataset(AbstractTest):
+    
+    def setUp(self):
+
+        self.nsamples = 1000
+        self.tolerance = 1e-1
+
+    def test_splitting(self):
+
+        pass
+
+    def test_normalisation(self):
+ 
+        dim = 5
+        mu = 3
+        sigma = 2
+
+        x = np.random.randn(self.nsamples, dim) * sigma + mu
+
+        #--- check normlisation with calculated params ---
+        x_norm = Dataset.normalize(x)[0]
+
+        self.assertAlmostEqual(0, np.mean(x_norm), delta=self.tolerance)
+        self.assertAlmostEqual(1, np.std(x_norm), delta=self.tolerance)
+        #---
+
+        #--- check normalisation with given params ---
+        x_norm_given_params = Dataset.normalize(x, mean=mu, std=sigma)[0]
+        self.assertAlmostEqual(
+            0, 
+            np.mean(x_norm_given_params), 
+            delta=self.tolerance
+        )
+        self.assertAlmostEqual(
+            1, 
+            np.std(x_norm_given_params), 
+            delta=self.tolerance
+        )
+        #---
+
 
 if __name__ == '__main__':
     unittest.main()

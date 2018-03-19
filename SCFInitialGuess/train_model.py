@@ -1,3 +1,9 @@
+"""This is a script to train a network on a dataset stored in a certain folder
+
+Author:
+    Johannes Cartus, QCIEP, TU Graz
+"""
+
 import numpy as np
 import argparse
 
@@ -35,7 +41,7 @@ def main(
         source = ["../dataset/PyQChem/s22"]
     
 
-    msg.info("Assmbling dataset ...", 2)
+    msg.info("Assembling dataset ...", 2)
     dataset = Dataset(*assemble_batch(source, species))
     
     msg.info("Training model ...", 2)

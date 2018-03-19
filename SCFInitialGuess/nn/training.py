@@ -5,6 +5,7 @@ Authors:
 """
 
 from os.path import join
+from uuid import uuid4
 
 import tensorflow as tf
 import numpy as np
@@ -42,9 +43,9 @@ class Model(object):
         
 
 def mse_with_l2_regularisation(
-    network, 
-    expectation_tensor,
-    regularisation_parameter=0.001
+        network, 
+        expectation_tensor,
+        regularisation_parameter=0.001
     ):
     
     with tf.name_scope("mse_with_l2_regularisation"):
@@ -62,10 +63,229 @@ def mse_with_l2_regularisation(
         cost = error + regularisation
 
         tf.summary.scalar("weight_decay", regularisation)
-        tf.summary.scalar("error/element", error)
+        tf.summary.scalar("error", error)
         tf.summary.scalar("total_loss", cost)
 
     return cost, error, regularisation
+
+class MSE(object):
+
+    def function(self, network, y_placeholder):
+
+        error = tf.losses.mean_squared_error(
+            network.output_tensor,
+            y_placeholder
+        )
+
+        cost = error
+        
+        tf.summary.scalar("error", error)
+        
+        return error
+
+class RegularizedMSE(MSE):
+
+    def __init__(self, alpha=0.001):
+
+        self.alpha = alpha
+
+    def function(self, network, y_placeholder):
+
+        error = super(RegularizedMSE, self).function(network, y_placeholder)
+
+        regularisation = tf.contrib.layers.apply_regularization(
+            tf.contrib.layers.l2_regularizer(self.alpha),
+            network.weights
+        )
+
+        cost = error + regularisation
+
+        tf.summary.scalar("weight_decay", regularisation)
+        tf.summary.scalar("total_loss", cost)
+
+        return cost
+
+
+
+
+class Trainer(object):
+
+    def __init__(
+        self, 
+        network,
+        optimizer=None,
+        error_function=None,
+        cost_function=None
+    ):
+
+        self.network = network
+
+        if optimizer is None:
+            self.optimizer = tf.train.AdamOptimizer(
+                learning_rate=0.001
+            )
+        else:
+            self.optimizer = optimizer
+
+        if cost_function is None:
+            self.cost_function = RegularizedMSE()
+        else:
+            self.cost_function = cost_function
+        
+        if error_function is None:
+            self.error_function = MSE()
+        else:
+            self.error_function = error_function
+
+
+        self.training_step = None
+        self.test_error = None
+
+    def setup(self):
+
+        msg.info("Setting up the training graph ...", 1)
+
+        self.trainer_graph = tf.Graph()
+        with self.trainer_graph.as_default():
+
+            # placeholder for dataset target-values
+            self.target_placeholder = tf.placeholder(
+                dtype="float32", 
+                shape=[None, self.network.structure[-1]],
+                name="y"
+            )
+
+            msg.info("network ...", 1)
+            with tf.name_scope("network/"):
+                network_output = self.network.setup()
+                self.input_placeholder = self.network.input_tensor
+
+            msg.info("error function ...", 1)
+            with tf.name_scope("error_function/"):
+                self.error = self.error_function.function(
+                    self.network, 
+                    self.target_placeholder
+                )
+                
+            msg.info("cost function ...", 1)
+            with tf.name_scope("cost_function/"):
+                self.cost = self.cost_function.function(
+                    self.network, 
+                    self.target_placeholder
+            )
+
+            msg.info("training step", 1)
+            with tf.name_scope("training/"):
+                self.training_step = self.optimizer.minimize(self.cost)
+
+        return self.trainer_graph, self.network, self.target_placeholder
+    
+    
+    def train(
+            self,
+            dataset,
+            max_steps=100000,
+            evaluation_period=200,
+            mini_batch_size=0.2,
+            convergence_threshold=1e-5,
+            summary_save_path=None
+        ):
+
+        sess = tf.Session(graph=self.trainer_graph)
+
+        if self.training_step is None:
+            self.setup()
+
+
+        #--- prep the writer ---
+        if not summary_save_path is None:
+            summary = tf.summary.merge_all()
+            writer = tf.summary.FileWriter(summary_save_path)
+            writer.add_graph(sess.graph)
+        #---
+
+        #--- train the network ---
+        old_error = 1e10
+
+        sess.run(tf.global_variables_initializer())
+
+
+        msg.info("Starting network training ...", 1)        
+        for step in range(max_steps):
+            mini_batch = dataset.sample_minibatch(mini_batch_size)
+
+            if step % np.ceil(evaluation_period / 10):
+                if not summary_save_path is None:
+                    writer.add_summary(
+                        sess.run(
+                            summary, 
+                            feed_dict={
+                                self.input_placeholder: mini_batch[0], 
+                                self.target_placeholder: mini_batch[1]
+                            }
+                        ), 
+                        step
+                    )
+
+            if step % evaluation_period == 0:
+                error = sess.run(
+                    self.error,
+                    feed_dict={
+                        self.input_placeholder: dataset.validation[0], 
+                        self.target_placeholder: dataset.validation[1]
+                    }
+                )
+
+                # compare to previous error
+                diff = np.abs(error - old_error)
+
+                # convergence check
+                if diff < convergence_threshold:
+                    msg.info(
+                        "Convergence reached after " + str(step) + " steps.", 
+                        1
+                    )
+
+                    break
+                else:
+                    msg.info(
+                        "Validation cost: {:0.5E}. Diff to prev.: {:0.1E}".format(
+                            error,
+                            diff
+                        )
+                    )
+
+                    old_error = error
+                
+
+            # do training step
+            sess.run(
+                self.training_step, 
+                feed_dict={
+                    self.input_placeholder: mini_batch[0], 
+                    self.target_placeholder: mini_batch[1]
+                }
+            )
+        #---
+
+        if not summary_save_path is None:
+            writer.close()
+
+
+        test_error = sess.run(
+            self.error,
+            feed_dict={
+                self.input_placeholder: dataset.testing[0], 
+                self.target_placeholder: dataset.testing[1]
+            }
+        )
+
+        self.test_error = test_error
+
+        msg.info("Test error: {:0.5E}".format(test_error), 1)
+
+        return self.network, sess
+
 
 def train_network(
     network,
@@ -128,9 +348,7 @@ def train_network(
     #optimizer and training
     with tf.name_scope("training"):
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        train_step = optimizer.minimize(cost)
-    
-    sess.run(tf.global_variables_initializer())
+        train_step = optimizer.minimize(cost) 
     #---
 
     #--- prep the writer ---
@@ -144,15 +362,20 @@ def train_network(
     msg.info("Starting network training ...", 1)
     old_error = 1e10
 
+    sess.run(tf.global_variables_initializer())
+
     for step in range(max_steps):
         mini_batch = dataset.sample_minibatch(mini_batch_size)
 
-        if step % np.ceil(evaluation_period / 10):
+        if step % np.ceil(evaluation_period / 10) == 0:
             if not summary_save_path is None:
                 writer.add_summary(
                     sess.run(
                         summary, 
-                        feed_dict={x: mini_batch[0], y: mini_batch[1]}
+                        feed_dict={
+                            x: mini_batch[0], 
+                            y: mini_batch[1]
+                        }
                     ), 
                     step
                 )
@@ -189,11 +412,15 @@ def train_network(
         sess.run(train_step, feed_dict={x: mini_batch[0], y: mini_batch[1]})
     #---
 
+    if not summary_save_path is None:
+        writer.close()
+
     test_error = sess.run(
         mse,
         feed_dict={x: dataset.testing[0], y: dataset.testing[1]}
     )
     msg.info("Test error: {:0.5E}".format(test_error), 1)
+
 
     return network, sess
 
