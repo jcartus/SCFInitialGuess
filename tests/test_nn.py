@@ -126,7 +126,7 @@ class TestNetworks(unittest.TestCase):
             x = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="x")
             y = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="y")
 
-            network = EluTrNNN([1,5,1])
+            network = EluTrNNN([1,5,3,1])
             network.setup(input_tensor=x)
 
 
