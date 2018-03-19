@@ -366,7 +366,7 @@ class TestTrainer(unittest.TestCase):
         self.dataset = Dataset(x, y)
 
 
-    def _test_training_default_options(self):
+    def test_training_default_options(self):
 
         try:
             trainer = Trainer(EluTrNNN(self.structure))
