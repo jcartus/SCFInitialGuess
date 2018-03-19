@@ -138,7 +138,7 @@ class TestNetworks(unittest.TestCase):
 
             old_error = 1e16
             n = 0
-            n_max = 1e3
+            n_max = 1e4
             converged = False
             while not converged and n < n_max:
                 
@@ -165,9 +165,9 @@ class TestNetworks(unittest.TestCase):
                 self.fail("Training unsuccessfull, max iteration exceeded")
 
             np.testing.assert_almost_equal(
-                0.0,
                 sess.run(cost, {x: dataset.testing[0], y: dataset.testing[1]}),
-                decimal=6
+                0.0,
+                decimal=5
             )
 
     def test_linear_EluTrNNN(self):
