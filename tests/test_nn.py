@@ -19,8 +19,11 @@ from SCFInitialGuess.nn.training import train_network, MSE, Trainer
 
 class TestNetworks(unittest.TestCase):
 
+    def setUp(self):
+        msg.print_level = 1
+    
     def test_EluTrNNN_setup(self):
-
+        tf.reset_default_graph()
         sess = tf.Session()
 
         structures = [
@@ -57,6 +60,8 @@ class TestNetworks(unittest.TestCase):
             self.assertEqual(dim_out, biases[layer].shape[0])
 
     def test_save_model(self):
+        
+        tf.reset_default_graph()
 
         structures = [
             [5, 5],
@@ -80,6 +85,8 @@ class TestNetworks(unittest.TestCase):
 
     def test_load_model(self):
 
+        tf.reset_default_graph()
+
         model_path = "tests/data/C_model.npy"
 
 
@@ -102,7 +109,81 @@ class TestNetworks(unittest.TestCase):
         except Exception as ex:
             self.fail("Network could not be loaded: " + str(ex))
 
+    def test_learn_cos_EluTrNNN(self):
+
+        tf.reset_default_graph()
+
+        self._test_train_network_for_1d_function(np.cos)
+
+    def test_learn_constant_function_EluTrNNNN(self):
+        def constant_function(x, value):
+            return x * 0 + value
+
+        tf.reset_default_graph()
+
+        self._test_train_network_for_1d_function(
+            lambda x: constant_function(x, 3)
+        )
+
+    def _test_train_network_for_1d_function(self, function):
+              
+        x_val = np.random.rand(200, 1) * 2
+        y_val = function(x_val)
+        
+        dataset = Dataset(x_val, y_val)
+
+        with tf.Session() as sess:
+            #TODO: umbeneneen!
+            x = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="x")
+            y = tf.placeholder(dtype=tf.float32, shape=[None, 1], name="y")
+
+            network = EluTrNNN([1,5,3,1])
+            network.setup(input_tensor=x)
+
+
+            optimizer = tf.train.AdamOptimizer()
+            cost = tf.losses.mean_squared_error(y, network.output_tensor)
+            training = optimizer.minimize(cost)
+
+            sess.run(tf.global_variables_initializer())
+
+            old_error = 1e16
+            n = 0
+            n_max = 1e4
+            converged = False
+            while not converged and n < n_max:
+                
+                for i in range(200):
+                    sess.run(
+                        training, 
+                        {x: dataset.training[0], y: dataset.training[1]}
+                    )
+                
+                error = sess.run(
+                    cost, 
+                    {x: dataset.validation[0], y: dataset.validation[1]}
+                )
+
+                if np.abs(old_error-error) < 1e-8:
+                    converged = True
+                else:
+                    old_error = error
+                    n += 1
+
+
+            
+            if not converged:
+                self.fail("Training unsuccessfull, max iteration exceeded")
+
+            np.testing.assert_almost_equal(
+                sess.run(cost, {x: dataset.testing[0], y: dataset.testing[1]}),
+                0.0,
+                decimal=5
+            )
+
     def test_linear_EluTrNNN(self):
+
+        tf.reset_default_graph()
 
         #--- setup tf and network
         sess = tf.Session()
@@ -136,6 +217,9 @@ class TestNetworks(unittest.TestCase):
         )
 
     def test_two_networks(self):    
+
+
+        tf.reset_default_graph()
 
         #--- setup tf and network
         sess = tf.Session()
@@ -234,9 +318,13 @@ class TestErrorFunctions(unittest.TestCase):
 
     def setUp(self):
         self.structure = [1, 1]
+        msg.print_level = 1
+
+        tf.reset_default_graph()
 
     def test_MSE(self):
         
+
         expected = 4
         x_values = np.random.rand(100, self.structure[0])
         y_values = x_values + np.sqrt(expected)
@@ -278,7 +366,7 @@ class TestTrainer(unittest.TestCase):
         self.dataset = Dataset(x, y)
 
 
-    def _test_training_default_options(self):
+    def test_training_default_options(self):
 
         try:
             trainer = Trainer(EluTrNNN(self.structure))
@@ -315,7 +403,7 @@ class TestTraining(unittest.TestCase):
         )
 
     def test_train_network(self):
-        
+        tf.reset_default_graph()
 
         structure = [self.input_dim, 10, self.output_dim]
         network = EluTrNNN(structure)
@@ -330,7 +418,9 @@ class TestTraining(unittest.TestCase):
         except Exception as ex:
             self.fail("Traning failed: " + str(ex))
 
-    def _test_train_network_w_logging(self):
+    def test_train_network_w_logging(self):
+
+        tf.reset_default_graph()
 
         structure = [self.input_dim, 10, self.output_dim]
         network = EluTrNNN(structure)

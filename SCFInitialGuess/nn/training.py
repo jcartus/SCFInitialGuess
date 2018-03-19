@@ -141,12 +141,19 @@ class Trainer(object):
         self.training_step = None
         self.test_error = None
 
-    def setup(self):
+    def setup(self, target_graph=None):
 
-        msg.info("Setting up the training graph ...", 1)
+        if target_graph is None:
+            msg.info("No target graph specified for Trainer setup. " + \
+                "Creating new graph ...", 1)
+            self.graph = tf.Graph()
+        else:
+            msg.info("Appending to graph: " + str(target_graph))
 
-        self.trainer_graph = tf.Graph()
-        with self.trainer_graph.as_default():
+        
+        with self.graph.as_default():
+            
+            msg.info("Setting up the training in the target graph ...", 1)
 
             # placeholder for dataset target-values
             self.target_placeholder = tf.placeholder(
@@ -178,7 +185,7 @@ class Trainer(object):
             with tf.name_scope("training/"):
                 self.training_step = self.optimizer.minimize(self.cost)
 
-        return self.trainer_graph, self.network, self.target_placeholder
+        return self.graph, self.network, self.target_placeholder
     
     
     def train(
@@ -191,7 +198,7 @@ class Trainer(object):
             summary_save_path=None
         ):
 
-        sess = tf.Session(graph=self.trainer_graph)
+        sess = tf.Session(graph=self.graph)
 
         if self.training_step is None:
             self.setup()
@@ -342,7 +349,8 @@ def train_network(
     # cost is mse w/ l2 regularisation
     cost, mse, _ = mse_with_l2_regularisation(
         network,
-        expectation_tensor=y
+        expectation_tensor=y,
+        regularisation_parameter=regularisation_parameter
     )
 
     #optimizer and training
@@ -353,6 +361,9 @@ def train_network(
 
     #--- prep the writer ---
     if not summary_save_path is None:
+        msg.warn("Careful! If more than 1 network is in current graph, " + \
+            "it should be cleared before merging the summary!"
+        )
         summary = tf.summary.merge_all()
         writer = tf.summary.FileWriter(summary_save_path)
         writer.add_graph(sess.graph)
