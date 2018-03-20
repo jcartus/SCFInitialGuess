@@ -178,7 +178,7 @@ class TestNetworks(unittest.TestCase):
             np.testing.assert_almost_equal(
                 sess.run(cost, {x: dataset.testing[0], y: dataset.testing[1]}),
                 0.0,
-                decimal=5
+                decimal=4
             )
 
     def test_linear_EluTrNNN(self):
@@ -268,8 +268,6 @@ class TestNetworks(unittest.TestCase):
             sess.run(y2, feed_dict={x2: x_test})
         )
         #---
-
-
 class NeuralNetworkMock(object):
 
     def __init__(self, structure, function=None):
@@ -357,13 +355,16 @@ class TestTrainer(unittest.TestCase):
         
         msg.print_level = 0
 
-        self.structure = [2, 4, 1]
+        self.structure = [1, 4, 1]
         self.nsamples = 100
 
         x = np.random.rand(self.nsamples, self.structure[0]) * 10
         y = np.sum(x**2, axis=1)
 
-        self.dataset = Dataset(x, y)
+        self.dataset = Dataset(
+            x.reshape(self.nsamples, self.structure[0]), 
+            y.reshape(self.nsamples, self.structure[-1])
+        )
 
 
     def test_training_default_options(self):
