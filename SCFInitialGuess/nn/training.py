@@ -85,7 +85,7 @@ class MSE(object):
 
 class RegularizedMSE(MSE):
 
-    def __init__(self, alpha=0.001):
+    def __init__(self, alpha=1e-5):
 
         self.alpha = alpha
 
