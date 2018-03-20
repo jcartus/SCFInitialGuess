@@ -98,7 +98,7 @@ class RegularizedMSE(MSE):
             network.weights
         )
 
-        cost = error + regularisation
+        cost = error + regularisation 
 
         tf.summary.scalar("weight_decay", regularisation)
         tf.summary.scalar("total_loss", cost)
@@ -198,94 +198,96 @@ class Trainer(object):
             summary_save_path=None
         ):
 
-        sess = tf.Session(graph=self.graph)
 
-        if self.training_step is None:
-            self.setup()
+        with self.graph.as_default():
+            sess = tf.Session(graph=self.graph)
 
-
-        #--- prep the writer ---
-        if not summary_save_path is None:
-            summary = tf.summary.merge_all()
-            writer = tf.summary.FileWriter(summary_save_path)
-            writer.add_graph(sess.graph)
-        #---
-
-        #--- train the network ---
-        old_error = 1e10
-
-        sess.run(tf.global_variables_initializer())
+            if self.training_step is None:
+                self.setup()
 
 
-        msg.info("Starting network training ...", 1)        
-        for step in range(max_steps):
-            mini_batch = dataset.sample_minibatch(mini_batch_size)
+            #--- prep the writer ---
+            if not summary_save_path is None:
+                summary = tf.summary.merge_all()
+                writer = tf.summary.FileWriter(summary_save_path)
+                writer.add_graph(sess.graph)
+            #---
 
-            if step % np.ceil(evaluation_period / 10):
-                if not summary_save_path is None:
-                    writer.add_summary(
-                        sess.run(
-                            summary, 
-                            feed_dict={
-                                self.input_placeholder: mini_batch[0], 
-                                self.target_placeholder: mini_batch[1]
-                            }
-                        ), 
-                        step
+            #--- train the network ---
+            old_error = 1e10
+
+            sess.run(tf.global_variables_initializer())
+
+
+            msg.info("Starting network training ...", 1)        
+            for step in range(max_steps):
+                mini_batch = dataset.sample_minibatch(mini_batch_size)
+
+                if step % np.ceil(evaluation_period / 10):
+                    if not summary_save_path is None:
+                        writer.add_summary(
+                            sess.run(
+                                summary, 
+                                feed_dict={
+                                    self.input_placeholder: mini_batch[0], 
+                                    self.target_placeholder: mini_batch[1]
+                                }
+                            ), 
+                            step
+                        )
+
+                if step % evaluation_period == 0:
+                    error = sess.run(
+                        self.error,
+                        feed_dict={
+                            self.input_placeholder: dataset.validation[0], 
+                            self.target_placeholder: dataset.validation[1]
+                        }
                     )
 
-            if step % evaluation_period == 0:
-                error = sess.run(
-                    self.error,
+                    # compare to previous error
+                    diff = np.abs(error - old_error)
+
+                    # convergence check
+                    if diff < convergence_threshold:
+                        msg.info(
+                            "Convergence reached after " + str(step) + " steps.", 
+                            1
+                        )
+
+                        break
+                    else:
+                        msg.info(
+                            "Validation cost: {:0.5E}. Diff to prev.: {:0.1E}".format(
+                                error,
+                                diff
+                            )
+                        )
+
+                        old_error = error
+                    
+
+                # do training step
+                sess.run(
+                    self.training_step, 
                     feed_dict={
-                        self.input_placeholder: dataset.validation[0], 
-                        self.target_placeholder: dataset.validation[1]
+                        self.input_placeholder: mini_batch[0], 
+                        self.target_placeholder: mini_batch[1]
                     }
                 )
+            #---
 
-                # compare to previous error
-                diff = np.abs(error - old_error)
+            if not summary_save_path is None:
+                writer.close()
 
-                # convergence check
-                if diff < convergence_threshold:
-                    msg.info(
-                        "Convergence reached after " + str(step) + " steps.", 
-                        1
-                    )
 
-                    break
-                else:
-                    msg.info(
-                        "Validation cost: {:0.5E}. Diff to prev.: {:0.1E}".format(
-                            error,
-                            diff
-                        )
-                    )
-
-                    old_error = error
-                
-
-            # do training step
-            sess.run(
-                self.training_step, 
+            test_error = sess.run(
+                self.error,
                 feed_dict={
-                    self.input_placeholder: mini_batch[0], 
-                    self.target_placeholder: mini_batch[1]
+                    self.input_placeholder: dataset.testing[0], 
+                    self.target_placeholder: dataset.testing[1]
                 }
             )
-        #---
-
-        if not summary_save_path is None:
-            writer.close()
-
-
-        test_error = sess.run(
-            self.error,
-            feed_dict={
-                self.input_placeholder: dataset.testing[0], 
-                self.target_placeholder: dataset.testing[1]
-            }
-        )
 
         self.test_error = test_error
 
