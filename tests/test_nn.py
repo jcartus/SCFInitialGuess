@@ -384,6 +384,32 @@ class TestTrainer(unittest.TestCase):
         except:
             self.fail("Trainer with trainer failed.")
 
+    def test_training_w_logging(self):
+
+        save_dir = "tests/tmp_log/" 
+
+        if not isdir(save_dir):
+            mkdir(save_dir)
+
+        try:
+            try:
+                trainer = Trainer(EluTrNNN(self.structure))
+            except:
+                self.fail("Instantiation of trainer failed")
+        
+
+            try:
+                trainer.setup()
+            except:
+                self.fail("Trainer setup failed")
+            
+            try:
+                trainer.train(self.dataset)
+            except:
+                self.fail("Trainer with trainer failed.")
+        finally:
+            rmtree(save_dir)
+
 class TestTraining(unittest.TestCase):
 
     def setUp(self):
