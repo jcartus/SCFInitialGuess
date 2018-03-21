@@ -25,6 +25,8 @@ class TestErrorFunctions(unittest.TestCase):
 
         tf.reset_default_graph()
 
+class TestMSE(TestErrorFunctions):
+
     def test_MSE(self):
         
 
