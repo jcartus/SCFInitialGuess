@@ -2,6 +2,8 @@
 testing.
 """
 
+import tensorflow as tf
+
 import unittest
 
 class AbstractTest(unittest.TestCase):
@@ -45,3 +47,48 @@ class AbstractTest(unittest.TestCase):
                 delta=delta,
                 msg="Element " + str(i) + " did not match to req. precision."
             )
+
+class NeuralNetworkMock(object):
+
+    def __init__(self, structure, function=None):
+        
+        # not that it is good for anythin
+        self.structure = structure
+
+        # if no special mapping is stated just return output again
+        if function is None:
+            self.function = self.function_in_out
+        else:
+            self.function = function
+
+        self.input_tensor = None
+
+    @staticmethod
+    def function_in_out(x):
+        return x
+
+    @property
+    def output_tensor(self):
+        if self._graph is None:
+            self.setup()
+        return self._graph
+
+    def setup(self):
+
+        # set up input placeholder    
+        self.input_tensor = tf.placeholder(
+                dtype="float32", 
+                shape=[None, self.structure[0]],
+                name="x"
+            )        
+
+        # put in simulated mapping
+        self._graph = self.function(self.input_tensor)
+
+        return self._graph
+
+
+    def run(self, session, inputs):
+        """Evaluate the neural network"""
+        return session.run(self._graph, feed_dict={self.input_tensor: inputs})
+
