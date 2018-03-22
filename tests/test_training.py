@@ -4,8 +4,10 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
+
 from os import remove, mkdir
 from os.path import isdir
+from shutil import rmtree
 
 import tensorflow as tf
 import numpy as np
