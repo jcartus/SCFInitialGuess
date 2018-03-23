@@ -13,6 +13,7 @@ import unittest
 from helper import AbstractTest
 
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import Dataset
 
 
@@ -104,20 +105,48 @@ class TestDataset(AbstractTest):
     
     def setUp(self):
 
-        self.nsamples = 1000
         self.tolerance = 1e-1
+        msg.print_level = 1
 
-    def test_splitting(self):
+    def test_setup(self):
+        nsamples = 200
 
-        pass
+        # create x/y with matching values
+        x = np.arange(nsamples)
+        y = np.arange(nsamples)
+
+        # dataset should be splitted pure traing 100, validation 50, test 50
+        candidate = Dataset(
+            x, y, 
+            split_test=0.25, 
+            split_validation=1.0/3.0,
+            normalize_input=False    
+        )
+
+        # check if splitting was correct
+        self.assertEqual(50, len(candidate.testing[0]))
+        self.assertEqual(50, len(candidate.testing[1]))
+        self.assertEqual(50, len(candidate.validation[0]))
+        self.assertEqual(50, len(candidate.validation[1]))
+        self.assertEqual(100, len(candidate.training[0]))
+        self.assertEqual(100, len(candidate.training[1]))
+
+        # check if x-y pairs are still correct
+        np.testing.assert_array_equal(*candidate.testing)
+        np.testing.assert_array_equal(*candidate.validation)
+        np.testing.assert_array_equal(*candidate.training)
+
+
+        
 
     def test_normalisation(self):
  
         dim = 5
         mu = 3
         sigma = 2
+        nsamples = 1000
 
-        x = np.random.randn(self.nsamples, dim) * sigma + mu
+        x = np.random.randn(nsamples, dim) * sigma + mu
 
         #--- check normlisation with calculated params ---
         x_norm = Dataset.normalize(x)[0]
