@@ -12,6 +12,35 @@ import numpy as np
 
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 
+class CustomAdam(tf.train.AdamOptimizer):
+    """A custom verison of tensorflow's AdamOptimizer. The only
+    difference is the new __str__ method, to get a neatly prinable
+    representation"""
+
+
+    def __init__(self, *args, **kwargs):
+    
+        super(CustomAdam, self).__init__(*args, **kwargs)
+
+    @property
+    def print_name(self):
+        return "Adam_eta-{0}_b1-{1}_b2-{2}".format(
+            self._lr, self._beta1, self._beta2
+        )
+    
+    
+
+class Model(object):
+
+    def __init__(self, name,network, optimizer):
+
+        self.name = name 
+        self.network = network
+        self.optimizer = optimizer
+
+    def __str__(self):
+        return self.name  + "_" + str(self.network) + "_" + self.optimizer.print_name
+        
 
 def mse_with_l2_regularisation(
         network, 
@@ -38,8 +67,6 @@ def mse_with_l2_regularisation(
         tf.summary.scalar("total_loss", cost)
 
     return cost, error, regularisation
-
-
 
 class MSE(object):
 
@@ -218,14 +245,6 @@ class Trainer(object):
                         }
                     )
 
-                    cost = sess.run(
-                        self.cost,
-                        feed_dict={
-                            self.input_placeholder: dataset.validation[0], 
-                            self.target_placeholder: dataset.validation[1]
-                        }
-                    )
-
                     # compare to previous error
                     diff = np.abs(error - old_error)
 
@@ -239,9 +258,7 @@ class Trainer(object):
                         break
                     else:
                         msg.info(
-                            "Val. Cost: " + \
-                                "{:0.3E}. Error: {:0.3E}. Diff: {:0.1E}".format(
-                                cost,
+                            "Validation cost: {:0.5E}. Diff to prev.: {:0.1E}".format(
                                 error,
                                 diff
                             )
