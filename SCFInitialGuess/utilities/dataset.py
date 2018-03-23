@@ -464,7 +464,11 @@ class Dataset(object):
         of the dataset.
         """
 
-        return self.normalize(x, mean=self.x_mean, std=self.x_std)
+        return self.normalize(x, mean=self.x_mean, std=self.x_std)[0]
+
+    def inverse_input_transform(self, x):
+
+        return self.denormalize(x, self.x_mean, self.x_std)
 
 
     @staticmethod
