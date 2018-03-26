@@ -347,7 +347,13 @@ class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 
     split it.
     """
-    def __init__(self, x, y, split_test=0.1, split_validation=0.2):
+    def __init__(self, 
+        x, 
+        y, 
+        split_test=0.1, 
+        split_validation=0.2,
+        normalize_input=True
+        ):
         """Ctor
 
         Args:
@@ -370,11 +376,16 @@ class Dataset(object):
             )
 
         # normalize the dataset
-        x, self.x_mean, self.x_std = self.normalize(x)
-
-        msg.info("Data set initialized. Mean value std: {0}".format(
+        if normalize_input:
+            x, self.x_mean, self.x_std = self.normalize(x)
+            msg.info("Data set normalized. Mean value std: {0}".format(
                 np.mean(self.x_std)
             ), 1)
+        else:
+            self.x_mean = None
+            self.x_std = None
+
+        
 
         # shuffle dataset
         dataset = self.shuffle_batch(x, y)
@@ -448,6 +459,18 @@ class Dataset(object):
 
         return (x_train, y_train), (x_test, y_test)
     
+    def input_transformation(self, x, std_tolerance=1e-20):
+        """Will normalize a set of given input vectors with the mean and std
+        of the dataset.
+        """
+
+        return self.normalize(x, mean=self.x_mean, std=self.x_std)[0]
+
+    def inverse_input_transform(self, x):
+
+        return self.denormalize(x, self.x_mean, self.x_std)
+
+
     @staticmethod
     def normalize(x, std_tolerance=1e-20, mean=None, std=None):
         """Will trans form a dataset with elements x_ij, where j is the index

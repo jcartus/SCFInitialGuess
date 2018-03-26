@@ -13,7 +13,7 @@ pathtable
 *.pyc
 
 _Notebooks/
-notebooks/butadien/*
+butadien/data/*
 notebooks/tmp*
 notebooks/log/*
 *-checkpoint.ipynb
@@ -21,3 +21,7 @@ notebooks/log/*
 database/
 
 build/
+
+butadien/notebooks/log/
+
+butadien/notebooks/log2/
