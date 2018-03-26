@@ -40,7 +40,7 @@ class IdempotencyPenalty(MSE):
 
 def main():   
 
-    S, P = np.load("notebooks/butadien/dataset.npy")
+    S, P = np.load("butadien/data/dataset.npy")
 
     dataset = Dataset(S, P, split_test=0.25)
 
@@ -55,7 +55,7 @@ def main():
     network_idem, sess_idem = trainer.train(
         dataset,
         convergence_threshold=1e-5,
-        summary_save_path="log2/idem"
+        #summary_save_path="butadien/log/idem"
     )
     graph_idem = trainer.graph
 
