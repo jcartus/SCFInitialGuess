@@ -45,7 +45,7 @@ def fetch_molecules(folder):
     
     for i, file in enumerate(files):
         
-        print("Fetching: " + str(i + 1) + "/" + str(len(files)))
+        msg.info("Fetching: " + str(i + 1) + "/" + str(len(files)))
 
         mol = Molecule(*grep_molecule(join(folder, file)))
         
@@ -69,7 +69,7 @@ def scf_runs(molecules):
         P.append(mf.make_rdm1().reshape((dim**2, )))
     return S, P
 
-def main(data_folder="notebooks/butadien/"):        
+def main(data_folder="butadien/data/"):        
 
     msg.info("Fetching molecules", 2)
     molecules = list(fetch_molecules(data_folder + "data"))
