@@ -296,3 +296,14 @@ class ReluTrNNN(TruncatedNormalNN):
 
     def _activation(self, preactivation):
         return tf.nn.relu(preactivation)
+
+class SeluTrNNN(TruncatedNormalNN):
+    """This is a Neural Network with weights/biases initialized truncated normal
+    and the activations being Relus
+    """
+    def __init__(self, *args, **kwargs):
+        super(SeluTrNNN, self).__init__(*args, **kwargs)
+        self._name_string = "Selu_" + self._name_string
+
+    def _activation(self, preactivation):
+        return tf.nn.selu(preactivation)
