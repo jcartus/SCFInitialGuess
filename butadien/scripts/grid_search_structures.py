@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 
 from shutil import rmtree
+from datetime import datetime
 
 dim = 26
 
@@ -20,6 +21,12 @@ def main():
     S, P = np.load("butadien/data/dataset.npy")
 
     dataset = Dataset(S, P, split_test=0.25)
+
+    msg.info("Starting grid search ", 2)
+    with open(log_file, "w") as f:
+        info  = "===============================\n"
+        info += str(datetime.now()) + "\n\n"
+        f.write(info)
 
     structures = sample_structures()
     for structure in uniquifiy(structures):
@@ -35,11 +42,14 @@ def sample_structures(
     min_hidden_layers=1
     ):
 
-    possible_number_of_nodes = np.arange(
+    node_nr_candidates = np.arange(
         min_hidden_nodes,
         max_hidden_nodes + 50,
         50
     )
+
+    node_nr_candidates_lr = \
+        np.fliplr(node_nr_candidates.reshape(1, -1)).reshape(len(node_nr_candidates))
 
     structures = []
     for num_layers in range(min_hidden_layers + 1, max_hidden_layers + 1):
@@ -47,28 +57,28 @@ def sample_structures(
         # pyramid
         structures.append(
             [dim**2] + \
-            list(np.fliplr(possible_number_of_nodes[-num_layers:])) + \
+            list(node_nr_candidates_lr[-num_layers:]) + \
             [dim**2]
         )
 
         # constant 
         for i in range(3):
-            ind = np.random.randint(len(possible_number_of_nodes))
+            ind = np.random.randint(len(node_nr_candidates))
             structures.append(
                 [dim**2] + [
-                    possible_number_of_nodes[ind] for j in range(num_layers)
+                    node_nr_candidates[ind] for j in range(num_layers)
                 ] + [dim**2]
             )
 
         # random
         for i in range(5):
             ind = np.random.randint(
-                len(possible_number_of_nodes), 
+                len(node_nr_candidates), 
                 size=num_layers
             )
             structures.append(
                 [dim**2] + [
-                    possible_number_of_nodes[j] for j in ind
+                    node_nr_candidates[j] for j in ind
                 ] + [dim**2]
             )
 
@@ -76,11 +86,17 @@ def sample_structures(
 
 def uniquifiy(full_list):
 
+    unique = set(map(tuple, full_list))
+    
+    """
     y = []
     for x in full_list:
         if not x in y:
             y.append(x)
     return y
+    """
+
+    return list(map(list, unique))
 
 def investigate_structure(dataset, structure, nsamples=10):
     
@@ -168,24 +184,24 @@ def log(
     error_idem, 
     error_sym):
 
-    msg  = str(structure) + "\n"
-    msg += "Error in values: {:0.3E} +- {:0.3E}".format(
+    info  = str(structure) + "\n"
+    info += "Error in values: {:0.3E} +- {:0.3E}".format(
         error_val.mean(), 
         error_val.std()
     ) + "\n"
-    msg += "Error in idemp:  {:0.3E} +- {:0.3E}".format(
+    info += "Error in idemp:  {:0.3E} +- {:0.3E}".format(
         error_idem.mean(), 
         error_idem.std()
     ) + "\n"
-    msg += "Error in sym:    {:0.3E} +- {:0.3E}".format(
+    info += "Error in sym:    {:0.3E} +- {:0.3E}".format(
         error_sym.mean(), 
         error_sym.std()
     ) + "\n"
 
-    msg += "--------------------------------------\n\n" 
+    info += "--------------------------------------\n\n" 
 
     with open(log_file, 'a') as f:
-        f.write(msg)
+        f.write(info)
 
 if __name__ == '__main__':
     main()
