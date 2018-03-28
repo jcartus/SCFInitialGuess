@@ -11,6 +11,7 @@ import tensorflow as tf
 import numpy as np
 
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
+from SCFInitialGuess.nn.cost_functions import MSE, RegularizedMSE
 
 
 def mse_with_l2_regularisation(
@@ -41,46 +42,6 @@ def mse_with_l2_regularisation(
 
 
 
-class MSE(object):
-
-    def function(self, network, y_placeholder):
-
-        error = tf.losses.mean_squared_error(
-            network.output_tensor,
-            y_placeholder
-        )
-
-        cost = error
-        
-        tf.summary.scalar("error", error)
-        
-        return error
-
-class RegularizedMSE(MSE):
-
-    def __init__(self, alpha=1e-5):
-
-        self.alpha = alpha
-
-    def function(self, network, y_placeholder):
-
-        error = super(RegularizedMSE, self).function(network, y_placeholder)
-
-        regularisation = tf.contrib.layers.apply_regularization(
-            tf.contrib.layers.l2_regularizer(self.alpha),
-            network.weights
-        )
-
-        cost = error + regularisation 
-
-        tf.summary.scalar("weight_decay", regularisation)
-        tf.summary.scalar("total_loss", cost)
-
-        return cost
-
-
-
-
 class Trainer(object):
 
     def __init__(
@@ -88,8 +49,7 @@ class Trainer(object):
         network,
         optimizer=None,
         error_function=None,
-        cost_function=None
-    ):
+        cost_function=None):
 
         self.network = network
 
