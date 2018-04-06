@@ -49,7 +49,9 @@ class Trainer(object):
         network,
         optimizer=None,
         error_function=None,
-        cost_function=None):
+        cost_function=None,
+        gradient_clipping=None
+        ):
 
         self.network = network
 
@@ -70,6 +72,7 @@ class Trainer(object):
         else:
             self.error_function = error_function
 
+        self.gradient_clipping = gradient_clipping
 
         self.training_step = None
         self.test_error = None
@@ -116,7 +119,29 @@ class Trainer(object):
 
             msg.info("training step", 1)
             with tf.name_scope("training/"):
-                self.training_step = self.optimizer.minimize(self.cost)
+                self.gradients = self.optimizer.compute_gradients(self.cost)
+                #tf.summary.histogram("gradients", self.gradients)
+                if not self.gradient_clipping is None:
+
+                    self.gradients = [
+                        (tf.clip_by_value(
+                            tf.where(
+                                tf.is_finite(grad), grad, tf.zeros_like(grad)
+                            ), 
+                            self.gradient_clipping[0], 
+                            self.gradient_clipping[1]
+                        ), 
+                        var) for grad, var in self.gradients
+                    ]
+            
+                    self.gradients = tf.clip_by_value(
+                        self.gradients,
+                        self.gradient_clipping[0],
+                        self.gradient_clipping[1]    
+                    )
+                    #tf.summary.histogram("gradients_clipped", self.gradients)
+                self.training_step = \
+                    self.optimizer.apply_gradients(self.gradients)
 
         return self.graph, self.network, self.target_placeholder
     
