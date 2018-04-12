@@ -35,7 +35,7 @@ def grep_molecule(input_file):
     for line in geometries:
         splits = line.split()
         species.append(splits[0])
-        positions.append(splits[1:])
+        positions.append(list(map(float, splits[1:])))
 
     return species, positions
 
