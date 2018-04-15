@@ -59,6 +59,32 @@ def iterations_histogram(
     ax = sns.countplot(x=xlabel, y=ylabel, data=data)
     return ax
 
+def plot_summary_scalars(
+    file_label_dicts, 
+    xlabel="steps / 1", 
+    ylabel="costs / 1"
+    ):
+    
+    fig = plt.figure()
+
+    for label, fpath in file_label_dicts.items():
+        with open(fpath, "r") as f:
+            lines = f.readlines()[1:]
+
+        steps, scalar = [], []
+        for line in lines:
+            splits = line.split(",")
+            steps.append(int(splits[1]))
+            scalar.append(float(splits[2]))
+
+        plt.semilogy(steps, scalar, label=label)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+
+        plt.legend()
+
+    return fig
+
 if __name__ == '__main__':
     dim = 26
     A = np.random.rand(dim, dim)
