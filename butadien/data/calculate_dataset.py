@@ -43,6 +43,8 @@ def fetch_molecules(folder):
     
     files = [file for file in listdir(folder) if ".inp" in file]
     
+    files.sort(key=lambda x: float(x.split(".inp")[0]))
+
     for i, file in enumerate(files):
         
         msg.info("Fetching: " + str(i + 1) + "/" + str(len(files)))
@@ -67,6 +69,7 @@ def scf_runs(molecules):
         
         S.append(mf.get_ovlp().reshape((dim**2, )))
         P.append(mf.make_rdm1().reshape((dim**2, )))
+
     return S, P
 
 def main(data_folder="butadien/data/"):        
