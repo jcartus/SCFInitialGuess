@@ -82,6 +82,7 @@ class Trainer(object):
             self.graph = tf.Graph()
         else:
             msg.info("Appending to graph: " + str(target_graph))
+            self.graph = target_graph
 
         
         with self.graph.as_default():
