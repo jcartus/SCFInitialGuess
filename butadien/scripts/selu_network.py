@@ -1,5 +1,7 @@
 from SCFInitialGuess.nn.networks import SeluTrNNN
-from SCFInitialGuess.nn.training import Trainer, MSE, RegularizedMSE
+from SCFInitialGuess.nn.training import Trainer
+
+from SCFInitialGuess.nn.cost_functions import MSE, RegularizedMSE, AbsoluteError
 from SCFInitialGuess.utilities.dataset import Dataset
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 
@@ -50,10 +52,16 @@ def main():
 
     dataset = Dataset(S, P, split_test=0.25)
 
+    save_path = "butadien/scripts/log/idem"
+
+    try:
+        rmtree(save_path)
+    except:
+        pass
 
     trainer = Trainer(
         SeluTrNNN(
-            [dim**2, 400, 400, 400, 400, 400, 400, dim**2], 
+            [dim**2, 700, 700, dim**2], 
             log_histograms=True
         ),
         #error_function=AbsoluteError(),
@@ -62,14 +70,14 @@ def main():
             dataset.inverse_input_transform,
             coupling=1e-5
         ),
-        optimizer=tf.train.AdamOptimizer(learning_rate=1e-3)
+        #optimizer=tf.train.AdamOptimizer(learning_rate=1e-3)
     )
 
     trainer.setup()
     network, sess = trainer.train(
         dataset,
-        convergence_threshold=1e-7,
-        #summary_save_path="butadien/log/idem",
+        convergence_threshold=1e-6,
+        summary_save_path=save_path,
         mini_batch_size=15
     )
     graph_idem = trainer.graph
