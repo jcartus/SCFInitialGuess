@@ -1,0 +1,21 @@
+$rem
+   JOBTYPE                       aimd
+   AIMD_METHOD                   bomd
+   AIMD_TEMP                     298
+   time_step                     20
+   AIMD_STEPS                    200
+   AIMD_INIT_VELOC               quasiclassical
+   BASIS                         6-311++g**
+   EXCHANGE                      hf
+$end
+
+
+$molecule
+   0 1
+   C       -2.83034        2.46352        0.00000
+   C       -1.31827        2.46353       -0.00000
+   H       -3.82434        2.46352        0.00000
+   H       -0.32427        2.46353       -0.00000
+$end
+
+
