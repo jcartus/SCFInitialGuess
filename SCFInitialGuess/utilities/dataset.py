@@ -66,6 +66,70 @@ class Molecule(object):
         return mol
 
 
+class QChemResultsReader(object):
+
+    def __init__(self):
+        
+        self.geometries = []
+
+    @staticmethod
+    def read_file(file_name):
+
+        if not isfile(file_name):
+            raise OSError(
+                "File could not be read. It does not exist at {0}!".format(
+                    file_name
+                )
+            )
+
+        with open(file_name, "r") as f:
+            content = f.read()
+            
+        start_mark = r"I     Atom"
+        end_mark = r"Nuclear Repulsion Energy"
+
+        match_start = re.finditer(start_mark, content, re.DOTALL)
+        match_end = re.finditer(end_mark, content, re.DOTALL)
+        
+        start_pos = [m.start() for m in match_start]
+        end_pos = [m.start() for m in match_end]
+
+        
+        if len(start_pos) == 0 or len(end_pos) == 0:
+            raise ValueError("No molecule found in " + f.name)
+
+        if len(start_pos) != len(end_pos):
+            raise ValueError("Matches are mixed up. Uneven number of start/end tokes.")
+
+        for (s,p) in zip(start_pos, end_pos):
+            
+            molecule = content[s:p]
+
+            # cut out geometries
+            geometries = molecule.splitlines()[2:-2]
+
+            # from geometries take the species and positions
+            species, positions = [], []
+            for line in geometries:
+                splits = line.split()
+                species.append(splits[1])
+                positions.append(list(map(float, splits[2:])))
+
+            yield species, positions
+
+    @classmethod
+    def read_folder(cls, folder):
+        
+        files = [file for file in listdir(folder) if ".out" in file]
+        
+        files.sort()
+
+        for i, file in enumerate(files):
+            
+            msg.info("Fetching: " + str(i + 1) + "/" + str(len(files)))
+
+            yield cls.read_file(join(folder, file))
+
 class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
     downloaded from the pyqChem repository) that are in a specified folder"""

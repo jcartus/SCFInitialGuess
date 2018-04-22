@@ -14,10 +14,28 @@ from helper import AbstractTest
 
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
-from SCFInitialGuess.utilities.dataset import Dataset
+from SCFInitialGuess.utilities.dataset import Dataset, QChemResultsReader
 
 
     
+class TestQChemReader(AbstractTest):
+
+    def test_read_file(self):
+
+        test_file = normpath("tests/data/ethan.out")
+
+        geometries = QChemResultsReader.read_file(test_file)
+
+        self.assertEqual(201, len(list(geometries)))
+
+    def test_read_folder(self):
+
+        test_folder = normpath("tests/data/")
+
+        geometries = QChemResultsReader.read_folder(test_folder)
+
+        self.assertEqual(201, len(list(list(geometries)[0])))
+
 
 
 class TestXYZFileReader(AbstractTest):
