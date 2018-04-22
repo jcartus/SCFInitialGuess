@@ -123,12 +123,13 @@ class QChemResultsReader(object):
         files = [file for file in listdir(folder) if ".out" in file]
         
         files.sort()
-
+        results = []
         for i, file in enumerate(files):
             
             msg.info("Fetching: " + str(i + 1) + "/" + str(len(files)))
 
-            yield cls.read_file(join(folder, file))
+            results.append(cls.read_file(join(folder, file)))
+        return results
 
 class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
@@ -403,9 +404,51 @@ class Result(object):
            
         return x_list, y_list
 
+def extract_triu(A, dim):
+    """Extracts the upper triangular part of the matrix.
+    Input can be matrix, will be reshaped if it is not.
+    """
+    return A.reshape(dim, dim)[np.triu_indices(dim)]
 
+def reconstruct_from_triu(A_flat, dim):
+    """Reconstructus the full symmetric matrix (dim x dim, not
+    flattened out) from the flattend elements of the upper 
+    triag of a symmetric matrix!"""
+    result = np.zeros((dim, dim))
+    result[np.triu_indices(dim)] = A_flat
+    return result + result.T - np.diag(np.diag(result))
 
+def make_butadien_dataset(molecules, S, P, test_samples=50):
+    """This function creates a dataset where S, P Matrix and 
+    the molecules match.
 
+    Args:
+        S <np.array<float>>: the overlap matrix,
+        P <np.array<float>>: the density matrix,
+        molecules list<Molecule>: the molecules in the dataset, in the
+        same order as S and P.
+
+    Returns:
+        The dataset, and the molecules (split in train and test)
+    """
+
+    ind_cut = 150
+    index = np.arange(200)
+    np.random.shuffle(index)
+
+    S_test = np.array(S)[index[ind_cut:]]
+    P_test = np.array(P)[index[ind_cut:]]
+    molecules_test = [molecules[index[i]] for i in range(ind_cut, 200)]
+
+    S_train = np.array(S)[index[:ind_cut]]
+    P_train = np.array(P)[index[:ind_cut]]
+    molecules_train = [molecules[index[i]] for i in range(ind_cut)]
+
+    dataset = Dataset(np.array(S_train), np.array(P_train), split_test=0.0, split_validation=0.1)
+
+    dataset.testing = (Dataset.normalize(S_test, mean=dataset.x_mean, std=dataset.x_std)[0], P_test)
+
+    return dataset, (molecules_train, molecules_test)
 
 class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 

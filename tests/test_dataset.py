@@ -15,6 +15,7 @@ from helper import AbstractTest
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import Dataset, QChemResultsReader
+from SCFInitialGuess.utilities.dataset import extract_triu, reconstruct_from_triu
 
 
     
@@ -36,6 +37,30 @@ class TestQChemReader(AbstractTest):
 
         self.assertEqual(201, len(list(list(geometries)[0])))
 
+class TestHelperFunctions(AbstractTest):
+
+    def testExtractTriu(self):
+        
+        dim = 3
+
+        A = np.arange(dim**2).reshape(dim, dim)
+
+        v = [0, 1, 2, 4, 5, 8]
+
+        np.testing.assert_array_equal(v, extract_triu(A, dim))
+
+
+    def reconstruct_from_triu(self):
+
+        dim = 3
+
+        A = np.arange(dim**2).reshape(dim, dim)
+
+        v = [0, 1, 2, 4, 5, 8]
+
+        np.testing.assert_array_equal(A, reconstruct_from_triu(v, dim))
+
+        
 
 
 class TestXYZFileReader(AbstractTest):
