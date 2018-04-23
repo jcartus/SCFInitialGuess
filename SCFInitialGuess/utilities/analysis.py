@@ -7,8 +7,17 @@ Author:
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from pandas import DataFrame
+import tensorflow as tf
 
+from pandas import DataFrame
+from pyscf.scf import hf
+
+#from SCFInitialGuess.utilities.dataset import reconstruct_from_triu
+from SCFInitialGuess.nn.cost_functions import absolute_error, symmetry_error
+from SCFInitialGuess.nn.cost_functions import idempotence_error, predicted_occupance, makeMatrixBatch  
+
+def statistics(x):
+    return np.mean(x), np.std(x)
 
 def matrix_error(error, xlabel="index", ylabel="index", ButadienMode=False, **kwargs):
     
@@ -92,6 +101,140 @@ def plot_summary_scalars(
         plt.legend()
 
     return fig
+
+class NetworkAnalyzer(object):
+
+    def __init__(self, trainer):
+        
+        self.trainer = trainer
+        self.graph = trainer.graph
+        self.network = trainer.network
+
+    def setup(self, dim, N_electrons, isUpperTriangle=False):
+        
+        self.dim = dim
+        self.vector_dim = vector_dim = dim*(dim+1)/2 if isUpperTriangle else dim**2
+
+        with self.graph.as_default():
+            self.x = self.network.input_tensor
+            self.f = self.network.output_tensor
+            self.y = tf.placeholder(tf.float32, [None, vector_dim], "y")
+            self.s = tf.placeholder(tf.float32, [None, vector_dim], "s")
+
+            self.f_batch = makeMatrixBatch(self.f, dim, isUpperTriangle)
+            self.s_batch = makeMatrixBatch(self.s, dim, isUpperTriangle)
+
+            self.absolute_error = absolute_error(self.f, self.y)
+            self.symmetry_error = symmetry_error(self.f_batch)
+            self.idempotence_error = \
+                idempotence_error(self.f_batch, self.s_batch)
+            self.predicted_occupance_error = \
+                predicted_occupance(self.f_batch, self.s_batch) - N_electrons
+
+    @staticmethod
+    def mf_initializer(mol):
+        mf = hf.RHF(mol)
+        mf.diis = None
+        mf.verbose = 1
+
+        return mf
+
+    def measure_iterations(self, sess, network, dataset, molecules):
+        
+        iterations = []
+        for (s_norm, molecule) in zip(dataset.testing[0], molecules):
+
+            p = sess.run(
+                self.f_batch, 
+                {self.x: s_norm.reshape(1,-1)}
+            ).reshape(self.dim, self.dim).astype('float64')
+
+            mf = self.mf_initializer(molecule.get_pyscf_molecule())
+            mf.kernel(dm0=p)
+
+            iterations.append(mf.iterations)
+
+        return iterations
+
+    def measure(self, dataset, molecules, number_of_measurements=10):
+        
+        err_abs = []
+        err_sym = []
+        err_idem = []
+        err_occ = []
+        iterations = []
+
+        s_raw = dataset.inverse_input_transform(dataset.testing[0])
+
+        for i in range(number_of_measurements):
+            network, sess = self.trainer.train(
+                dataset,
+                convergence_threshold=1e-3
+            )
+
+            with self.graph.as_default():
+                err_abs.append(statistics(
+                    sess.run(
+                        self.absolute_error, 
+                        {self.x: dataset.testing[0], self.y: dataset.testing[1]}
+                    )
+                ))
+
+                err_sym.append(statistics(
+                    sess.run(self.symmetry_error, {self.x: dataset.testing[0]})
+                ))
+
+                err_idem.append(statistics(
+                    sess.run(self.idempotence_error, 
+                    {self.x: dataset.testing[0], self.s: s_raw})
+                ))
+
+                err_occ.append(statistics(
+                    sess.run(
+                        self.predicted_occupance_error, 
+                        {self.x: dataset.testing[0], self.s: s_raw}
+                    )
+                ))
+
+                iterations.append(statistics(self.measure_iterations(
+                    sess, network, dataset, molecules
+                )))
+            
+        
+        return (
+            np.array(
+                err_abs,
+                err_sym,
+                err_idem,
+                err_occ,
+                iterations
+            )
+        )
+    
+    @staticmethod
+    def make_results_str(results):
+        
+        out = ""
+
+        def format_results(result):
+            out = list(map(
+                lambda x, y: "{:0.5E} +- {:0.5E}".format(x, y),
+                result
+            ))
+            return "\n".join(out)
+
+        out += "--- Absolute Error ---\n"
+        out += format_results(results[0])
+        out += "--- Symmetry Error ---\n"
+        out += format_results(results[1])
+        out += "--- Idempotence Error ---\n"
+        out += format_results(results[2])
+        out += "--- Occupance Error ---\n"
+        out += format_results(results[3])
+        out += "--- Avg. Iterations ---\n"
+        out += format_results(results[4])
+
+        return out
 
 if __name__ == '__main__':
     dim = 26
