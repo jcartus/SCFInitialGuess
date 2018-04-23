@@ -169,7 +169,7 @@ class NetworkAnalyzer(object):
         for i in range(number_of_measurements):
             network, sess = self.trainer.train(
                 dataset,
-                convergence_threshold=1e-3
+                convergence_threshold=1e-6
             )
 
             with self.graph.as_default():
@@ -202,13 +202,11 @@ class NetworkAnalyzer(object):
             
         
         return (
-            np.array(
-                err_abs,
-                err_sym,
-                err_idem,
-                err_occ,
-                iterations
-            )
+            np.array(err_abs),
+            np.array(err_sym),
+            np.array(err_idem),
+            np.array(err_occ),
+            np.array(iterations)
         )
     
     @staticmethod
