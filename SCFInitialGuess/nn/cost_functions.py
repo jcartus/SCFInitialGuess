@@ -76,7 +76,7 @@ def makeMatrixBatch(vector_batch, dim, isUpperTriangle=False):
     return tf.reshape(vector_batch, [-1, dim, dim])
 
 def absolute_error(f, y):
-    """Absolute errror of two tensors of matching dimension (batchwise)"""
+    """Absolute error of two tensors of matching dimension (batchwise)"""
 
     #TODO fix this!.
     #if f.get_shape() != y.get_shape():
@@ -103,7 +103,7 @@ def idempotence_error(p, s):
     """
     return absolute_error(2 * p, reduce(tf.matmul, (p, s, p)))
 
-def predicted_occupancy(p, s):
+def predicted_occupance(p, s):
     """Number of electrons in system as predicted by 
         N = tr[p s]
     p and s must be in QUADRATIC MATRIX SHAPE. s must be raw 
