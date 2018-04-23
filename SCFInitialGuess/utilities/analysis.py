@@ -64,6 +64,14 @@ def plot_summary_scalars(
     xlabel="steps / 1", 
     ylabel="costs / 1"
     ):
+    """This function is used to plot data of scalars exported from
+    tensorboard.
+
+    Args:
+        file_label_dicts <dict<str, str>>: dictionary with labels for plot and
+        file path for data to be plotted.
+        xlabel/ylabel <str>: plot axis labels.
+    """
     
     fig = plt.figure()
 
