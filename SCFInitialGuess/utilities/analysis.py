@@ -13,6 +13,7 @@ from pandas import DataFrame
 from pyscf.scf import hf
 
 #from SCFInitialGuess.utilities.dataset import reconstruct_from_triu
+from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.nn.cost_functions import absolute_error, symmetry_error
 from SCFInitialGuess.nn.cost_functions import idempotence_error, predicted_occupance, makeMatrixBatch  
 
@@ -142,7 +143,9 @@ class NetworkAnalyzer(object):
     def measure_iterations(self, sess, network, dataset, molecules):
         
         iterations = []
-        for (s_norm, molecule) in zip(dataset.testing[0], molecules):
+        for i, (s_norm, molecule) in enumerate(zip(dataset.testing[0], molecules)):
+
+            msg.info("Iteration calculation: " + str(i))
 
             p = sess.run(
                 self.f_batch, 
@@ -167,12 +170,19 @@ class NetworkAnalyzer(object):
         s_raw = dataset.inverse_input_transform(dataset.testing[0])
 
         for i in range(number_of_measurements):
+            
+            msg.info("Network: " + str(i), 2)
+            msg.info("train ... " + str(i), 1)
+
             network, sess = self.trainer.train(
                 dataset,
                 convergence_threshold=1e-6
             )
 
             with self.graph.as_default():
+                
+                msg.info("calculate quantities ...", 1)
+
                 err_abs.append(statistics(
                     sess.run(
                         self.absolute_error, 
@@ -216,21 +226,26 @@ class NetworkAnalyzer(object):
 
         def format_results(result):
             out = list(map(
-                lambda x, y: "{:0.5E} +- {:0.5E}".format(x, y),
+                lambda x: "{:0.5E} +- {:0.5E}".format(*x),
                 result
             ))
             return "\n".join(out)
 
         out += "--- Absolute Error ---\n"
         out += format_results(results[0])
+        out += "\n"
         out += "--- Symmetry Error ---\n"
         out += format_results(results[1])
+        out += "\n"
         out += "--- Idempotence Error ---\n"
         out += format_results(results[2])
+        out += "\n"
         out += "--- Occupance Error ---\n"
         out += format_results(results[3])
+        out += "\n"
         out += "--- Avg. Iterations ---\n"
         out += format_results(results[4])
+        out += "\n"
 
         return out
 
