@@ -71,7 +71,10 @@ def makeMatrixBatch(vector_batch, dim, isUpperTriangle=False):
     """
 
     if isUpperTriangle:
-        vector_batch = tf.map_fn(reconstruct_from_triu, vector_batch)
+        vector_batch = tf.map_fn(
+            lambda x: reconstruct_from_triu(x, dim), 
+            vector_batch
+        )
 
     return tf.reshape(vector_batch, [-1, dim, dim])
 
