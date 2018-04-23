@@ -13,9 +13,72 @@ import numpy as np
 import unittest
 
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
-from SCFInitialGuess.nn.training import MSE
+from SCFInitialGuess.nn.cost_functions import MSE
 from helper import NeuralNetworkMock
 
+
+class TestHelperFunctions(unittest.TestCase):
+
+    def setUp(self):
+
+        msg.print_level = 1
+        tf.reset_default_graph()
+
+    def test_absolute_error(self):
+        from SCFInitialGuess.nn.cost_functions import absolute_error
+
+        tf.reset_default_graph()
+
+        #--- prep matrix with asymmetric matix ---
+        dataset_lhs = np.array(
+            [
+                np.arange(2),
+                np.ones(2)
+            ]
+        )
+
+        dataset_rhs = np.array(
+            [
+                np.arange(2),
+                np.zeros(2)
+            ]
+        )
+        #---
+
+        f = tf.placeholder(tf.float64, shape=(None, 2))
+        g = tf.placeholder(tf.float64, shape=(None, 2))
+        error = absolute_error(f, g)
+
+        sess = tf.Session()
+        result = sess.run(error, {f: dataset_lhs, g: dataset_rhs})
+
+        np.testing.assert_array_equal(np.array([0.0, 1.0]), result)
+
+
+    def test_symmetry_error(self):    
+        from SCFInitialGuess.nn.cost_functions import symmetry_error
+
+        tf.reset_default_graph()
+
+        #--- prep matrix with asymmetric matix ---
+        dataset = []
+        b = np.ones((2, 2))
+        dataset.append(b) # error in first batch should be 0
+
+        a = np.ones((2, 2))
+        a[1][0] = 3 # average errror in first batch should be 1
+        dataset.append(a) 
+        dataset = np.array(dataset)
+        #---
+        
+        f = tf.placeholder(tf.float64, shape=(None, 2, 2))
+        error = symmetry_error(f)
+
+        sess = tf.Session()
+        result = sess.run(error, {f: dataset})
+
+        np.testing.assert_array_equal(np.array([0.0, 1.0]), result)
+        
 
 class TestErrorFunctions(unittest.TestCase):
 
