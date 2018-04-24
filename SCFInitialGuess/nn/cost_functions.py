@@ -64,18 +64,11 @@ class RegularizedMSE(MSE):
 
         return cost
 
-def makeMatrixBatch(vector_batch, dim, isUpperTriangle=False):
+def makeMatrixBatch(vector_batch, dim):
     """Turns a batch of flatted out matrices into a batch of actual matrices
     i.e. reshapes the vectors into dim x dim matrices again.
     TODO describe inputs
     """
-
-    if isUpperTriangle:
-        vector_batch = tf.map_fn(
-            lambda x: reconstruct_from_triu(x, dim), 
-            vector_batch
-        )
-
     return tf.reshape(vector_batch, [-1, dim, dim])
 
 def absolute_error(f, y):
