@@ -159,9 +159,13 @@ def measure_all_quantities(
     ):
     """This function calculates all important quantities of a 
     density matrix (of the dimension dim) guess p, for the testing data in dataset, 
-    and molecules given in moleules with n_electron electrons in them.
-    As iterations are calculated to a function to initialize the scf engine 
-    is handen over to (mf_initializer)
+    and molecules given in molecules with n_electron electrons in them.
+    As iterations are calculated too, a function to initialize the scf engine 
+    is handed over by mf_initialize.
+    
+    Returns:
+        a tuple of tuples containing the values and error for each quantity 
+        measured. Eg.g ((error1, error of error1), (error2, error of ...), ...)
     """
 
     s_raw_batch = make_matrix_batch(
@@ -196,7 +200,37 @@ def measure_all_quantities(
         )
     ))
 
-    return err_abs, errr_sym, err_idem, err_occ, iterations
+    return err_abs, err_sym, err_idem, err_occ, iterations
+
+def make_results_str(results):
+    """Creates a printable string from results of measure all quantities"""
+
+    out = ""
+
+    def format_results(result):
+        out = list(map(
+            lambda x: "{:0.5E} +- {:0.5E}".format(*x),
+            result
+        ))
+        return "\n".join(out)
+
+    out += "--- Absolute Error ---\n"
+    out += format_results(results[0])
+    out += "\n"
+    out += "--- Symmetry Error ---\n"
+    out += format_results(results[1])
+    out += "\n"
+    out += "--- Idempotence Error ---\n"
+    out += format_results(results[2])
+    out += "\n"
+    out += "--- Occupance Error ---\n"
+    out += format_results(results[3])
+    out += "\n"
+    out += "--- Avg. Iterations ---\n"
+    out += format_results(results[4])
+    out += "\n"
+
+    return out
 
 class NetworkAnalyzer(object):
 
@@ -316,34 +350,7 @@ class NetworkAnalyzer(object):
     
     @staticmethod
     def make_results_str(results):
-        
-        out = ""
-
-        def format_results(result):
-            out = list(map(
-                lambda x: "{:0.5E} +- {:0.5E}".format(*x),
-                result
-            ))
-            return "\n".join(out)
-
-        out += "--- Absolute Error ---\n"
-        out += format_results(results[0])
-        out += "\n"
-        out += "--- Symmetry Error ---\n"
-        out += format_results(results[1])
-        out += "\n"
-        out += "--- Idempotence Error ---\n"
-        out += format_results(results[2])
-        out += "\n"
-        out += "--- Occupance Error ---\n"
-        out += format_results(results[3])
-        out += "\n"
-        out += "--- Avg. Iterations ---\n"
-        out += format_results(results[4])
-        out += "\n"
-
-        return out
-
+        return make_results_str(results)
 if __name__ == '__main__':
     dim = 26
     A = np.random.rand(dim, dim)
