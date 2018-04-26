@@ -1,5 +1,5 @@
 from functools import reduce
-
+from datetime import date, datetime
 
 import numpy as np
 import tensorflow as tf
@@ -14,7 +14,7 @@ from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.analysis import statistics
 
 # ethan
-dim = 58
+
 #msg.print_level = 1
 
 class TriuNetworkAnalyzer(object):
@@ -34,14 +34,15 @@ class TriuNetworkAnalyzer(object):
 
         return mf
 
-    def measure_iterations(self, guesses, molecules):
+    @staticmethod
+    def measure_iterations(mf_initializer, guesses, molecules):
         
         iterations = []
         for i, (p, molecule) in enumerate(zip(guesses, molecules)):
 
             msg.info("Iteration calculation: " + str(i))
 
-            mf = self.mf_initializer(molecule.get_pyscf_molecule())
+            mf = mf_initializer(molecule.get_pyscf_molecule())
             mf.kernel(dm0=p)
 
             iterations.append(mf.iterations)
@@ -111,11 +112,15 @@ class TriuNetworkAnalyzer(object):
                 )))
 
                 err_occ.append(statistics(list(
-                    self.measure_occupance_error(p_batch, s_raw)
+                    self.measure_occupance_error(p_batch, s_raw, self.n_electrons)
                 )))
 
                 iterations.append(statistics(list(
-                    self.measure_iterations(p_batch.astype('float64'), molecules)
+                    self.measure_iterations(
+                        self.mf_initializer, 
+                        p_batch.astype('float64'), 
+                        molecules
+                    )
                 )))
             
         
@@ -127,21 +132,25 @@ class TriuNetworkAnalyzer(object):
             np.array(iterations)
         )
     
-    def measure_absolute_error(self, p, dataset):
+    @staticmethod
+    def measure_absolute_error(p, dataset):
 
         return np.mean(np.abs(p - dataset.testing[0]), 1)
 
-    def measure_symmetry_error(self, p_batch):
+    @staticmethod
+    def measure_symmetry_error(p_batch):
         for p in p_batch:
             yield np.mean(np.abs(p - p.T))
 
-    def measure_idempotence_error(self, p_batch, s_batch):
+    @staticmethod
+    def measure_idempotence_error(p_batch, s_batch):
         for (p, s) in zip(p_batch, s_batch):
             yield np.mean(np.abs(2 * p - reduce(np.dot, (p, s, p))))
 
-    def measure_occupance_error(self, p_batch, s_batch):
+    @staticmethod
+    def measure_occupance_error(p_batch, s_batch, n_electrons):
         for (p, s) in zip(p_batch, s_batch):
-            yield np.mean(np.abs(np.trace(np.dot(p, s)) - self.n_electrons))
+            yield np.mean(np.abs(np.trace(np.dot(p, s)) - n_electrons))
 
     @staticmethod
     def make_results_str(results):
@@ -174,9 +183,9 @@ class TriuNetworkAnalyzer(object):
         return out
 
 
-def fetch_dataset():
+def fetch_dataset(path, dim):
     #--- the dataset ---
-    S, P = np.load("cc2ai/ethan/dataset_ethan_6-31g**.npy")
+    S, P = np.load(path)
 
     
     ind_cut = 150
@@ -201,27 +210,47 @@ def fetch_dataset():
 
 def main():
 
-    dim_triu = int(dim * (dim + 1) / 2)
+    dim = {
+        "ethan": 58,
+        "ethen": 48,
+        "ethin": 38
+    }
 
-    msg.info("Fetch data ...", 2)
-    dataset = fetch_dataset()
-    molecules = np.load("cc2ai/ethan/molecules_ethan_6-31g**.npy")[150:]
+    log_file = "cc2ai/results/" + str(date.today()) + ".log"
+    with open(log_file, "a+") as f:
+        f.write("##### Analysis of " + str(datetime.now()) + " #####\n")
 
-    msg.info("Setup trainer ...", 2)
-    trainer = Trainer(
-        EluTrNNN([dim_triu, dim_triu, dim_triu]),
-        cost_function=MSE()
-    )
-    trainer.setup()
-    
-    msg.info("Setup analyzer ...", 2)
-    analyzer = TriuNetworkAnalyzer(trainer, dim, 30)
+    for key, value in dim.items():
+        dim_triu = int(value * (value + 1) / 2)
 
-    msg.info("Do measurements ...", 2)
-    results = analyzer.measure(dataset, molecules)
+        msg.info("Starting " + key, 2)
 
-    msg.info("Plot results ...", 2)
-    print(analyzer.make_results_str(results))
+        msg.info("Fetch data ...", 2)
+        dataset = fetch_dataset(
+            "cc2ai/" + key + "/dataset_" + key + "_6-31g**.npy", 
+            value
+        )
+        molecules = np.load(
+            "cc2ai/" + key +"/molecules_" + key + "_6-31g**.npy"
+        )[150:]
+
+        msg.info("Setup trainer ...", 2)
+        trainer = Trainer(
+            EluTrNNN([dim_triu, dim_triu, dim_triu]),
+            cost_function=MSE()
+        )
+        trainer.setup()
+        
+        msg.info("Setup analyzer ...", 2)
+        analyzer = TriuNetworkAnalyzer(trainer, value, 30)
+
+        msg.info("Do measurements ...", 2)
+        results = analyzer.measure(dataset, molecules)
+
+        msg.info("Plot results ...", 2)
+
+        with open(log_file, "a+") as f:
+            f.write(analyzer.make_results_str(results))
 
 
 if __name__ == '__main__':
