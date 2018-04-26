@@ -4,6 +4,8 @@ Author:
     - Johannes Cartus, QCIEP, TU Graz
 """
 
+from functools import reduce
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -12,10 +14,10 @@ import tensorflow as tf
 from pandas import DataFrame
 from pyscf.scf import hf
 
-#from SCFInitialGuess.utilities.dataset import reconstruct_from_triu
+from SCFInitialGuess.utilities.dataset import make_matrix_batch
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
-from SCFInitialGuess.nn.cost_functions import absolute_error, symmetry_error
-from SCFInitialGuess.nn.cost_functions import idempotence_error, predicted_occupance, makeMatrixBatch  
+
+
 
 def statistics(x):
     return np.mean(x), np.std(x)
@@ -102,6 +104,99 @@ def plot_summary_scalars(
         plt.legend()
 
     return fig
+
+def mf_initializer(mol):
+    """Will init pyscf hf engine"""
+    mf = hf.RHF(mol)
+    mf.diis = None
+    mf.verbose = 1
+
+    return mf
+
+def measure_iterations(mf_initializer, guesses, molecules):
+    """For an scf engine as returned by mf_initializer
+    for a list of molecules and a list of corresponding guesses the number 
+    of required iterations will be returned.
+    """
+
+    iterations = []
+    for i, (p, molecule) in enumerate(zip(guesses, molecules)):
+
+        msg.info("Iteration calculation: " + str(i))
+
+        mf = mf_initializer(molecule.get_pyscf_molecule())
+        mf.kernel(dm0=p)
+
+        iterations.append(mf.iterations)
+
+    return iterations
+
+def measure_symmetry_error(p_batch):
+    """For a list of QUADRATIC Matrices calculate symmetry""" 
+    for p in p_batch:
+        yield np.mean(np.abs(p - p.T))
+
+def measure_absolute_error(p, dataset):
+    """The absolute error between a network guess p and the testing data"""
+    return np.mean(np.abs(p - dataset.testing[0]), 1)
+
+def measure_idempotence_error(p_batch, s_batch):
+    for (p, s) in zip(p_batch, s_batch):
+        yield np.mean(np.abs(2 * p - reduce(np.dot, (p, s, p))))
+
+def measure_occupance_error(p_batch, s_batch, n_electrons):
+    for (p, s) in zip(p_batch, s_batch):
+        yield np.mean(np.abs(np.trace(np.dot(p, s)) - n_electrons))
+
+def measure_all_quantities(
+        p,
+        dataset,
+        molecules,
+        n_electrons,
+        mf_initializer,
+        dim,
+        is_triu=False
+    ):
+    """This function calculates all important quantities of a 
+    density matrix (of the dimension dim) guess p, for the testing data in dataset, 
+    and molecules given in moleules with n_electron electrons in them.
+    As iterations are calculated to a function to initialize the scf engine 
+    is handen over to (mf_initializer)
+    """
+
+    s_raw_batch = make_matrix_batch(
+        dataset.inverse_input_transform(dataset.testing[0]),
+        dim,
+        is_triu
+    )
+
+    p_batch = make_matrix_batch(p, dim, is_triu)
+
+    err_abs = statistics(list(
+        measure_absolute_error(p, dataset)
+    ))
+
+    err_sym = statistics(list(
+        measure_symmetry_error(p_batch)
+    ))
+
+    err_idem = statistics(list(
+        measure_idempotence_error(p_batch, s_raw_batch)
+    ))
+
+    err_occ = statistics(list(
+        measure_occupance_error(p_batch, s_raw_batch, n_electrons)
+    ))
+
+    iterations = statistics(list(
+        measure_iterations(
+            mf_initializer, 
+            p_batch.astype('float64'), 
+            molecules
+        )
+    ))
+
+    return err_abs, errr_sym, err_idem, err_occ, iterations
 
 class NetworkAnalyzer(object):
 
