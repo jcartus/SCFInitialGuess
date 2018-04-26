@@ -418,6 +418,20 @@ def reconstruct_from_triu(A_flat, dim):
     result[np.triu_indices(dim)] = A_flat
     return result + result.T - np.diag(np.diag(result))
 
+def make_matrix_batch(vector_batch, dim, is_triu=False):
+        """Turns a batch of flatted out matrices into a batch of actual matrices
+        i.e. reshapes the vectors into dim x dim matrices again.
+        TODO describe inputs
+        """
+
+        if is_triu:
+            vector_batch = np.array(list(map(
+                lambda x: reconstruct_from_triu(x, dim), 
+                vector_batch
+            )))
+
+        return vector_batch.reshape([-1, dim, dim])
+
 def make_butadien_dataset(molecules, S, P, test_samples=50):
     """This function creates a dataset where S, P Matrix and 
     the molecules match.
