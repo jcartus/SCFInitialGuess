@@ -64,10 +64,11 @@ class RegularizedMSE(MSE):
 
         return cost
 
-def makeMatrixBatch(vector_batch, dim):
+def make_matrix_batch_tensor(vector_batch, dim):
     """Turns a batch of flatted out matrices into a batch of actual matrices
     i.e. reshapes the vectors into dim x dim matrices again.
-    TODO describe inputs
+    Difference to make_matrix_batch in SCFInitialguess.utilities.dataset:
+    this function works on tensorflow tensors
     """
     return tf.reshape(vector_batch, [-1, dim, dim])
 
