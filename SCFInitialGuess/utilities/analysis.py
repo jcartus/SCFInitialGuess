@@ -138,7 +138,7 @@ def measure_symmetry_error(p_batch):
 
 def measure_absolute_error(p, dataset):
     """The absolute error between a network guess p and the testing data"""
-    return np.mean(np.abs(p - dataset.testing[0]), 1)
+    return np.mean(np.abs(p - dataset.testing[1]), 1)
 
 def measure_idempotence_error(p_batch, s_batch):
     for (p, s) in zip(p_batch, s_batch):
