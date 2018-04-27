@@ -48,6 +48,16 @@ class AbstractTest(unittest.TestCase):
                 msg="Element " + str(i) + " did not match to req. precision."
             )
 
+
+
+class DatasetMock(object):
+    
+    def __init__(self, training=None, validation=None, testing=None):
+
+        self.training = training
+        self.validation = validation
+        self.testing = testing
+
 class NeuralNetworkMock(object):
 
     def __init__(self, structure, function=None):
