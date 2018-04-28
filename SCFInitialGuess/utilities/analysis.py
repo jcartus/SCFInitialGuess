@@ -106,11 +106,15 @@ def plot_summary_scalars(
     return fig
 
 def mf_initializer(mol):
-    """Will init pyscf hf engine"""
+    """Will init pyscf hf engine. With damping of 0.3 and maximum of 100 
+    iterations"""
     mf = hf.RHF(mol)
     mf.diis = None
+    mf.diis_start_cycle = 1000
+    mf.damp = 0.3
     mf.verbose = 1
-
+    mf.max_cycle = 100
+    
     return mf
 
 def measure_iterations(mf_initializer, guesses, molecules):
