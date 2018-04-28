@@ -77,10 +77,18 @@ def main(data_folder="butadien/data/"):
     msg.info("Fetching molecules", 2)
     molecules = list(fetch_molecules(data_folder + "data"))
 
+    index = np.arange(len(molecules))
+    np.random.shuffle(index)
+
+    molecules =[molecules[i] for i in index]
+
     msg.info("Starting SCF Calculation", 2)
     S, P = scf_runs(molecules)
 
     msg.info("Exporting Results", 2)
+    msg.info("Index ...", 1)
+    np.save(data_folder + "index.npy", index)
+
     msg.info("Molecules ...", 1)
     np.save(data_folder + "dataset.npy", (S,P))
     msg.info("S & P ...", 1)
