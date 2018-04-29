@@ -159,6 +159,14 @@ def measure_hf_energy(p_batch, molecules):
         h1e = mf.get_hcore()
         veff = mf.get_veff(dm=p)
         yield mf.energy_tot(p, h1e, veff)
+
+def measure_hf_energy_error(p_batch, p_dataset_batch, molecules):
+
+    E_nn = measure_hf_energy(p_batch, molecules)
+    E_ds = measure_hf_energy(p_dataset_batch, molecules)
+
+    for (e_nn, e_ds) in zip(E_nn, E_ds):
+        yield np.abs(e_nn -  e_ds)
         
 
 def measure_all_quantities(
