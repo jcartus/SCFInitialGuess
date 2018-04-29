@@ -152,6 +152,15 @@ def measure_occupance_error(p_batch, s_batch, n_electrons):
     for (p, s) in zip(p_batch, s_batch):
         yield np.mean(np.abs(np.trace(np.dot(p, s)) - n_electrons))
 
+def measure_hf_energy(p_batch, molecules):
+
+    for (p, mol) in zip(p_batch, molecules):
+        mf = hf.RHF(mol)
+        h1e = mf.get_hcore()
+        veff = mf.get_veff(dm=p)
+        yield mf.energy_tot(p, h1e, veff)
+        
+
 def measure_all_quantities(
         p,
         dataset,
