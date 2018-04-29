@@ -106,11 +106,15 @@ def plot_summary_scalars(
     return fig
 
 def mf_initializer(mol):
-    """Will init pyscf hf engine"""
+    """Will init pyscf hf engine. With damping of 0.3 and maximum of 100 
+    iterations"""
     mf = hf.RHF(mol)
     mf.diis = None
+    mf.diis_start_cycle = 1000
+    mf.damp = 0.3
     mf.verbose = 1
-
+    mf.max_cycle = 100
+    
     return mf
 
 def measure_iterations(mf_initializer, guesses, molecules):
@@ -138,7 +142,7 @@ def measure_symmetry_error(p_batch):
 
 def measure_absolute_error(p, dataset):
     """The absolute error between a network guess p and the testing data"""
-    return np.mean(np.abs(p - dataset.testing[0]), 1)
+    return np.mean(np.abs(p - dataset.testing[1]), 1)
 
 def measure_idempotence_error(p_batch, s_batch):
     for (p, s) in zip(p_batch, s_batch):
@@ -147,6 +151,23 @@ def measure_idempotence_error(p_batch, s_batch):
 def measure_occupance_error(p_batch, s_batch, n_electrons):
     for (p, s) in zip(p_batch, s_batch):
         yield np.mean(np.abs(np.trace(np.dot(p, s)) - n_electrons))
+
+def measure_hf_energy(p_batch, molecules):
+
+    for (p, mol) in zip(p_batch, molecules):
+        mf = hf.RHF(mol)
+        h1e = mf.get_hcore()
+        veff = mf.get_veff(dm=p)
+        yield mf.energy_tot(p, h1e, veff)
+
+def measure_hf_energy_error(p_batch, p_dataset_batch, molecules):
+
+    E_nn = measure_hf_energy(p_batch, molecules)
+    E_ds = measure_hf_energy(p_dataset_batch, molecules)
+
+    for (e_nn, e_ds) in zip(E_nn, E_ds):
+        yield np.abs(e_nn -  e_ds)
+        
 
 def measure_all_quantities(
         p,
