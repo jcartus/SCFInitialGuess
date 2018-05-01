@@ -8,6 +8,10 @@ Author:
 import warnings
 from datetime import datetime
 
+try:
+    input = raw_input
+except:
+    pass
 
 class MarkerTheme(object):
     """Parent class for marker themes, Abstract class!"""
@@ -17,6 +21,7 @@ class MarkerTheme(object):
     _info_low = ""
     _info_medium = ""
     _info_high = ""
+    _input = ""
 
 
     def __init__(self):
@@ -39,6 +44,10 @@ class MarkerTheme(object):
             cls._info_high + " "
         ][level]
 
+    @classmethod
+    def input(cls):
+        return cls._input + " "
+
 class BracketMarkers(MarkerTheme):
     """A marker theme for logging that uses brackes"""
 
@@ -48,6 +57,8 @@ class BracketMarkers(MarkerTheme):
     _info_low = "[ ]"
     _info_medium = "[-]"
     _info_high = "[+]"
+    
+    _input = "[?]"
 
 
     def __init__(self):
@@ -95,8 +106,13 @@ class Messenger(object):
             cls.marker_theme.error() + cls.time() + message, *args, **kwargs
         )
 
+    @classmethod
+    def input(cls, message):
+        """Prompt user input """
 
-
-
+        # for python 2/3 compatibility:
+        
+        
+        return input(cls.marker_theme.input() + cls.time() + message + ": ")
 
 
