@@ -65,7 +65,6 @@ class Molecule(object):
 
         return mol
 
-
 class QChemResultsReader(object):
 
     def __init__(self):
@@ -258,6 +257,7 @@ class Result(object):
         H <np.array<double>>: core hamiltonian
         F <np.array<double>>: fock matrix from last SCF step.
         P <np.array<double>>: density matrix from last SCF step
+        atoms list<str>: the species available in the molecule of the result.
     """
 
     def __init__(self, root_dir, job_name=None ):
@@ -269,9 +269,6 @@ class Result(object):
             - job name <str>: the name of the job (which as given to the
             qChem job for calculation). If none given it will be assumed to be
             the name of the root directory.
-        
-        TODO:
-            - maybe turn this into a context
         """
         
         if not isdir(root_dir):
@@ -347,7 +344,6 @@ class Result(object):
         
         return atoms
 
-
     def _index_range(self, atom_index):
         """Calculate the range of matrix elements for atom specified by index in
         atoms list."""
@@ -361,23 +357,22 @@ class Result(object):
 
         return start, end
         
-    def create_batch(self, atom_type, descriptor):
+    def create_batch(self, atom_type, extractor):
         """This will check for all atoms of the given type in the molecule and 
         create a set of inputs (x) and expected outputs (y) for each instance.
+        The values x and y are extracted by an extractor object from the 
+        Result. 
+        [Previously that instead of an extractor the descriptor 
+        was directly applied at this stage.]
         
         Args:
             atom_type <str>: element symbol for atom type for which input/output
             data shall be put together.
 
         Returns:
-            A list of tuples that contains the descriptors x_i and and elements
+            A tuples of two list that contain the extractors x_i and and elements
             of the fock matrix that correspond to the atom in question. One 
             list element per instance of atom_type atoms found in the molecule.
-
-        Example:
-            let atom_type be C. Then the function will check for all C atoms in
-            the molecule and return descriptors & sections of the fock matrix
-            for each instance found.
         """
 
         try:
@@ -399,10 +394,11 @@ class Result(object):
         y_list = []
 
         for ind in atom_instance_indices:
-            x_list.append(descriptor.input_values(self.S, self.atoms, ind))
-            y_list.append(descriptor.target_values(self, ind))
+            x_list.append(extractor.input_values(self.S, self.atoms, ind))
+            y_list.append(extractor.target_values(self, ind))
            
         return x_list, y_list
+
 
 def extract_triu(A, dim):
     """Extracts the upper triangular part of the matrix.
@@ -464,6 +460,109 @@ def make_butadien_dataset(molecules, S, P, test_samples=50):
 
     return dataset, (molecules_train, molecules_test)
 
+
+class AbstractExtractor(object):
+    """An abstract descriptor class (previously used as 'desriptor').
+    Used to extract parts of S or P matrix to put into a dataset object for
+    training.
+    """
+
+    @staticmethod
+    def index_range(atoms, atom_index):
+        """Calculate the range of matrix elements for atom specified by index in
+        atoms list."""
+
+        # summ up the number of basis functions of previous atoms
+        start = 0
+        for i in range(atom_index):
+            start += N_BASIS[atoms[i]]
+        
+        end = start + N_BASIS[atoms[atom_index]]
+
+        return start, end
+
+    @classmethod
+    def input_values(cls, S, atoms, index):
+        raise NotImplementedError("AbstractExtractor is an abstract class!")
+
+    @classmethod
+    def target_values(cls, result, index):
+        raise NotImplementedError("AbstractExtractor is an abstract class!")
+
+class BlockExtractor(object):
+    """An abstract extractor class (however 'desriptor' previously used for
+    descriptors). Extracts some parts of S and P Matrix to use for network
+    training.
+    """
+
+    @staticmethod
+    def index_range(atoms, atom_index):
+        """Calculate the range of matrix elements for atom specified by index in
+        atoms list."""
+
+        # summ up the number of basis functions of previous atoms
+        start = 0
+        for i in range(atom_index):
+            start += N_BASIS[atoms[i]]
+        
+        end = start + N_BASIS[atoms[atom_index]]
+
+        return start, end
+
+    @classmethod
+    def input_values(cls, S, atoms, index):
+        """Returns a list with for each atom in the molecule of the result 
+        a list of overlap blocks.
+
+         ____ __________
+        | C  |  :  :    | <-- For the first C, the three blocks right from the
+        |____|__:__:____|     self overlap area (i.e. the C-Block) are retrned
+        |    |_H|__     |
+        |       |_H|____|
+        |          | O  |
+        |__________|____|
+
+        Args:
+            - S np.array (2D): with a quadratic Matrix of the shape as, say the
+            overlap matrix.
+            - atoms list<str>: a list of atoms in the molecule
+            - index int: index of the molecule for which the descriptor schall 
+            be calculated.
+        """
+        
+        # find the range of the block-band for the atom in question
+        start_rows, end_rows = cls.index_range(atoms, index)
+
+        atom_blocks = []
+
+        for i, atom in enumerate(atoms):
+            
+            #ignore the self-overlap part
+            if i == index:
+                continue
+            
+            start_cols, end_cols = cls.index_range(atoms, i)
+
+            # find block 
+            atom_blocks.append((
+                atoms[i], 
+                S[start_rows:end_rows, start_cols:start_cols]
+            ))
+
+        return atom_blocks
+
+
+    
+
+    @classmethod
+    def target_values(cls, result, index):
+        """Extract a part of the P or the F Matrix"""
+        start, end = cls.index_range(result.atoms, index)
+
+        return result.P[start:end, start:end]
+
+
+
 class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 
     split it.
@@ -473,7 +572,8 @@ class Dataset(object):
         y, 
         split_test=0.1, 
         split_validation=0.2,
-        normalize_input=True
+        normalize_input=True,
+        static_mode=False
         ):
         """Ctor
 
@@ -484,6 +584,7 @@ class Dataset(object):
                 be used for testing
             - split_validation <float>: the fraction how much of the dataset -test
                 set shall be used for validation.
+            - static_mode <bool>: the randomisation if turned off!
         """
 
         if not isinstance(x, np.ndarray):
@@ -509,7 +610,9 @@ class Dataset(object):
         
 
         # shuffle dataset
-        dataset = self.shuffle_batch(x, y)
+        if not static_mode:
+            dataset = self.shuffle_batch(x, y)
+
 
         # extract test data
         dataset, self.testing = self.split_dataset(
@@ -524,6 +627,27 @@ class Dataset(object):
             dataset[0], 
             dataset[1], 
             split_validation
+        )
+
+
+    @classmethod
+    def create_from_splits(cls, 
+        testing, 
+        validation, 
+        training, 
+        normalize_input=True
+        ):
+
+        x = training[0] + validation[0] + testing[0]
+        y = training[1] + validation[1] + testing[1]
+        
+        split_test = len(testing) / len(x)
+        split_validation = len(validation) / len(x)
+
+        return cls(
+            x, y, 
+            split_test, split_validation, normalize_input, 
+            static_mode=True
         )
 
     def sample_minibatch(self, size):
@@ -592,6 +716,7 @@ class Dataset(object):
         return self.denormalize(x, self.x_mean, self.x_std)
 
 
+
     @staticmethod
     def normalize(x, std_tolerance=1e-20, mean=None, std=None):
         """Will trans form a dataset with elements x_ij, where j is the index
@@ -619,6 +744,108 @@ class Dataset(object):
         """The inverse trans formation to normalize"""
 
         return x * std + mean
+
+
+class SCFResultsDataset(object):
+    """This class will serve as a gathering of input data needed to train and
+    evaluate one or many neural networks with SCF calculation results.
+
+    The difficulty here is to create batches for training of atomic nns, while
+    still being able to provide S and P matrices of the whole molecule.
+
+    Attribute:
+        - available_species dict<str, int>: a dictionary storing the number of
+            environments available for atom types that appear in the dataset.
+    """
+
+    def __init__(self, 
+        results, 
+        split_test=0.1, 
+        split_validation=0.2
+        ):
+
+
+        #--- update avail able species ---
+        self.available_species = {}
+        for result in results:
+
+            for atom in result.atoms:
+                if atom in self.available_species:
+                    self.available_species[atom] += 1
+                else:
+                    self.available_species[atom] = 1
+        #---
+
+        #--- randomize and split dataset in test & train & validation ---
+        indices = np.arange(len(results))
+        np.random.shuffle(indices)
+
+        # TODO stimmen die so?
+        index_test = self.process_fractions(split_test, len(results))
+        index_validation = index_test + self.process_fractions(
+            split_validation, 
+            len(results) - index_test
+        )
+
+        self.testing = results[:index_test]
+        self.validation = results[index_test:index_validation]
+        self.training = results[index_validation:]
+
+        if len(self.testing) + len(self.validation) + len(self.training) \
+                != len(results):
+            raise ValueError("Split values for testing, validation and " + \
+                "training are inconsistent!")
+        #---
+
+    @staticmethod
+    def process_fractions(fraction, total_count):
+        """Converts a fraction to an int (number of elements)"""
+        if isinstance(fraction, int):
+            return fraction
+        elif isinstance(fraction, float):
+            return int(np.ceil(fraction * total_count))
+
+    @staticmethod
+    def assemble_batch(results, species, extractor):
+
+        if extractor is None:
+            extractor = BlockExtractor()
+        
+        x, y = [], []
+        for result in results:
+            
+            # logg how many points were found
+            points_found = 0
+
+            # go through all molecules in this data base
+            data = result.create_batch(species, extractor) 
+            x += data[0] 
+            y += list(map(np.diag, data[1])) #todo: maybe the cast to list is not necessary
+            points_found += len(data[0])
+            
+        return x, y
+
+    def create_trainable_dataset(self, species, descriptor):
+        """Returns a dataset that can be used in training
+        routines SCFInitialguess.nn.training. The values in this dataset
+        are inputs for Descriptor function which in turn produce the network 
+        inputs!!!
+        """
+
+        testing = self.assemble_batch(self.testing, species, descriptor)
+        validation = self.assemble_batch(self.validation, species, descriptor)
+        training = self.assemble_batch(self.training, species, descriptor)
+
+        return Dataset.create_from_splits(
+            testing, 
+            validation, 
+            training, 
+            normalize_input=False,
+        )
+    
+
+
+   
 
 def assemble_batch(folder_list, species="C", descriptor=None):
     """Looks in all folders for results to create a large batch to test the 
