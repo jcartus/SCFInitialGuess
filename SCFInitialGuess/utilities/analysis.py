@@ -174,7 +174,7 @@ def measure_occupance_error(p_batch, s_batch, n_electrons):
 def measure_hf_energy(p_batch, molecules):
 
     for (p, mol) in zip(p_batch, molecules):
-        mf = hf.RHF(mol)
+        mf = hf.RHF(mol.get_pyscf_molecule())
         h1e = mf.get_hcore()
         veff = mf.get_veff(dm=p)
         yield mf.energy_tot(p, h1e, veff)
@@ -232,6 +232,14 @@ def measure_all_quantities(
         measure_occupance_error(p_batch, s_raw_batch, n_electrons)
     ))
 
+    err_Ehf = statistics(list(
+        measure_hf_energy_error(
+            p_batch, 
+            make_matrix_batch(dataset.testing[1], dim, is_triu), 
+            molecules
+        )
+    ))
+
     iterations = statistics(list(
         measure_iterations(
             mf_initializer, 
@@ -240,7 +248,7 @@ def measure_all_quantities(
         )
     ))
 
-    return err_abs, err_sym, err_idem, err_occ, iterations
+    return err_abs, err_sym, err_idem, err_occ, err_Ehf, iterations
 
 def make_results_str(results):
     """Creates a printable string from results of measure all quantities"""
@@ -248,11 +256,15 @@ def make_results_str(results):
     out = ""
 
     def format_results(result):
-        out = list(map(
-            lambda x: "{:0.5E} +- {:0.5E}".format(*x),
-            result
-        ))
-        return "\n".join(out)
+        if isinstance(result, list):
+            out = list(map(
+                lambda x: "{:0.5E} +- {:0.5E}".format(*x),
+                result
+            ))
+            out = "\n".join(out)
+        else:
+            out =  "{:0.5E} +- {:0.5E}".format(*result)
+        return out
 
     out += "--- Absolute Error ---\n"
     out += format_results(results[0])
@@ -266,8 +278,11 @@ def make_results_str(results):
     out += "--- Occupance Error ---\n"
     out += format_results(results[3])
     out += "\n"
-    out += "--- Avg. Iterations ---\n"
+    out += "--- HF Energy Error ---\n"
     out += format_results(results[4])
+    out += "\n"
+    out += "--- Avg. Iterations ---\n"
+    out += format_results(results[5])
     out += "\n"
 
     return out
