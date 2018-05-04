@@ -174,41 +174,41 @@ def main(molecule_type):
         f.write("##### Analysis of " + str(datetime.now()) + " #####\n")
     msg.info("Results NN: ", 1)
     with open(log_file, "a+") as f:
-        f.write("+++++ Plain NN +++++")
+        f.write("\n+++++ Plain NN +++++\n")
     measure_and_display(
         p_nn, dataset_triu, molecules, molecule_type, True, log_file
     )
     
     with open(log_file, "a+") as f:
-        f.write("+++++ McW 1 +++++")
+        f.write("\n\n+++++ McW 1 +++++\n")
     msg.info("Results McWheeny 1: ",1)
     measure_and_display(
         p_mcw1.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
     )
     
     with open(log_file, "a+") as f:
-        f.write("+++++ McW 5 +++++")
+        f.write("\n\n+++++ McW 5 +++++\n")
     msg.info("Results McWheeny 5: ", 1)
     measure_and_display(
         p_mcw5.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
     )
 
     with open(log_file, "a+") as f:
-        f.write("+++++ SAP +++++")
+        f.write("\n\n+++++ SAP +++++\n")
     msg.info("Results SAP: ", 1)
     measure_and_display(
         p_gwh.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
     )
 
     with open(log_file, "a+") as f:
-        f.write("+++++ MINAO +++++")
+        f.write("\n\n+++++ MINAO +++++\n")
     msg.info("Results MINAO: ", 1)
     measure_and_display(
         p_minao.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
     )
 
     with open(log_file, "a+") as f:
-        f.write("+++++ GWH +++++")
+        f.write("\n\n+++++ GWH +++++\n")
     msg.info("Results GWH: ", 1)
     measure_and_display(
         p_gwh.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
