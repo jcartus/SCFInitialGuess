@@ -121,10 +121,8 @@ def main(molecule_type):
 
     #--- fetch dataset and constants ---
     msg.info("Fetching dataset", 2)
-    index = np.arange(200)
-    np.random.shuffle(index)
-    dataset_triu, molecules = fetch_dataset(molecule_type, True, index)
-    dataset, _ = fetch_dataset(molecule_type, False, index)
+    dataset_triu, molecules = fetch_dataset(molecule_type, True)
+    dataset, _ = fetch_dataset(molecule_type, False)
     dim = DIM[molecule_type]
     #---
 
