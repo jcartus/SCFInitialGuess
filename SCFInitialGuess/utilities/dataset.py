@@ -442,13 +442,13 @@ def make_butadien_dataset(molecules, S, P, test_samples=50):
         The dataset, and the molecules (split in train and test)
     """
 
-    ind_cut = 150
-    index = np.arange(200)
+    ind_cut = len(S) - test_samples
+    index = np.arange(len(S))
     np.random.shuffle(index)
 
     S_test = np.array(S)[index[ind_cut:]]
     P_test = np.array(P)[index[ind_cut:]]
-    molecules_test = [molecules[index[i]] for i in range(ind_cut, 200)]
+    molecules_test = [molecules[index[i]] for i in range(ind_cut, len(S))]
 
     S_train = np.array(S)[index[:ind_cut]]
     P_train = np.array(P)[index[:ind_cut]]
@@ -763,6 +763,7 @@ class SCFResultsDataset(object):
         split_test=0.1, 
         split_validation=0.2
         ):
+
 
 
         #--- update avail able species ---
