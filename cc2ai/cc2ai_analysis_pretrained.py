@@ -1,5 +1,6 @@
 from functools import reduce
 import argparse
+from datetime import date, datetime
 
 import numpy as np
 import tensorflow as tf
@@ -27,7 +28,7 @@ N_ELECTRONS = {
     "ethin": 14
 }
 
-def fetch_dataset(molecule_type):
+def fetch_dataset(molecule_type, is_triu=True, index=None):
 
         dim = DIM[molecule_type]
 
@@ -35,16 +36,30 @@ def fetch_dataset(molecule_type):
             
             return [extract_triu(s, dim) for s in S], [extract_triu(p, dim) for p in P]
 
-        dataset, molecules = make_butadien_dataset(
-            np.load(
-                "cc2ai/" + \
-                molecule_type + "/molecules_" + molecule_type + "_6-31g**.npy"
-            ),
-            *load_triu(*np.load(
-                "cc2ai/" + \
-                molecule_type + "/dataset_" + molecule_type + "_6-31g**.npy"
-            ), dim), 
-        )
+        if is_triu:
+            dataset, molecules = make_butadien_dataset(
+                np.load(
+                    "cc2ai/" + \
+                    molecule_type + "/molecules_" + molecule_type + "_6-31g**.npy"
+                ),
+                *load_triu(*np.load(
+                    "cc2ai/" + \
+                    molecule_type + "/dataset_" + molecule_type + "_6-31g**.npy"
+                ), dim), 
+                index=index
+            )
+        else:
+            dataset, molecules = make_butadien_dataset(
+                np.load(
+                    "cc2ai/" + \
+                    molecule_type + "/molecules_" + molecule_type + "_6-31g**.npy"
+                ),
+                *np.load(
+                    "cc2ai/" + \
+                    molecule_type + "/dataset_" + molecule_type + "_6-31g**.npy"
+                ),
+                index=index
+            )
 
         return dataset, molecules
 
@@ -56,7 +71,7 @@ def multi_mc_wheeny(p, s, n_max=4):
         p = mc_wheeny_purification(p, s)
     return p
 
-def measure_and_display(p, dataset, molecules, molecule_type):
+def measure_and_display(p, dataset, molecules, molecule_type, is_triu, log_file):
     def format_results(result):
         if isinstance(result, list):
             out = list(map(
@@ -77,25 +92,26 @@ def measure_and_display(p, dataset, molecules, molecule_type):
         N_ELECTRONS[molecule_type],
         mf_initializer,
         dim,
-        is_triu=True
+        is_triu=is_triu
     ))
 
     result += "--- Iterations Damped ---\n" + \
         format_results(statistics(list(measure_iterations(
             mf_initializer_damping,
-            make_matrix_batch(p, dim, is_triu=True).astype('float64'),
+            make_matrix_batch(p, dim, is_triu=is_triu).astype('float64'),
             molecules[1]
         ))))
 
     result += "\n" + "--- Iterations DIIS ---\n" + \
         format_results(statistics(list(measure_iterations(
             mf_initializer_diis,
-            make_matrix_batch(p, dim, is_triu=True).astype('float64'),
+            make_matrix_batch(p, dim, is_triu=is_triu).astype('float64'),
             molecules[1]
         ))))
 
-    msg.info("\n" +  result, 1)
-    
+    msg.info(result, 1)
+    with open(log_file, "a+") as f:
+        f.write(result)
 
 def main(molecule_type):
 
@@ -103,9 +119,14 @@ def main(molecule_type):
 
     msg.info("Hi. Measurements for " + molecule_type, 2)
 
+    #--- fetch dataset and constants ---
     msg.info("Fetching dataset", 2)
-    dataset, molecules = fetch_dataset(molecule_type)
+    index = np.arange(200)
+    np.random.shuffle(index)
+    dataset_triu, molecules = fetch_dataset(molecule_type, True, index)
+    dataset, _ = fetch_dataset(molecule_type, False, index)
     dim = DIM[molecule_type]
+    #---
 
     #--- fetch network ---
     msg.info("Fetching pretained network ", 2)
@@ -114,6 +135,7 @@ def main(molecule_type):
         "cc2ai/" + molecule_type + "/network_" + molecule_type + ".npy", 
         encoding="latin1"
     )
+    #---
 
     with graph.as_default():
         sess = tf.Session()
@@ -124,10 +146,10 @@ def main(molecule_type):
 
     #--- calculate guesses ---
     msg.info("Calculating guesses ...",2)
-    s_raw = make_matrix_batch(dataset.inverse_input_transform(dataset.testing[0]), dim, True)
+    s_raw = make_matrix_batch(dataset_triu.inverse_input_transform(dataset_triu.testing[0]), dim, True)
     
     msg.info("Neural network ", 1)
-    p_nn = network.run(sess, dataset.testing[0])
+    p_nn = network.run(sess, dataset_triu.testing[0])
 
     msg.info("McWheenys", 1)
     p_batch = make_matrix_batch(p_nn, dim, True)
@@ -135,45 +157,62 @@ def main(molecule_type):
     p_mcw5 = np.array(list(map(lambda x: multi_mc_wheeny(x[0], x[1], n_max=5), zip  (p_batch, s_raw))))
 
     msg.info("Classics", 1)
-    p_sap = [
+    p_sap = np.array([
         hf.init_guess_by_atom(mol.get_pyscf_molecule()) for mol in molecules[1]
-    ]
-    p_minao = [
+    ])
+    p_minao = np.array([
         hf.init_guess_by_minao(mol.get_pyscf_molecule()) for mol in molecules[1]
-    ]
-    p_gwh = [
+    ])
+    p_gwh = np.array([
         hf.init_guess_by_wolfsberg_helmholtz(mol.get_pyscf_molecule()) for mol in molecules[1]
-    ]
+    ])
     #--- 
 
-    #--- Measureing:
+    #--- Measureing & print ---
+    log_file = "cc2ai/" + molecule_type + "/pretrained_" + str(date.today()) + ".log"
+    with open(log_file, "a+") as f:
+        f.write("##### Analysis of " + str(datetime.now()) + " #####\n")
     msg.info("Results NN: ", 1)
-    measure_and_display(p_nn, dataset, molecules, molecule_type)
-
+    with open(log_file, "a+") as f:
+        f.write("+++++ Plain NN +++++")
+    measure_and_display(
+        p_nn, dataset_triu, molecules, molecule_type, True, log_file
+    )
+    
+    with open(log_file, "a+") as f:
+        f.write("+++++ McW 1 +++++")
     msg.info("Results McWheeny 1: ",1)
     measure_and_display(
-        list(map(lambda x: extract_triu(x, dim), p_mcw1)), 
-        dataset, molecules, molecule_type)
-
+        p_mcw1.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+    )
+    
+    with open(log_file, "a+") as f:
+        f.write("+++++ McW 5 +++++")
     msg.info("Results McWheeny 5: ", 1)
     measure_and_display(
-        list(map(lambda x: extract_triu(x, dim), p_mcw5)), 
-        dataset, molecules, molecule_type)
+        p_mcw5.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+    )
 
+    with open(log_file, "a+") as f:
+        f.write("+++++ SAP +++++")
     msg.info("Results SAP: ", 1)
     measure_and_display(
-        list(map(lambda x: extract_triu(x, dim), p_gwh)), 
-        dataset, molecules, molecule_type)
+        p_gwh.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+    )
 
+    with open(log_file, "a+") as f:
+        f.write("+++++ MINAO +++++")
     msg.info("Results MINAO: ", 1)
     measure_and_display(
-        list(map(lambda x: extract_triu(x, dim), p_minao)), 
-        dataset, molecules, molecule_type)
+        p_minao.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+    )
 
+    with open(log_file, "a+") as f:
+        f.write("+++++ GWH +++++")
     msg.info("Results GWH: ", 1)
     measure_and_display(
-        list(map(lambda x: extract_triu(x, dim), p_gwh)), 
-        dataset, molecules, molecule_type)
+        p_gwh.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+    )
 
    
 if __name__ == '__main__':
