@@ -447,7 +447,6 @@ def make_butadien_dataset(molecules, S, P, test_samples=50, index=None):
 
     if index is None:
         index = np.arange(len(S))
-        np.random.shuffle(index)
 
     S_test = np.array(S)[index[ind_cut:]]
     P_test = np.array(P)[index[ind_cut:]]
