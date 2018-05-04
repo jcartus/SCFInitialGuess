@@ -22,6 +22,8 @@ class MarkerTheme(object):
     _info_medium = ""
     _info_high = ""
     _input = ""
+    _line_continuation = ""
+
 
 
     def __init__(self):
@@ -48,6 +50,10 @@ class MarkerTheme(object):
     def input(cls):
         return cls._input + " "
 
+    @classmethod
+    def line_continuation(cls):
+        return cls._line_continuation + " "
+
 class BracketMarkers(MarkerTheme):
     """A marker theme for logging that uses brackes"""
 
@@ -59,6 +65,8 @@ class BracketMarkers(MarkerTheme):
     _info_high = "[+]"
     
     _input = "[?]"
+
+    _line_continuation = "..."
 
 
     def __init__(self):
@@ -78,6 +86,16 @@ class Messenger(object):
 
     marker_theme = BracketMarkers
     print_level = 3
+    indentation_marker = " " * 21 
+
+    @classmethod
+    def parse(cls, message):
+        """Make sure line breaks etc. have proper indentation"""
+        
+        return message.replace(
+            "\n", 
+            "\n" + cls.indentation_marker + cls.marker_theme.line_continuation()
+        )
 
     @classmethod
     def time(cls):
@@ -90,29 +108,25 @@ class Messenger(object):
 
         if cls.print_level == 3 or (cls.print_level == 2 and level >= 1) or \
             (cls.print_level == 1 and level >= 2):
-            print(cls.marker_theme.info(level) + cls.time() + message)
+            print(cls.marker_theme.info(level) + cls.time() + cls.parse(message))
 
     @classmethod
     def warn(cls, message, *args, **kwargs):
         """Raise a warning if printlevel is 2 or higher"""
 
         if cls.print_level > 1:
-            print(cls.marker_theme.warning() + cls.time() + message)
+            print(cls.marker_theme.warning() + cls.time() + cls.parse(message))
 
     @classmethod
     def error(cls, message, *args, **kwargs):
         """Write /raise? an error"""
         warnings.warn(
-            cls.marker_theme.error() + cls.time() + message, *args, **kwargs
+            cls.marker_theme.error() + cls.time() + cls.parse(message), *args, **kwargs
         )
 
     @classmethod
     def input(cls, message):
         """Prompt user input """
-
-        # for python 2/3 compatibility:
-        
-        
-        return input(cls.marker_theme.input() + cls.time() + message + ": ")
+        return input(cls.marker_theme.input() + cls.time() + cls.parse(message) + ": ")
 
 
