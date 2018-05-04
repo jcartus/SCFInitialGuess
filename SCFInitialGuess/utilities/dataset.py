@@ -428,7 +428,7 @@ def make_matrix_batch(vector_batch, dim, is_triu=False):
 
         return vector_batch.reshape([-1, dim, dim])
 
-def make_butadien_dataset(molecules, S, P, test_samples=50):
+def make_butadien_dataset(molecules, S, P, test_samples=50, index=None):
     """This function creates a dataset where S, P Matrix and 
     the molecules match.
 
@@ -437,14 +437,17 @@ def make_butadien_dataset(molecules, S, P, test_samples=50):
         P <np.array<float>>: the density matrix,
         molecules list<Molecule>: the molecules in the dataset, in the
         same order as S and P.
+        #TODO rest of the inputs
 
     Returns:
         The dataset, and the molecules (split in train and test)
     """
 
     ind_cut = len(S) - test_samples
-    index = np.arange(len(S))
-    np.random.shuffle(index)
+
+    if index is None:
+        index = np.arange(len(S))
+        np.random.shuffle(index)
 
     S_test = np.array(S)[index[ind_cut:]]
     P_test = np.array(P)[index[ind_cut:]]
@@ -560,8 +563,6 @@ class BlockExtractor(object):
         start, end = cls.index_range(result.atoms, index)
 
         return result.P[start:end, start:end]
-
-
 
 class Dataset(object):
     """This class will govern the whole dataset and has methods to process and 
@@ -745,7 +746,6 @@ class Dataset(object):
 
         return x * std + mean
 
-
 class SCFResultsDataset(object):
     """This class will serve as a gathering of input data needed to train and
     evaluate one or many neural networks with SCF calculation results.
@@ -844,8 +844,6 @@ class SCFResultsDataset(object):
             normalize_input=False,
         )
     
-
-
    
 
 def assemble_batch(folder_list, species="C", descriptor=None):
