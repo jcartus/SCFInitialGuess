@@ -195,7 +195,7 @@ def main(molecule_type):
         f.write("\n\n+++++ SAP +++++\n")
     msg.info("Results SAP: ", 1)
     measure_and_display(
-        p_gwh.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
+        p_sap.reshape(-1, dim**2), dataset, molecules, molecule_type, False, log_file
     )
 
     with open(log_file, "a+") as f:
