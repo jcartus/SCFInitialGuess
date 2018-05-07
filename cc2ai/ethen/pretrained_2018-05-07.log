@@ -1,0 +1,22 @@
+##### Analysis of 2018-05-07 15:43:06.409829 #####
+##### Analysis of 2018-05-07 16:03:17.054803 #####
+
++++++ Plain NN +++++
+--- Absolute Error ---
+1.68941E-03 +- 2.71900E-04
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+2.77754E-03 +- 4.45733E-04
+--- Occupance Error ---
+1.20061E-01 +- 8.19510E-02
+--- HF Energy Error ---
+4.74759E-01 +- 3.23544E-01
+--- Avg. Iterations ---
+1.23600E+01 +- 2.68894E+00
+--- Iterations Damped ---
+1.28800E+01 +- 1.19398E+00
+--- Iterations DIIS ---
+8.04000E+00 +- 3.44093E-01
+
++++++ McW 1 +++++
