@@ -173,11 +173,13 @@ def measure_occupance_error(p_batch, s_batch, n_electrons):
 
 def measure_hf_energy(p_batch, molecules):
 
+    energies = []
     for (p, mol) in zip(p_batch, molecules):
         mf = hf.RHF(mol.get_pyscf_molecule())
         h1e = mf.get_hcore()
-        veff = mf.get_veff(dm=p)
-        yield mf.energy_tot(p, h1e, veff)
+        veff = mf.get_veff(dm=p.astype("float64"))
+        energies.append(mf.energy_tot(p.astype("float64"), h1e, veff))
+    return energies
 
 def measure_hf_energy_error(p_batch, p_dataset_batch, molecules):
 
