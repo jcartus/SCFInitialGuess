@@ -57,7 +57,7 @@ def fetch_molecules(folder):
 
 def scf_runs(molecules):
 
-    S, P = [], []
+    S, P, F = [], [], []
     for i, molecule in enumerate(molecules):
         
         msg.info(str(i + 1) + "/" + str(len(molecules)))
@@ -67,36 +67,48 @@ def scf_runs(molecules):
         mf.verbose = 1
         mf.run()
         
-        S.append(mf.get_ovlp().reshape((dim**2, )))
-        P.append(mf.make_rdm1().reshape((dim**2, )))
+        h = mf.get_hcore(mol)
+        s = mf.get_ovlp()
+        p = mf.make_rdm1()
+        f = mf.get_fock(h, s, mf.get_veff(mol, p), p)
 
-    return S, P
+        S.append(s.reshape((dim**2, )))
+        P.append(p.reshape((dim**2, )))
+        F.append(f.reshape((dim**2, )))
 
-def main(data_folder="butadien/data/"):        
+    return S, P, F
+
+def main(data_folder="butadien/data/", index_file=None):        
 
     msg.info("Fetching molecules", 2)
     molecules = list(fetch_molecules(data_folder + "data"))
 
-    index = np.arange(len(molecules))
-    np.random.shuffle(index)
+    if not index_file is None:
+        index = np.arange(len(molecules))
+        np.random.shuffle(index)
+    else:
+        index = np.load(index_file)
 
     molecules =[molecules[i] for i in index]
 
     msg.info("Starting SCF Calculation", 2)
-    S, P = scf_runs(molecules)
+    S, P, F = scf_runs(molecules)
 
     msg.info("Exporting Results", 2)
     msg.info("Index ...", 1)
     np.save(data_folder + "index.npy", index)
 
-    msg.info("Molecules ...", 1)
-    np.save(data_folder + "dataset.npy", (S,P))
     msg.info("S & P ...", 1)
+    np.save(data_folder + "S.npy", S)
+    np.save(data_folder + "P.npy", P)
+    np.save(data_folder + "F.npy", F)
+
+    msg.info("Molecules ...", 1)
     np.save(data_folder + "molecules.npy", molecules)
 
     msg.info("All Done. ", 2)
 
 if __name__ == '__main__':
-    main()
+    main(index_file="butadien/data/index.npy")
 
 
