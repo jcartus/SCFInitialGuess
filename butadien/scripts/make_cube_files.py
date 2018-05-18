@@ -87,7 +87,7 @@ def main(sample_index):
     outfile = "butadien/results/cube_" + str(sample_index) + "_"
     
     msg.info("Results Converged ", 1)
-    cubegen.density(molecule, outfile + "converged.cube", p_nn.astype("float64"))
+    cubegen.density(molecule, outfile + "converged.cube", p.astype("float64"))
 
     msg.info("Results NN: ", 1)
     cubegen.density(molecule, outfile + "nn.cube", p_nn.astype("float64"))

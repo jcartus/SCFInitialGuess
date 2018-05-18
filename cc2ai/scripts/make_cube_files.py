@@ -136,7 +136,7 @@ def main(molecule_type, sample_index):
     outfile = "cc2ai/" + molecule_type + "/cube_" + str(sample_index) + "_"
     
     msg.info("Results Converged ", 1)
-    cubegen.density(molecule, outfile + "converged.cube", p_nn.astype("float64"))
+    cubegen.density(molecule, outfile + "converged.cube", p.astype("float64"))
 
     msg.info("Results NN: ", 1)
     cubegen.density(molecule, outfile + "nn.cube", p_nn.astype("float64"))
