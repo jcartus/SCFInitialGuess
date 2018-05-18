@@ -7,6 +7,8 @@ Author:
 
 import numpy as np
 
+import argparse
+
 def main(cube_1, cube_2, outfile):
     
     with open(cube_1, 'r') as f1:
@@ -38,9 +40,34 @@ def main(cube_1, cube_2, outfile):
 
 
 if __name__ == '__main__':
-    folder = "cc2ai/ethen/"
+    parser = argparse.ArgumentParser(
+        prog='PROG',
+        description="This program calculate the difference of two cube files." 
+    )
+
+    parser.add_argument(
+        "--lhs", 
+        help="lhs - rhs = out",
+        dest="lhs"
+    )
+
+    parser.add_argument(
+        "--rhs", 
+        help="lhs - rhs = out",
+        dest="rhs"
+    )
+
+
+    parser.add_argument(
+        "--out", 
+        help="lhs - rhs = out",
+        dest="out"
+    )
+
+    args = parser.parse_args()
+
     main(
-        folder + "cube_180_converged.cube",
-        folder + "cube_180_sap.cube",
-        folder + "cube_diff_converged-sap.cube"
+        args.lhs,
+        args.rhs,
+        args.out
     )
