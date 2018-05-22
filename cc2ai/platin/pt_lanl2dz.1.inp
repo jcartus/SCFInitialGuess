@@ -1,0 +1,19 @@
+$molecule
+   0 1
+  Pt       -1.23239        2.53387        0.00000
+  Pt        0.21499        1.13214        0.00000
+  Pt        0.22221        2.91345        0.11177
+  Pt       -0.40225        1.96355       -1.29171
+$end
+
+$rem
+   JOBTYPE              aimd
+   AIMD_METHOD          bomd
+   METHOD               hf
+   BASIS                lanl2dz
+   ECP                  lanl2dz
+   TIME_STEP            20        (20 a.u. = 0.48 fs) 
+   AIMD_STEPS           200
+   AIMD_INIT_VELOC      thermal
+   AIMD_TEMP            700
+$end 

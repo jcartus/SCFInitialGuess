@@ -1,0 +1,22 @@
+$molecule
+   0 1
+   Pt     -1.7005895206     2.5405479739     0.3789908496
+   Pt      0.2369903209     0.8034485009     0.3314850075
+   Pt      0.6168354326     3.2209845390     0.1864621052
+   Pt     -0.4094462330     1.9528189862    -2.0589979621
+$end
+
+$rem
+   JOBTYPE              aimd
+   AIMD_METHOD          bomd
+   METHOD               hf
+   BASIS                lanl2dz
+   ECP                  lanl2dz
+   TIME_STEP            20        (20 a.u. = 0.48 fs) 
+   AIMD_STEPS           300
+   AIMD_INIT_VELOC      thermal
+   AIMD_TEMP            700
+   MAX_SCF_CYCLES       100
+   FOCK_EXTRAP_ORDER    6         
+   FOCK_EXTRAP_POINTS   12
+$end 
