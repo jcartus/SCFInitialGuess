@@ -65283,7 +65283,7 @@ Mean: 1.072e-03   Max: 7.375e-03   RMS: 4.081e-03
 
  JobOver = TRUE
 Archival summary:
-1\1\qciep03\JobtypUnspecified\HF\BasisUnspecified\t4(€+,1)\jcartus\TueMay2214:30:072018TueMay2214:30:072018\0\\#,JobtypUnspecified,HF,BasisUnspecified,\\240,1\Pt\Pt,1,2.39334\Pt,1,2.45333,2,62.7782\Pt,2,2.84005,1,66.8803,3,-75.7668,0\\HF=-472.852082\\@
+1\1\qciep03\JobtypUnspecified\HF\BasisUnspecified\t4(\80+,1)\jcartus\TueMay2214:30:072018TueMay2214:30:072018\0\\#,JobtypUnspecified,HF,BasisUnspecified,\\240,1\Pt\Pt,1,2.39334\Pt,1,2.45333,2,62.7782\Pt,2,2.84005,1,66.8803,3,-75.7668,0\\HF=-472.852082\\@
 
  Total job time:  19024.50s(wall), 19016.78s(cpu) 
  Tue May 22 14:30:07 2018
