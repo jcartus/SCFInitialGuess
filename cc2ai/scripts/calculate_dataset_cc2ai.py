@@ -15,12 +15,20 @@ from SCFInitialGuess.utilities import Molecule
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import QChemResultsReader
 
-BASIS = "6-31g**"
 
-MOLECULE = "ethan"
+BASIS = "lanl2dz" #"cc-pvdz-pp"
+ECP = "lanl2dz" #"cc-pvdz-pp"
+
+MOLECULE = "platin"
+
+# pt cc-pvdz-pp
+#dim = 152
+# pt lanl2dz
+dim = 88
+
 
 # ethan
-dim = 58
+#dim = 58
 
 # ethen
 #dim = 48
@@ -43,6 +51,10 @@ def fetch_molecules(folder):
         for molecule_values in molecules:
             mol = Molecule(*molecule_values)
             mol.basis = BASIS
+            try:
+                mol.ecp = ECP
+            except:
+                pass
 
             yield mol
 
