@@ -47,7 +47,6 @@ def matrix_error(error, xlabel="index", ylabel="index", ButadienMode=False, **kw
 
     return ax
     
-
 def prediction_scatter(
         actual,
         predicted, 
@@ -104,6 +103,33 @@ def plot_summary_scalars(
         plt.legend()
 
     return fig
+
+def calculate_electrondensity_xy_plane(mol, dm, nx=80, ny=80):
+    """ Calculates the density in the x-y plane on a grid"""
+    
+    from pyscf import lib
+    from pyscf.dft import gen_grid, numint
+
+    coords = mol.atom_coords()
+    coords[:, 2] = 0 # set z-coordinate 0
+
+    lower = np.min(coords, axis=0)
+    upper = np.max(coords, axis=0)
+    grid_x, grid_y = np.meshgrid(
+        np.linspace(lower[0], upper[0], nx),
+        np.linspace(lower[1], upper[1], ny)
+    )
+    
+
+    grid = np.array(
+        [grid_x.flatten(), 
+        grid_y[:].flatten(), 
+        np.zeros(grid_x.shape).flatten()]
+    ).T
+
+    ao = numint.eval_ao(mol, grid)
+    rho = numint.eval_rho(mol, ao, dm)
+    return rho.reshape(nx, ny)
 
 def mf_initializer(mol):
     """Will init pyscf hf engine. With damping of 0.3 and maximum of 100 
@@ -189,7 +215,6 @@ def measure_hf_energy_error(p_batch, p_dataset_batch, molecules):
     for (e_nn, e_ds) in zip(E_nn, E_ds):
         yield np.abs(e_nn -  e_ds)
         
-
 def measure_all_quantities(
         p,
         dataset,
@@ -408,8 +433,22 @@ class NetworkAnalyzer(object):
     @staticmethod
     def make_results_str(results):
         return make_results_str(results)
+
 if __name__ == '__main__':
-    dim = 26
-    A = np.random.rand(dim, dim)
-    matrix_error(A, orbitalTicks=True)
+    from pyscf.scf import hf
+    from pyscf.gto import Mole
+
+    mol = Mole()
+    mol.verbose = 1
+    mol.output = None
+
+    mol.atom = [['H', (0, 0, 0)], ['O', (1, 0, 0)], ['H', (3, 0, 0)]]
+    mol.basis = "6-311++g**"
+    mol.build()
+
+    dm = hf.init_guess_by_1e(mol)
+
+    error = calculate_electrondensity_xy_plane(mol, dm, nx=50, ny=50)
+
+    sns.heatmap(error, vmin=0, vmax=0.02)
     plt.show()
