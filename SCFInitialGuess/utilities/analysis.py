@@ -104,7 +104,7 @@ def plot_summary_scalars(
 
     return fig
 
-def calculate_electrondensity_xy_plane(mol, dm, nx=80, ny=80):
+def density_cut_old(mol, dm, nx=80, ny=80):
     """ Calculates the density in the x-y plane on a grid"""
     
     from pyscf import lib
@@ -130,6 +130,72 @@ def calculate_electrondensity_xy_plane(mol, dm, nx=80, ny=80):
     ao = numint.eval_ao(mol, grid)
     rho = numint.eval_rho(mol, ao, dm)
     return rho.reshape(nx, ny)
+
+def density(mol, dm, nx=80, ny=80, nz=80):
+    from scipy.constants import physical_constants
+    from pyscf import lib
+    from pyscf.dft import gen_grid, numint
+
+
+    coord = mol.atom_coords()
+    box = np.max(coord,axis=0) - np.min(coord,axis=0) + 6
+    boxorig = np.min(coord,axis=0) - 3
+    xs = np.arange(nx) * (box[0]/nx)
+    ys = np.arange(ny) * (box[1]/ny)
+    zs = np.arange(nz) * (box[2]/nz)
+    coords = lib.cartesian_prod([xs,ys,zs])
+    coords = np.asarray(coords, order='C') - (-boxorig)
+
+    ngrids = nx * ny * nz
+    blksize = min(8000, ngrids)
+    rho = np.empty(ngrids)
+    ao = None
+    for ip0, ip1 in gen_grid.prange(0, ngrids, blksize):
+        ao = numint.eval_ao(mol, coords[ip0:ip1], out=ao)
+        rho[ip0:ip1] = numint.eval_rho(mol, ao, dm)
+    rho = rho.reshape(nx, ny, nz)
+
+    # needed for conversion as x,y are in bohr for some reason
+    a0 = physical_constants["Bohr radius"][0]
+
+    return (
+        rho.T, 
+        (xs + boxorig[0]) * a0, 
+        (ys + boxorig[1]) * a0, 
+        (zs + boxorig[2]) * a0
+    )
+
+
+def density_cut(mol, dm, nx=80, ny=80, z_value=0):
+    from scipy.constants import physical_constants
+    from pyscf import lib
+    from pyscf.dft import gen_grid, numint
+
+    nz = 1
+
+    coord = mol.atom_coords()
+    box = np.max(coord,axis=0) - np.min(coord,axis=0) + 6
+    boxorig = np.min(coord,axis=0) - 3
+    xs = np.arange(nx) * (box[0]/nx)
+    ys = np.arange(ny) * (box[1]/ny)
+    zs = np.array([z_value]) 
+    #zs = np.arange(nz) * (box[2]/nz)
+    coords = lib.cartesian_prod([xs,ys,zs])
+    coords = np.asarray(coords, order='C') - (-boxorig)
+
+    ngrids = nx * ny * nz
+    blksize = min(8000, ngrids)
+    rho = np.empty(ngrids)
+    ao = None
+    for ip0, ip1 in gen_grid.prange(0, ngrids, blksize):
+        ao = numint.eval_ao(mol, coords[ip0:ip1], out=ao)
+        rho[ip0:ip1] = numint.eval_rho(mol, ao, dm)
+    rho = rho.reshape(nx,ny)
+
+    # needed for conversion as x,y are in bohr for some reason
+    a0 = physical_constants["Bohr radius"][0]
+
+    return rho.T, (xs + boxorig[0]) * a0, (ys + boxorig[1]) * a0
 
 def mf_initializer(mol):
     """Will init pyscf hf engine. With damping of 0.3 and maximum of 100 
@@ -442,13 +508,35 @@ if __name__ == '__main__':
     mol.verbose = 1
     mol.output = None
 
-    mol.atom = [['H', (0, 0, 0)], ['O', (1, 0, 0)], ['H', (3, 0, 0)]]
+    mol.atom = [['H', (-2, 1, 0)], ['O', (0, 0, 0)], ['H', (2, 1, 0)]]
+    #mol.atom = [['H', (0, 0, 0)], ['H', (3, 0, 0)]]
+#    mol.atom = """
+#C       -0.5809229194      2.2786702584     -0.0000000000                 
+#C        0.3341762014      1.1498668226     -0.0000000000                 
+#C       -1.8814381635      2.1217429837      0.0000000000                 
+#H       -0.2617503274      3.3158480899      0.0000000000                 
+#H       -2.2118065230      1.0964193501      0.0000000000                 
+#H       -2.5555793591      2.9807928012     -0.0000000000                 
+#C        1.6346915572      1.3067927385      0.0000000000                 
+#H        0.0150027543      0.1126892373      0.0000000000                 
+#H        1.9650613410      2.3321158857      0.0000000000                 
+#H        2.3088316989      0.4477420354     -0.0000000000"""
+
     mol.basis = "6-311++g**"
     mol.build()
 
-    dm = hf.init_guess_by_1e(mol)
+    dm_1e = hf.init_guess_by_atom(mol)
+    dm_minao = hf.init_guess_by_minao(mol)
 
-    error = calculate_electrondensity_xy_plane(mol, dm, nx=50, ny=50)
+    rho_1e, x, y, z = density(mol, dm_1e, nx=100, ny=100, nz=100)
+    rho_minao, x, y, z = density(mol, dm_minao, nx=100, ny=100, nz=100)
 
-    sns.heatmap(error, vmin=0, vmax=0.02)
+
+    plt.contourf(*np.meshgrid(x, y), np.mean(rho_1e - rho_minao, axis=2))
+    plt.colorbar()
+    #plt.xlim([0,10])
+    #plt.ylim([0,10])
+    #plt.gca().set_aspect('equal', adjustable='box')
+    #plt.draw()
     plt.show()
+
