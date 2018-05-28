@@ -29,10 +29,12 @@ def prep_dataset():
 
 
     folder = join("butadien", "data")
+    
 
     dataset, molecules = make_butadien_dataset(
         np.load(join(folder, "molecules.npy")),
-        *np.load(join(folder, "dataset.npy")) 
+        np.load(join(folder, "S.npy")),
+        np.load(join(folder, "P.npy")) 
     )
 
     return dataset#, molecules
