@@ -22,7 +22,16 @@ from SCFInitialGuess.utilities.usermessages import Messenger as msg
 DIM = {
     "ethan": 58,
     "ethen": 48,
-    "ethin": 38
+    "ethin": 38,
+    "platin": 88
+}
+
+BASIS = {
+    "ethan": "6-31g**",
+    "ethen": "6-31g**",
+    "ethin": "6-31g**",
+    "butadien": "sto-3g",
+    "platin": "lanl2dz",
 }
 
 def prep_dataset(molecule_type):
@@ -36,9 +45,15 @@ def prep_dataset(molecule_type):
     folder = join("cc2ai", molecule_type)
 
     dataset, molecules = make_butadien_dataset(
-        np.load(join(folder, "molecules_" + molecule_type + "_6-31g**.npy")),
+        np.load(join(
+            folder, 
+            "molecules_" + molecule_type + "_" + BASIS[molecule_type] + ".npy"
+        )),
         *load_triu(*np.load(
-            join(folder, "dataset_" + molecule_type + "_6-31g**.npy")), 
+            join(
+                folder, 
+                "dataset_" + molecule_type + "_" + BASIS[molecule_type] + ".npy"
+            )), 
             DIM[molecule_type]
         ), 
     )
@@ -105,7 +120,7 @@ if __name__ == '__main__':
         required=False,
         help="name of the molecule for which to train a network",
         dest="molecule",
-        choices=["ethan", "ethen", "ethin"]
+        choices=["ethan", "ethen", "ethin", "platin"]
     )
 
     args = parser.parse_args()
