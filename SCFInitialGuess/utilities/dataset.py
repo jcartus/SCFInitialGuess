@@ -11,6 +11,7 @@ from os import listdir, walk
 import sys
 import numpy as np
 import re
+from pyscf.scf import hf
 
 from .constants import number_of_basis_functions as N_BASIS
 from .usermessages import Messenger as msg
@@ -64,6 +65,32 @@ class Molecule(object):
         mol.build()
 
         return mol
+
+def do_scf_runs(molecules):
+    """Do scf calculation for molecules in molecules and extract all relevant 
+    matrices
+    """
+
+    S, P, F = [], [], []
+    for i, molecule in enumerate(molecules):
+        
+        msg.info(str(i + 1) + "/" + str(len(molecules)))
+        
+        mol = molecule.get_pyscf_molecule()
+        mf = hf.RHF(mol)
+        mf.verbose = 1
+        mf.run()
+        
+        h = mf.get_hcore(mol)
+        s = mf.get_ovlp()
+        p = mf.make_rdm1()
+        f = mf.get_fock(h, s, mf.get_veff(mol, p), p)
+
+        S.append(s)
+        P.append(p)
+        F.append(f)
+
+    return S, P, F
 
 class QChemResultsReader(object):
 
