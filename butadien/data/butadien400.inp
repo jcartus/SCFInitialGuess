@@ -4,7 +4,7 @@ $rem
    METHOD               hf
    BASIS                sto-3g
    TIME_STEP            20        (20 a.u. = 0.48 fs) 
-   AIMD_STEPS           200
+   AIMD_STEPS           400
    AIMD_INIT_VELOC      thermal
    AIMD_TEMP            400
    MAX_SCF_CYCLES       100
