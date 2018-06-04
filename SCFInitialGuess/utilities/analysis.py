@@ -500,43 +500,5 @@ class NetworkAnalyzer(object):
     def make_results_str(results):
         return make_results_str(results)
 
-if __name__ == '__main__':
-    from pyscf.scf import hf
-    from pyscf.gto import Mole
 
-    mol = Mole()
-    mol.verbose = 1
-    mol.output = None
-
-    mol.atom = [['H', (-2, 1, 0)], ['O', (0, 0, 0)], ['H', (2, 1, 0)]]
-    #mol.atom = [['H', (0, 0, 0)], ['H', (3, 0, 0)]]
-#    mol.atom = """
-#C       -0.5809229194      2.2786702584     -0.0000000000                 
-#C        0.3341762014      1.1498668226     -0.0000000000                 
-#C       -1.8814381635      2.1217429837      0.0000000000                 
-#H       -0.2617503274      3.3158480899      0.0000000000                 
-#H       -2.2118065230      1.0964193501      0.0000000000                 
-#H       -2.5555793591      2.9807928012     -0.0000000000                 
-#C        1.6346915572      1.3067927385      0.0000000000                 
-#H        0.0150027543      0.1126892373      0.0000000000                 
-#H        1.9650613410      2.3321158857      0.0000000000                 
-#H        2.3088316989      0.4477420354     -0.0000000000"""
-
-    mol.basis = "6-311++g**"
-    mol.build()
-
-    dm_1e = hf.init_guess_by_atom(mol)
-    dm_minao = hf.init_guess_by_minao(mol)
-
-    rho_1e, x, y, z = density(mol, dm_1e, nx=100, ny=100, nz=100)
-    rho_minao, x, y, z = density(mol, dm_minao, nx=100, ny=100, nz=100)
-
-
-    plt.contourf(*np.meshgrid(x, y), np.mean(rho_1e - rho_minao, axis=2))
-    plt.colorbar()
-    #plt.xlim([0,10])
-    #plt.ylim([0,10])
-    #plt.gca().set_aspect('equal', adjustable='box')
-    #plt.draw()
-    plt.show()
 
