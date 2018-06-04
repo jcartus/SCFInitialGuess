@@ -9,5 +9,9 @@ install:
 
 script: python -W ignore tests/run_all_tests.py
 
+branches:
+  except:
+  - ContractionDescriptors
+
 notification:
   email: false 
