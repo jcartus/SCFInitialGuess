@@ -178,9 +178,23 @@ class TestDataset(AbstractTest):
         np.testing.assert_array_equal(*candidate.testing)
         np.testing.assert_array_equal(*candidate.validation)
         np.testing.assert_array_equal(*candidate.training)
-
-
         
+    def test_create_from_splits(self):
+        training = np.arange(5)
+        validation = np.arange(5, 7)
+        testing = np.arange(7, 10)
+        
+        dataset = \
+            Dataset.create_from_splits(
+                (testing, testing), 
+                (validation, validation), 
+                (training, training), 
+                False
+            )
+
+        np.testing.assert_array_equal(training[0], dataset.training[0])
+        np.testing.assert_array_equal(validation[0], dataset.validation[0])
+        np.testing.assert_array_equal(testing[0], dataset.testing[0])
 
     def test_normalisation(self):
  

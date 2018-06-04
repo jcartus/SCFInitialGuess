@@ -6,6 +6,7 @@ Author:
 """
 
 import numpy as np
+import tensorflow as tf
 
 from SCFInitialGuess.utilities.constants \
     import number_of_basis_functions as N_BASIS
@@ -15,32 +16,31 @@ class AbstractDescriptor(object):
     implemented)
     """
 
-    @staticmethod
-    def index_range(atoms, atom_index):
-        """Calculate the range of matrix elements for atom specified by index in
-        atoms list."""
+    @classmethod
+    def process_batch(cls, environments):
+        """This function returns an input vector for neural networks. 
+        This input vector is calculated from the "x"-value of the dataset, here
+        refered to as environment.
 
-        # summ up the number of basis functions of previous atoms
-        start = 0
-        for i in range(atom_index):
-            start += N_BASIS[atoms[i]]
+        Args:
+            environments <list<??>>: a list of objects returned by the 
+            dataset as "x"- values. (E.g. S-matrix blocks).
+
+        Returns:
+            An iterator containing the descriptor vector for each environment
+            in environmens.
+        """
         
-        end = start + N_BASIS[atoms[atom_index]]
+        for environment in environments:
+            yield cls.calculate_description(environment)
 
-        return start, end
+    @classmethod    
+    def calculate_description(environment):
+        """Does the actual description of an environment (i.e. calculates
+        the descriptor vector for an environment)
+        """
+        raise NotImplementedError("Abstract Descriptor is an abstract class.")
 
-    @classmethod
-    def input_values(cls, S, atoms, index):
-        raise NotImplementedError("AbstractDescriptor is an abstract class!")
-
-    
-
-    @classmethod
-    def target_values(cls, result, index):
-
-        start, end = cls.index_range(result.atoms, index)
-
-        return result.P[start:end, start:end]
 
 
 class ContractionDescriptor(AbstractDescriptor):
@@ -60,34 +60,23 @@ class ContractionDescriptor(AbstractDescriptor):
         contraction over atoms in the molecule). E.g. it could be a sum summing up 
         all the inner contraction results (Default is a sum).
         """
-        return intermediate_result + next_operand
+        return NotImplementedError("ContractionDescriptor is an Abstract class")
 
     @classmethod
-    def input_values(cls, S, atoms, index):
+    def calculate_description(cls, environment):
+        """Calculates the environment vector, by first reducing all
+        Blocks with the inner contraction and then combining the block
+        results with the outer contraction.
 
-        # start/end index of range of elements in e.g. S-Matrix
-        # that correspond to current atom. Using the range object would 
-        # trigger advanced indexing ...
-        start, end = cls.index_range(atoms, index)
-        
-
-        x = np.zeros(N_BASIS[atoms[index]])
-
-        # add contribution to descriptor from every other atom
-        for i, atom in enumerate(atoms):
-            
-            # an atom should not influence itself
-            if i != index:
-                
-                x = cls.outer_contraction(
-                    x, 
-                    cls.inner_contraction(
-                        S[start:end, range(*cls.index_range(atoms, i))],
-                        atom
-                    )
-                )
-
-        return x
+        Args:
+            envrionment <list<list<??>>: Musst be a list of lists to allow
+            two contractions.
+        """
+        return             cls.outer_contraction, 
+            tf.map_fun(
+                cls.inner_contraction, 
+                environment
+            )
 
 class WeightedSum(ContractionDescriptor):
 

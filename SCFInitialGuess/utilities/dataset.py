@@ -5,6 +5,8 @@ Authors:
  - Johannes Cartus, QCIEP, TU Graz
 """
 
+from functools import reduce
+
 from os.path import exists, isdir, isfile, join, splitext, normpath, basename
 from os import listdir, walk
 
@@ -665,8 +667,15 @@ class Dataset(object):
         normalize_input=True
         ):
 
-        x = training[0] + validation[0] + testing[0]
-        y = training[1] + validation[1] + testing[1]
+        x = np.array(reduce(
+            lambda a,b: list(a[0]) + list(b[0]), 
+            (training, validation, testing)
+        ))
+
+        y = np.array(reduce(
+            lambda a,b: list(a[1]) + list(b[1]), 
+            (training, validation, testing)
+        ))
         
         split_test = len(testing) / len(x)
         split_validation = len(validation) / len(x)
