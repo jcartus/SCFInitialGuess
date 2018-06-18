@@ -240,6 +240,112 @@ class Trainer(object):
         return self.network, sess
 
 
+
+class ContinuousTrainer(Trainer):
+    """This trainer will train a network until the training is interrupted
+    by the user. Everytime a new minimum on the validation error is reached,
+    the model is exported.
+    """
+
+    def train(
+            self,
+            dataset,
+            network_save_path,
+            evaluation_period=2000,
+            mini_batch_size=40
+        ):
+        """Similaraly to the train function in the superclass, the function will
+        start the training. However it will continue to train until the user
+        aborts it. It will be exported after evaluation_period training 
+        steps if a new minumim of error on the validation training set is reached.
+        """
+
+
+        with self.graph.as_default():
+            sess = tf.Session(graph=self.graph)
+
+            if self.training_step is None:
+                self.setup()
+
+            #--- train the network ---
+            old_error = 1e10
+
+            sess.run(tf.global_variables_initializer())
+
+            msg.info("Starting network training ...", 1)        
+            
+            #Training will run until user aborts it.
+            while True:
+
+
+                #--- do training ---
+                for step in range(evaluation_period):
+                    mini_batch = dataset.sample_minibatch(mini_batch_size)
+
+                    sess.run(
+                        self.training_step, 
+                        feed_dict={
+                            self.input_placeholder: mini_batch[0], 
+                            self.target_placeholder: mini_batch[1]
+                        }
+                    )
+                #---
+                
+
+                #--- evaluation ---
+                # export nummary
+                if not summary_save_path is None:
+                    writer.add_summary(
+                        sess.run(
+                            summary, 
+                            feed_dict={
+                                self.input_placeholder: mini_batch[0], 
+                                self.target_placeholder: mini_batch[1]
+                            }
+                        ), 
+                        step
+                    )
+
+                # calculate validation errors ...
+                error = sess.run(
+                    self.error,
+                    feed_dict={
+                        self.input_placeholder: dataset.validation[0], 
+                        self.target_placeholder: dataset.validation[1]
+                    }
+                )
+
+                # ... and costs.
+                cost = sess.run(
+                    self.cost,
+                    feed_dict={
+                        self.input_placeholder: dataset.validation[0], 
+                        self.target_placeholder: dataset.validation[1]
+                    }
+                )
+                
+
+                # Check for new validation error minimum
+                diff = error - old_error
+                
+                # if a new minimum was found notify user 
+                # and save the model.
+                if diff < 0:
+                    message = (
+                        "New Minimum found! Val. Cost: {:0.1E}. " + \
+                        "Error: {:0.3E}. Diff: {:0.1E}"
+                        ).format(cost, error, diff)
+                    msg.info(message)
+
+                    # export network
+                    self.network.export(sess, network_save_path)
+
+                    # store new minimum
+                    old_error = error
+                #---
+            #---
+
+
 def train_network(
     network,
     dataset,
