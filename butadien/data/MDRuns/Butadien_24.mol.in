@@ -1,0 +1,29 @@
+$rem
+AIMD_STEPS                    400
+FOCK_EXTRAP_POINTS            12
+MAX_SCF_CYCLES                100
+BASIS                         sto-3g
+AIMD_INIT_VELOC               thermal
+FOCK_EXTRAP_ORDER             6
+AIMD_TEMP                     400
+AIMD_METHOD                   bomd
+TIME_STEP                     20
+METHOD                        hf
+JOBTYPE                       aimd
+$end
+
+$molecule
+0 1
+C    3.14070    -0.33008    0.23398
+C    3.79376    -0.23156    -0.92903
+H    3.43599    -1.01755    1.01837
+H    2.27350    0.29344    0.42898
+C    4.95214    -0.99176    -1.33902
+C    5.64979    -1.85728    -0.59394
+H    6.51181    -2.36812    -1.01201
+H    5.39628    -2.08549    0.43499
+H    3.42822    0.48179    -1.66705
+H    5.27736    -0.81519    -2.36385
+$end
+
+
