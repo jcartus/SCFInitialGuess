@@ -293,19 +293,6 @@ class ContinuousTrainer(Trainer):
                 
 
                 #--- evaluation ---
-                # export nummary
-                if not summary_save_path is None:
-                    writer.add_summary(
-                        sess.run(
-                            summary, 
-                            feed_dict={
-                                self.input_placeholder: mini_batch[0], 
-                                self.target_placeholder: mini_batch[1]
-                            }
-                        ), 
-                        step
-                    )
-
                 # calculate validation errors ...
                 error = sess.run(
                     self.error,
