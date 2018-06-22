@@ -28,17 +28,17 @@ def prep_dataset():
         return [extract_triu(s, dim) for s in S], [extract_triu(p, dim) for p in P]
 
 
-    folder = join("butadien", "data", "dataBigData")
+    folder = join("butadien", "data", "400")
     
 
     dataset, molecules = make_butadien_dataset(
-        np.load(join(folder, "molecules_BigDataset.npy")),
+        np.load(join(folder, "molecules400.npy")),
         *load_triu(
-            np.load(join(folder, "S_BigDataset.npy")),
-            np.load(join(folder, "P_BigDataset.npy")),
+            np.load(join(folder, "S400.npy")),
+            np.load(join(folder, "P400.npy")),
             DIM
         ),
-        test_samples=1000
+        test_samples=100
     )
 
     return dataset#, molecules
