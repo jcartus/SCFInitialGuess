@@ -42,7 +42,7 @@ def fetch_molecules(folder):
 def main(data_folder="butadien/data/", index_file=None):        
 
     msg.info("Fetching molecules", 2)
-    molecules = list(fetch_molecules(data_folder + "MDRuns"))
+    molecules = list(fetch_molecules(data_folder + "MDRuns/results"))
 
     if index_file is None:
         index = np.arange(len(molecules))
