@@ -75,20 +75,22 @@ def do_scf_runs(molecules):
     for i, molecule in enumerate(molecules):
         
         msg.info(str(i + 1) + "/" + str(len(molecules)))
-        
-        mol = molecule.get_pyscf_molecule()
-        mf = hf.RHF(mol)
-        mf.verbose = 1
-        mf.run()
-        
-        h = mf.get_hcore(mol)
-        s = mf.get_ovlp()
-        p = mf.make_rdm1()
-        f = mf.get_fock(h, s, mf.get_veff(mol, p), p)
+        try:
+            mol = molecule.get_pyscf_molecule()
+            mf = hf.RHF(mol)
+            mf.verbose = 1
+            mf.run()
+            
+            h = mf.get_hcore(mol)
+            s = mf.get_ovlp()
+            p = mf.make_rdm1()
+            f = mf.get_fock(h, s, mf.get_veff(mol, p), p)
 
-        S.append(s)
-        P.append(p)
-        F.append(f)
+            S.append(s)
+            P.append(p)
+            F.append(f)
+        except Exception as ex:
+            msg.warn("There was a problem: " + str(ex))
 
     return S, P, F
 
