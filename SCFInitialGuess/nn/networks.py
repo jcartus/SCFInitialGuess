@@ -8,6 +8,8 @@ Author:
 import tensorflow as tf
 import numpy as np
 
+from datetime import datetime
+
 class AbstractNeuralNetwork(object):
     """This is an abstract template for a neural network. Components like
     the activation function or the initialization method can be replace
@@ -97,12 +99,15 @@ class AbstractNeuralNetwork(object):
 
         return self._graph
 
-    def export(self, sess, path):
+    def export(self, sess, path, test_error=None, comment=None):
         
         save_object = [
             self.structure,
             self.weights_values(sess),
-            self.biases_values(sess)
+            self.biases_values(sess),
+            test_error,
+            comment,
+            datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         ]
 
         np.save(
