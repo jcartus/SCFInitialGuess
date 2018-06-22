@@ -11,6 +11,11 @@ log/*
 pathtable
 
 *.pyc
+*.mol
+*.npy
+*.out
+*.inp
+*.tar.gz
 
 _Notebooks/
 butadien/data/data/*.inp
