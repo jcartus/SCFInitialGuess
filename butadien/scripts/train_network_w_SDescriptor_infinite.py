@@ -56,7 +56,7 @@ def train_network(dataset, structure, save_path):
     network, sess = trainer.train(
         dataset,
         save_path,
-        evaluation_period=5000,
+        evaluation_period=1000,
         mini_batch_size=100
     )
     
@@ -85,7 +85,7 @@ def main():
 
     msg.info("Train ... ", 2)
     dim_triu = int(DIM * (DIM + 1) / 2)
-    structure = [dim_triu, dim_triu, dim_triu, dim_triu, dim_triu, dim_triu, dim_triu]
+    structure = [dim_triu, int(dim_triu * 0.75), int(dim_triu * 0.5), dim_triu, dim_triu]
 
 
     train_network(dataset, structure, save_path)
