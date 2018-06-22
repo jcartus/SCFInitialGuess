@@ -12,7 +12,7 @@ import numpy as np
 import tensorflow as tf
 import argparse
 
-from SCFInitialGuess.nn.networks import EluTrNNN
+from SCFInitialGuess.nn.networks import EluTrNNN, EluFixedValue
 from SCFInitialGuess.nn.training import ContinuousTrainer
 from SCFInitialGuess.nn.cost_functions import RegularizedMSE
 from SCFInitialGuess.utilities.dataset import make_butadien_dataset, extract_triu
@@ -43,11 +43,11 @@ def prep_dataset():
 
     return dataset#, molecules
 
-def train_network(dataset, structure, save_path):
+def train_network(dataset, network, save_path, test_error):
     """Training the network"""
 
     trainer = ContinuousTrainer(
-        EluTrNNN(structure),
+        network,
         cost_function=RegularizedMSE(alpha=1e-7),
     )
 
@@ -57,7 +57,8 @@ def train_network(dataset, structure, save_path):
         dataset,
         save_path,
         evaluation_period=1000,
-        mini_batch_size=100
+        mini_batch_size=100,
+        old_error=test_error
     )
     
     return trainer, network, sess
@@ -65,6 +66,8 @@ def train_network(dataset, structure, save_path):
 
 
 def main():
+    #todo this funciton and taining should become part of the library!!
+    # sodass man nur mehr savepath und dataset angeben muss!
 
     msg.info("Traing a network for butadien", 2)
 
@@ -73,22 +76,47 @@ def main():
 
     save_path = "butadien/data/networks/networkSMatrixBigData.npy"
 
+
     user_input =  msg.input(
         "This will overwrite the model at " + save_path + \
-        "\nAre you sure you want that? (y for yes)"
+        "Are you sure you want that? (y for yes)"
     )
 
     if user_input.upper() != "Y":
         msg.info("Aborting", 2)
         return
+
+    msg.info("Try to fetch current model")
+    try:
         
+        model = np.load(save_path, encoding="latin1")
+        structure, weights, biases = model[0], model[1], model[2]
+        network = EluFixedValue(structure, weights, biases)
+        test_error = model[3]
+
+        user_input =  msg.input(
+            "Model found with test error :  " + str(test_error) + \
+            ". Do you want to continue to train it? (y for yes)"
+        )
+
+        if user_input.upper() != "Y":
+            msg.info("Creating new network", 2)
+            model = None
+
+    except:
+        model = None
+        
+    if model is None:
+        dim_triu = int(DIM * (DIM + 1) / 2)
+        structure = [dim_triu, int(dim_triu * 0.75), int(dim_triu * 0.5), dim_triu, dim_triu]
+        test_error = 1e10
+
 
     msg.info("Train ... ", 2)
-    dim_triu = int(DIM * (DIM + 1) / 2)
-    structure = [dim_triu, int(dim_triu * 0.75), int(dim_triu * 0.5), dim_triu, dim_triu]
+    
+    network = EluTrNNN(structure)
 
-
-    train_network(dataset, structure, save_path)
+    train_network(dataset, network, save_path, test_error)
 
     
     msg.info("All done. Bye bye..", 2)

@@ -251,6 +251,8 @@ class ContinuousTrainer(Trainer):
             self,
             dataset,
             network_save_path,
+            comment=None,
+            old_error=1e10,
             evaluation_period=2000,
             mini_batch_size=40
         ):
@@ -268,7 +270,6 @@ class ContinuousTrainer(Trainer):
                 self.setup()
 
             #--- train the network ---
-            old_error = 1e10
 
             sess.run(tf.global_variables_initializer())
 
@@ -325,7 +326,7 @@ class ContinuousTrainer(Trainer):
                     msg.info(message)
 
                     # export network
-                    self.network.export(sess, network_save_path)
+                    self.network.export(sess, network_save_path, error, comment)
 
                     # store new minimum
                     old_error = error
