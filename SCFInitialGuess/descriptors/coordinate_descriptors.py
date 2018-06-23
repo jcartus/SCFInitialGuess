@@ -20,17 +20,36 @@ def carthesian_to_spherical_coordinates(x):
 #-------------------------------------------------------------------------------
 
 # a collection of guassian positioning models (cut_off, r_s, eta)
-RADIAL_GUASSIAN_MODELS = {
+RADIAL_GAUSSIAN_MODELS = {
     "Origin-Centered_1": (
         5.0,
         [0.0, 0.0, 0.0, 0.0, 0.0],
         [1.2, 0.5, 0.2, 0.1, 0.01]
     ),
 
-    "Equidistant-Broadening": (
+    "Equidistant-Broadening_1": (
         5.0,
         [0.6, 1.1, 1.6, 2.1, 2.6],
         [0.9, 0.7, 0.6, 0.5, 0.4]
+    )
+}
+
+AZIMUTHAL_GAUSSIAN_MODELS = {
+    # 8 gaussians equally distributed, litte overlap
+    "Equisitant_1": (
+        5,
+        np.arange(1, 8 + 1) * 2 * np.pi / (8+1),
+        2 * np.pi / 8
+    )
+}
+
+
+POLAR_GAUSSIAN_MODELS = {
+    # 2 gaussians equally distributed, little more overlap
+    "Equisitant_1": (
+        5,
+        np.arange(1, 5 + 1) * np.pi / (5 + 1),
+        (5 / (np.pi))**2
     )
 }
 
@@ -76,15 +95,15 @@ class AbstractQuantityDescriptor(object):
 
 class Gaussians(object):
 
-    def __init__(self, r_s, eta):
+    def __init__(self, r_cutoff, r_s, eta):
         
         # check if list are of equal length of if eta is scalar
-        if len(r_s) != len(eta) and \
-            (len(eta) != 1 and \
-            not isinstance(eta, (list, tuple))):
+        # check if list are of equal length of if eta is scalar
+        if isinstance(eta, (list, tuple)):
+            if len(r_s) != len(eta) and len(eta) != 1 :
+                raise ValueError("Dimension of r_s and eta do not match")
 
-            raise ValueError("Dimension of r_s and eta do not match")
-
+        self.R_c = r_cutoff
         self.r_s = np.array(r_s)
         self.eta = np.array(eta)
 
@@ -94,7 +113,10 @@ class Gaussians(object):
         """Returns a descriptor value for an abstract quantity x (e.g. a 
         distance or an angle). The vector will be list!!!!
         """
-        return list(np.exp(-1 * self.eta*(x - self.r_s)**2))
+        return list(
+            np.exp(-1 * self.eta*(x - self.r_s)**2) * \
+            behler_cutoff_1(x, self.R_c)
+        )
         
 
 class SphericalHarmonics(object):
@@ -102,11 +124,9 @@ class SphericalHarmonics(object):
     def __init__(self, r_s, eta):
         
         # check if list are of equal length of if eta is scalar
-        if len(r_s) != len(eta) and \
-            (len(eta) != 1 and \
-            not isinstance(eta, (list, tuple))):
-
-            raise ValueError("Dimension of r_s and eta do not match")
+        if isinstance(eta, (list, tuple)):
+            if len(r_s) != len(eta) and len(eta) != 1 :
+                raise ValueError("Dimension of r_s and eta do not match")
 
         self.r_s = r_s
         self.eta = eta
@@ -148,6 +168,14 @@ class AbstractCoordinateDescriptor(object):
         return self.radial_descriptor.number_of_descriptors + \
             self.azimuthal_descriptor.number_of_descriptors + \
             self.polar_descriptor.number_of_descriptors
+
+    def calculate_descriptors_batch(self, molecules):
+        
+        descriptors = []
+        for molecule in molecules:
+            descriptors.append(self.calculate_descriptor(molecule))
+        
+        return np.array(descriptors).reshape(len(molecules), -1)
 
     def calculate_descriptor(self, molecule):
         
@@ -196,6 +224,7 @@ class AbstractCoordinateDescriptor(object):
 
         return np.array(G)
 
+
 class NonWeighted(AbstractCoordinateDescriptor):
     """This class calculates a desriptor of the vectors of the atoms
     to each other with gaussians in the radial direction.
@@ -206,7 +235,7 @@ class NonWeighted(AbstractCoordinateDescriptor):
         for the atom j.
         """
 
-        R = geom_i[1] -  geom_j[1]
+        R = np.array(geom_i[1]) -  np.array(geom_j[1])
 
         return self.apply_coordinate_descriptors(R)
 
