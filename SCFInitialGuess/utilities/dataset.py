@@ -30,6 +30,10 @@ class Molecule(object):
         self.full_name = full_name
 
         self.basis = "6-311++g**"
+    
+    @property
+    def number_of_atoms(self):
+        return len(self.species)
 
     @property
     def geometry(self):
