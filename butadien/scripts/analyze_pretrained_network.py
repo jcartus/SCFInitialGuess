@@ -23,12 +23,17 @@ N_ELECTRONS = 30
 
 def main():
 
+    ############################################################################
+    #         Inputs
+    ############################################################################
     network_path = "butadien/data/networks/networkS400.npy"
     #network_path = "butadien/data/networks/networkSMatrixBigDataset.npy"
     data_folder = "butadien/data/400/"
     postfix = "400"
 
     log_file = "butadien/results/pretrained_" + str(date.today()) + ".log"
+    ############################################################################
+
 
 
     msg.print_level = 2
@@ -90,7 +95,7 @@ def do_analysis(network_path, dataset, molecules, s_raw, log_file):
     structure, weights, biases = np.load(
         network_path, 
         encoding="latin1"
-    )
+    )[:3]
 
     with graph.as_default():
         sess = tf.Session()
