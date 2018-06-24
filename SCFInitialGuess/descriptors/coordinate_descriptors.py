@@ -170,34 +170,55 @@ class AbstractCoordinateDescriptor(object):
             self.polar_descriptor.number_of_descriptors
 
     def calculate_descriptors_batch(self, molecules):
+        """Calculate all descriptors for a batch of molecules"""
         
         descriptors = []
         for molecule in molecules:
-            descriptors.append(self.calculate_descriptor(molecule))
+            descriptors.append(self.calculate_all_descriptors(molecule))
         
         return np.array(descriptors).reshape(len(molecules), -1)
 
-    def calculate_descriptor(self, molecule):
+    def calculate_all_descriptors(self, molecule):
+        """Calculates all descriptors for all molecules"""
         
         geometry = molecule.geometry
 
         molecular_descriptor = []
 
         # calculate descriptor for each atom
-        for i, geom_i in enumerate(geometry):
+        for i in range(molecule.number_of_atoms):
             
-
-            atomic_descriptor = np.zeros(self.number_of_descriptors)
-            
-            for j, geom_j in enumerate(geometry):
-                if i == j:
-                    continue
-                
-                atomic_descriptor += \
-                    self.calculate_atomic_descriptor_contribution(geom_i, geom_j)
-                
-            molecular_descriptor.append(atomic_descriptor)
+            molecular_descriptor.append(
+                self.calculate_atom_descriptor(
+                    i, 
+                    molecule, 
+                    self.number_of_descriptors
+                )
+            )
         return np.array(molecular_descriptor)
+
+    def calculate_atom_descriptor(self, index_atom, molecule, number_of_descriptors):
+        """Calculates the descriptor of the atom with index index_atom in the 
+        molecule
+        """
+
+        geometry = molecule.geometry
+
+        atomic_descriptor = np.zeros(number_of_descriptors)
+            
+        for j, geom_j in enumerate(geometry):
+            if index_atom == j:
+                continue
+            
+            atomic_descriptor += self.calculate_atomic_descriptor_contribution(
+                    geometry[index_atom], 
+                    geom_j
+                )
+
+        return atomic_descriptor
+
+
+
 
     def calculate_atomic_descriptor_contribution(self, geom_i, geom_j):
         """Calculates the contribution to the atomic descriptor of atom i
