@@ -131,46 +131,46 @@ def do_analysis(network_path, dataset, molecules, s_raw, log_file):
     with open(log_file, "a+") as f:
         f.write("\n+++++ Plain NN +++++\n")
     measure_and_display(
-        p_nn, dataset, molecules, True, log_file
+        p_nn, dataset, molecules, True, log_file, s=s_raw
     )
     
     with open(log_file, "a+") as f:
         f.write("\n\n+++++ McW 1 +++++\n")
     msg.info("Results McWheeny 1: ",1)
     measure_and_display(
-        p_mcw1.reshape(-1, DIM**2), dataset, molecules, False, log_file
+        p_mcw1.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
     
     with open(log_file, "a+") as f:
         f.write("\n\n+++++ McW 5 +++++\n")
     msg.info("Results McWheeny 5: ", 1)
     measure_and_display(
-        p_mcw5.reshape(-1, DIM**2), dataset, molecules, False, log_file
+        p_mcw5.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
 
     with open(log_file, "a+") as f:
         f.write("\n\n+++++ SAP +++++\n")
     msg.info("Results SAP: ", 1)
     measure_and_display(
-        p_sap.reshape(-1, DIM**2), dataset, molecules, False, log_file
+        p_sap.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
 
     with open(log_file, "a+") as f:
         f.write("\n\n+++++ MINAO +++++\n")
     msg.info("Results MINAO: ", 1)
     measure_and_display(
-        p_minao.reshape(-1, DIM**2), dataset, molecules, False, log_file
+        p_minao.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
 
     with open(log_file, "a+") as f:
         f.write("\n\n+++++ GWH +++++\n")
     msg.info("Results GWH: ", 1)
     measure_and_display(
-        p_gwh.reshape(-1, DIM**2), dataset, molecules, False, log_file
+        p_gwh.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
 
 
-def measure_and_display(p, dataset, molecules, is_triu, log_file):
+def measure_and_display(p, dataset, molecules, is_triu, log_file, s):
     def format_results(result):
         if isinstance(result, list):
             out = list(map(
@@ -192,7 +192,8 @@ def measure_and_display(p, dataset, molecules, is_triu, log_file):
         mf_initializer,
         dim,
         is_triu=is_triu,
-        is_dataset_triu=True
+        is_dataset_triu=True,
+        s=s
     ))
 
     result += "--- Iterations Damped ---\n" + \

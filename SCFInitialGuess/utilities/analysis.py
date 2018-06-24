@@ -289,7 +289,8 @@ def measure_all_quantities(
         mf_initializer,
         dim,
         is_triu=False,
-        is_dataset_triu=None
+        is_dataset_triu=None,
+        s=None
     ):
     """This function calculates all important quantities of a 
     density matrix (of the dimension dim) guess p, for the testing data in dataset, 
@@ -305,11 +306,14 @@ def measure_all_quantities(
     if is_dataset_triu is None:
         is_dataset_triu = is_triu
 
-    s_raw_batch = make_matrix_batch(
-        dataset.inverse_input_transform(dataset.testing[0]),
-        dim,
-        is_dataset_triu
-    )
+    if s is None:            
+        s_raw_batch = make_matrix_batch(
+            dataset.inverse_input_transform(dataset.testing[0]),
+            dim,
+            is_dataset_triu
+        )
+    else:
+        s_raw_batch = make_matrix_batch(s, dim, False)
 
     p_batch = make_matrix_batch(p, dim, is_triu)
 
