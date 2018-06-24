@@ -251,9 +251,9 @@ def measure_symmetry_error(p_batch):
     for p in p_batch:
         yield np.mean(np.abs(p - p.T))
 
-def measure_absolute_error(p, dataset):
+def measure_absolute_error(p, p_dataset):
     """The absolute error between a network guess p and the testing data"""
-    return np.mean(np.abs(p - dataset.testing[1]), 1)
+    return np.mean(np.abs(p - p_dataset), 1)
 
 def measure_idempotence_error(p_batch, s_batch):
     for (p, s) in zip(p_batch, s_batch):
@@ -288,7 +288,8 @@ def measure_all_quantities(
         n_electrons,
         mf_initializer,
         dim,
-        is_triu=False
+        is_triu=False,
+        is_dataset_triu=None
     ):
     """This function calculates all important quantities of a 
     density matrix (of the dimension dim) guess p, for the testing data in dataset, 
@@ -301,16 +302,22 @@ def measure_all_quantities(
         measured. Eg.g ((error1, error of error1), (error2, error of ...), ...)
     """
 
+    if is_dataset_triu is None:
+        is_dataset_triu = is_triu
+
     s_raw_batch = make_matrix_batch(
         dataset.inverse_input_transform(dataset.testing[0]),
         dim,
-        is_triu
+        is_dataset_triu
     )
 
     p_batch = make_matrix_batch(p, dim, is_triu)
 
     err_abs = statistics(list(
-        measure_absolute_error(p, dataset)
+        measure_absolute_error(
+            p_batch, 
+            make_matrix_batch(dataset.testing[1], dim, is_dataset_triu)
+        )
     ))
 
     err_sym = statistics(list(
@@ -328,7 +335,7 @@ def measure_all_quantities(
     err_Ehf = statistics(list(
         measure_hf_energy_error(
             p_batch, 
-            make_matrix_batch(dataset.testing[1], dim, is_triu), 
+            make_matrix_batch(dataset.testing[1], dim, is_dataset_triu), 
             molecules
         )
     ))
