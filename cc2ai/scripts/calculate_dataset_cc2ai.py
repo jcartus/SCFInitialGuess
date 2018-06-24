@@ -16,19 +16,21 @@ from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import QChemResultsReader
 
 
-BASIS = "lanl2dz" #"cc-pvdz-pp"
-ECP = "lanl2dz" #"cc-pvdz-pp"
+#BASIS = "lanl2dz" #"cc-pvdz-pp"
+#ECP = "lanl2dz" #"cc-pvdz-pp"
 
-MOLECULE = "platin"
+BASIS="6-31g**"
 
+#MOLECULE = "platin"
+MOELCULE="ethan"
 # pt cc-pvdz-pp
 #dim = 152
 # pt lanl2dz
-dim = 88
+#dim = 88
 
 
 # ethan
-#dim = 58
+dim = 58
 
 # ethen
 #dim = 48
@@ -89,7 +91,7 @@ def main(data_folder="cc2ai/", index_file=None):
     msg.info("Fetching molecules", 2)
     molecules = list(fetch_molecules(data_folder))
 
-    if not index_file is None:
+    if index_file is None:
         index = np.arange(len(molecules))
         np.random.shuffle(index)
     else:
