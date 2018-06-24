@@ -74,7 +74,7 @@ def main():
     msg.info("Fetching dataset ... ", 2)
     dataset = prep_dataset()
 
-    save_path = "butadien/data/networks/networkSMatrixBigData.npy"
+    save_path = "butadien/data/networks/networkS400.npy"
 
 
     user_input =  msg.input(
