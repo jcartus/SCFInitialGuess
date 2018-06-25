@@ -38,8 +38,7 @@ class Molecule(object):
     @property
     def geometry(self):
         """The geometries as used by A. Fuchs in his NN Project """
-        for x in zip(self.species, self.positions):
-            yield x
+        return [x for x in zip(self.species, self.positions)]
 
     def get_sum_formula(self):
         raise NotImplementedError("Sum formula not available yet!")
@@ -759,7 +758,7 @@ class DescribedMoleculesDataset(AbstractDataset):
             x += self.input_descriptor.calculate_descriptors(mol)
             y += self.output_descriptor.calculate_descriptors(mol)
         
-        return x, y
+        return np.array(x), np.array(y)
 
     @property
     def training(self):
@@ -794,19 +793,20 @@ class DescribedMoleculesDataset(AbstractDataset):
         return x, y
 
     def make_normalization(self):
-        train = self.training[0]
-        validation = self.validation[0]
-        test = self.testing[0]
-
+        
         _, self.x_mean, self.x_std = \
-            self.normalize(train[0] + validation[0] + test[0])
+            self.normalize(
+                list(self.training[0]) + \
+                list(self.validation[0]) + \
+                list(self.testing[0])
+            )
         
         self._training_pairs_cache = \
-            (self.input_transformation(train[0]), train[1])
+            (self.input_transformation(self.training[0]), self.training[1])
         self._validation_pairs_cache = \
-            (self.input_transformation(validation[0]), validation[1])
+            (self.input_transformation(self.validation[0]), self.validation[1])
         self._testing_pairs_cache = \
-            (self.input_transformation(test[0]), test[1])
+            (self.input_transformation(self.testing[0]), self.testing[1])
 
     def export(self, save_path, comment=None):
         """Export the dataset to a numpy binary"""
