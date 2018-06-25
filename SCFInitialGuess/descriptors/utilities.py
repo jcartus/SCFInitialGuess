@@ -6,6 +6,7 @@ Author:
 """
 
 from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
+from SCFInitialGuess.utilities.dataset import extract_triu
 
 # TODO a diagonal extractor, so i can train to just guess the diagonal
 
@@ -15,21 +16,21 @@ class BlockExtractor(object):
     from the S matrix)
     """
 
-    def __init__(self, target_species):
+    def __init__(self, target_species, basis):
         self.target_species = target_species
+        self.basis = basis
 
 
-    @staticmethod
-    def index_range(atoms, atom_index):
+    def index_range(self, atoms, atom_index):
         """Calculate the range of matrix elements for atom specified by index in
         atoms list."""
 
         # summ up the number of basis functions of previous atoms
         start = 0
         for i in range(atom_index):
-            start += N_BASIS[atoms[i]]
+            start += N_BASIS[self.basis][atoms[i]]
         
-        end = start + N_BASIS[atoms[atom_index]]
+        end = start + N_BASIS[self.basis][atoms[atom_index]]
 
         return start, end
 
@@ -49,7 +50,7 @@ class BlockExtractor(object):
         Args:
             TODO
         """
-
+    
         extracted_blocks = []
 
         indices_of_atoms_of_interest = [
@@ -59,10 +60,8 @@ class BlockExtractor(object):
 
         for index in indices_of_atoms_of_interest:
             start, end = self.index_range(atoms_in_molecule, index)
-            
-            extracted_blocks.append(
-                Matrix[start:end, range(*self.index_range(atoms_in_molecule, i))]
-            )
+            block = Matrix[start:end, start:end]
+            extracted_blocks.append(extract_triu(block, len(block)))
         ################
         # TODO: Extract only upper triu!
         ################
