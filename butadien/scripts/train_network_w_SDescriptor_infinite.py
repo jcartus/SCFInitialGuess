@@ -28,14 +28,14 @@ def prep_dataset():
         return [extract_triu(s, dim) for s in S], [extract_triu(p, dim) for p in P]
 
 
-    folder = join("butadien", "data", "dataBigData")
+    folder = join("butadien", "data", "dataLarge")
     
 
     dataset, molecules = make_butadien_dataset(
-        np.load(join(folder, "molecules_BigDataset.npy")),
+        np.load(join(folder, "molecules_Large.npy")),
         *load_triu(
-            np.load(join(folder, "S_BigDataset.npy")),
-            np.load(join(folder, "P_BigDataset.npy")),
+            np.load(join(folder, "S_Large.npy")),
+            np.load(join(folder, "P_Large.npy")),
             DIM
         ),
         test_samples=1000
@@ -74,7 +74,7 @@ def main():
     msg.info("Fetching dataset ... ", 2)
     dataset = prep_dataset()
 
-    save_path = "butadien/data/networks/networkSMatrixBigData.npy"
+    save_path = "butadien/data/networks/networkSLarge.npy"
 
 
     user_input =  msg.input(
