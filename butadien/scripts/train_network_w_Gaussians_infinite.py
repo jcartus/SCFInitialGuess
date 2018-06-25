@@ -17,6 +17,8 @@ from SCFInitialGuess.nn.training import ContinuousTrainer
 from SCFInitialGuess.nn.cost_functions import RegularizedMSE
 from SCFInitialGuess.utilities.dataset import make_butadien_dataset, extract_triu
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
+from SCFInitialGuess.descriptors.coordinate_descriptors import NonWeighted, \
+    RADIAL_GAUSSIAN_MODELS, AZIMUTHAL_GAUSSIAN_MODELS, POLAR_GAUSSIAN_MODELS, Gaussians
 
 DIM = 26
 
@@ -28,16 +30,22 @@ def prep_dataset():
         return [extract_triu(s, dim) for s in S], [extract_triu(p, dim) for p in P]
 
 
-    folder = join("butadien", "data", "dataLarge")
+    folder = join("butadien", "data", "400")
+
+    molecules = np.load(join(folder, "molecules400.npy")) 
     
+    descriptor = NonWeighted(
+        Gaussians(*RADIAL_GAUSSIAN_MODELS["Equidistant-Broadening_1"]),
+        Gaussians(*AZIMUTHAL_GAUSSIAN_MODELS["Equisitant_1"]),
+        Gaussians(*POLAR_GAUSSIAN_MODELS["Equisitant_1"])
+    )
+
+    descriptor_values = descriptor.calculate_descriptors_batch(molecules)
 
     dataset, molecules = make_butadien_dataset(
-        np.load(join(folder, "molecules_Large.npy")),
-        *load_triu(
-            np.load(join(folder, "S_Large.npy")),
-            np.load(join(folder, "P_Large.npy")),
-            DIM
-        ),
+        molecules,
+        descriptor_values,
+        [extract_triu(p, DIM) for p in np.load(join(folder, "P400.npy"))],
         test_samples=100
     )
 
@@ -74,12 +82,12 @@ def main():
     msg.info("Fetching dataset ... ", 2)
     dataset = prep_dataset()
 
-    save_path = "butadien/data/networks/networkSLarge.npy"
+    save_path = "butadien/data/networks/networkGaussians400EquidistantBroadening.npy"
 
 
     user_input =  msg.input(
         "This will overwrite the model at " + save_path + \
-        "Are you sure you want that? (y for yes)"
+        " Are you sure you want that? (y for yes)"
     )
 
     if user_input.upper() != "Y":
@@ -108,7 +116,7 @@ def main():
         
     if model is None:
         dim_triu = int(DIM * (DIM + 1) / 2)
-        structure = [dim_triu, int(dim_triu * 0.75), int(dim_triu * 0.5), dim_triu, dim_triu]
+        structure = [18, int(dim_triu * 0.75), int(dim_triu * 0.5), dim_triu, dim_triu]
         test_error = 1e10
 
 
