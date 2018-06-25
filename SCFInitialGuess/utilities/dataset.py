@@ -70,6 +70,10 @@ class Molecule(object):
 
         return mol
 
+
+
+
+
 def do_scf_runs(molecules):
     """Do scf calculation for molecules in molecules and extract all relevant 
     matrices
@@ -496,110 +500,106 @@ def make_butadien_dataset(molecules, S, P, test_samples=50, index=None):
     return dataset, (molecules_train, molecules_test)
 
 
-class AbstractExtractor(object):
-    """An abstract descriptor class (previously used as 'desriptor').
-    Used to extract parts of S or P matrix to put into a dataset object for
-    training.
-    """
-
-    @staticmethod
-    def index_range(atoms, atom_index):
-        """Calculate the range of matrix elements for atom specified by index in
-        atoms list."""
-
-        # summ up the number of basis functions of previous atoms
-        start = 0
-        for i in range(atom_index):
-            start += N_BASIS[atoms[i]]
-        
-        end = start + N_BASIS[atoms[atom_index]]
-
-        return start, end
-
-    @classmethod
-    def input_values(cls, S, atoms, index):
-        raise NotImplementedError("AbstractExtractor is an abstract class!")
-
-    @classmethod
-    def target_values(cls, result, index):
-        raise NotImplementedError("AbstractExtractor is an abstract class!")
-
-class BlockExtractor(object):
-    """An abstract extractor class (however 'desriptor' previously used for
-    descriptors). Extracts some parts of S and P Matrix to use for network
-    training.
-    """
-
-    @staticmethod
-    def index_range(atoms, atom_index):
-        """Calculate the range of matrix elements for atom specified by index in
-        atoms list."""
-
-        # summ up the number of basis functions of previous atoms
-        start = 0
-        for i in range(atom_index):
-            start += N_BASIS[atoms[i]]
-        
-        end = start + N_BASIS[atoms[atom_index]]
-
-        return start, end
-
-    @classmethod
-    def input_values(cls, S, atoms, index):
-        """Returns a list with for each atom in the molecule of the result 
-        a list of overlap blocks.
-
-         ____ __________
-        | C  |  :  :    | <-- For the first C, the three blocks right from the
-        |____|__:__:____|     self overlap area (i.e. the C-Block) are retrned
-        |    |_H|__     |
-        |       |_H|____|
-        |          | O  |
-        |__________|____|
-
-        Args:
-            - S np.array (2D): with a quadratic Matrix of the shape as, say the
-            overlap matrix.
-            - atoms list<str>: a list of atoms in the molecule
-            - index int: index of the molecule for which the descriptor schall 
-            be calculated.
-        """
-        
-        # find the range of the block-band for the atom in question
-        start_rows, end_rows = cls.index_range(atoms, index)
-
-        atom_blocks = []
-
-        for i, atom in enumerate(atoms):
-            
-            #ignore the self-overlap part
-            if i == index:
-                continue
-            
-            start_cols, end_cols = cls.index_range(atoms, i)
-
-            # find block 
-            atom_blocks.append((
-                atoms[i], 
-                S[start_rows:end_rows, start_cols:start_cols]
-            ))
-
-        return atom_blocks
 
 
-    
-
-    @classmethod
-    def target_values(cls, result, index):
-        """Extract a part of the P or the F Matrix"""
-        start, end = cls.index_range(result.atoms, index)
-
-        return result.P[start:end, start:end]
-
-class Dataset(object):
+class AbstractDataset(object):
     """This class will govern the whole dataset and has methods to process and 
     split it.
     """
+    def __init__(self):
+        raise NotImplementedError("AbstractDataset is an abstract class!")
+
+
+    def sample_minibatch(self, size):
+        """returns a sub set of the training data 
+        
+        Args:
+            size <int/float>: if size is int it will be assumed as the number
+            of points required, if float it will be assumed as the
+            fraction of the training data to be used.
+        """
+
+        if isinstance(size, int):
+            return self.random_subset(*self.training, size=size)
+        elif isinstance(size, float):
+            return self.random_subset_by_fraction(*self.training, fraction=size)
+        else:
+            raise TypeError(
+                "Size parameter must be either int or float, but was " + \
+                str(type(size)) + "."
+            )
+        
+    @staticmethod
+    def shuffle_batch(x, y):
+        """randomly shuffles the elements of x, y, so the the elements still
+        correspond to each other"""
+        indices = np.arange(len(x))
+        np.random.shuffle(indices)
+        return x[indices], y[indices]
+
+    @staticmethod
+    def random_subset(x, y, size=1):
+        """Cut out size random values from the batch (x,y)"""
+        indices = np.arange(len(x))
+        np.random.shuffle(indices)
+        indices = indices[:int(size)] 
+        return x[indices], y[indices]    
+
+    @classmethod
+    def random_subset_by_fraction(cls, x, y, fraction):
+        """Get a subset of the batch (x,y) with a fraction of the values"""
+        return cls.random_subset(x, y, int(np.ceil(fraction * len(x))))
+    
+    def input_transformation(self, x, std_tolerance=1e-20):
+        """Will normalize a set of given input vectors with the mean and std
+        of the dataset. 
+        """
+
+        return self.normalize(x, mean=self.x_mean, std=self.x_std)[0]
+
+    def inverse_input_transform(self, x):
+
+        return self.denormalize(x, self.x_mean, self.x_std)
+
+
+
+    @staticmethod
+    def normalize(x, std_tolerance=1e-20, mean=None, std=None):
+        """Will trans form a dataset with elements x_ij, where j is the index
+        that labels the example and i the index that labels to which input
+        the value corresponds, in the following way:
+
+            x_ij = x_ij - mean(x_ij, j) / var(x_ij, j)
+
+        where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
+        """
+
+        if mean is None or std is None:
+            mean = np.average(x, 0)
+            std = np.std(x, 0)
+
+        # handle dvision by zero if std == 0
+        return (
+            (x - mean) / np.where(np.abs(std) < std_tolerance, 1, std),
+            mean,
+            std
+        )
+
+    @staticmethod
+    def denormalize(x, mean, std):
+        """The inverse trans formation to normalize"""
+
+        return x * std + mean
+
+
+class Dataset(AbstractDataset):
+    """Should actally be called SimpleDataset or so (current name is historical)
+    . You feed it all the 
+    input-target pairs you have and it will randomize them and split them up for
+     you.
+    """
+
+
     def __init__(self, 
         x, 
         y, 
@@ -683,45 +683,6 @@ class Dataset(object):
             static_mode=True
         )
 
-    def sample_minibatch(self, size):
-        """returns a sub set of the training data 
-        
-        Args:
-            size <int/float>: if size is int it will be assumed as the number
-            of points required, if float it will be assumed as the
-            fraction of the training data to be used.
-        """
-
-        if isinstance(size, int):
-            return self.random_subset(*self.training, size=size)
-        elif isinstance(size, float):
-            return self.random_subset_by_fraction(*self.training, fraction=size)
-        else:
-            raise TypeError(
-                "Size parameter must be either int or float, but was " + \
-                str(type(size)) + "."
-            )
-        
-    @staticmethod
-    def shuffle_batch(x, y):
-        """randomly shuffles the elements of x, y, so the the elements still
-        correspond to each other"""
-        indices = np.arange(len(x))
-        np.random.shuffle(indices)
-        return x[indices], y[indices]
-
-    @staticmethod
-    def random_subset(x, y, size=1):
-        """Cut out size random values from the batch (x,y)"""
-        indices = np.arange(len(x))
-        np.random.shuffle(indices)
-        indices = indices[:int(size)] 
-        return x[indices], y[indices]    
-
-    @classmethod
-    def random_subset_by_fraction(cls, x, y, fraction):
-        """Get a subset of the batch (x,y) with a fraction of the values"""
-        return cls.random_subset(x, y, int(np.ceil(fraction * len(x))))
 
     @staticmethod
     def split_dataset(x_raw, y_raw, fraction=0.2):
@@ -736,47 +697,129 @@ class Dataset(object):
         x_test, y_test = x_raw[:ind_train], y_raw[:ind_train]
 
         return (x_train, y_train), (x_test, y_test)
-    
-    def input_transformation(self, x, std_tolerance=1e-20):
-        """Will normalize a set of given input vectors with the mean and std
-        of the dataset.
+
+
+class DescribedMoleculesDataset(AbstractDataset):
+    """This class holds a dataset of molecules. With external descriptors
+    objects, a input/target values for training can be created.
+    """
+
+    def __init__(self, 
+        molecules, 
+        input_descriptor, 
+        output_descriptor,
+        split_test=0.2, 
+        split_validation=0.1,
+        static_mode=True
+    ):
+
+        # input can be normalized later on!
+        self.x_mean = None
+        self.y_mean = None
+        self.input_normalized = False
+
+        self.input_descriptor = input_descriptor
+        self.output_descriptor = output_descriptor
+
+        # with the descriptors the input-target pairs are created.
+        # after the first calculation the values are cached
+        self._testing_pairs_cache = None
+        self._training_pairs_cache = None
+        self._validation_pairs_cache = None
+
+
+        # shuffle dataset
+        self.index = np.arange(len(molecules))
+        if not static_mode:
+            np.shuffle(self.index)
+            molecules = molecules[self.index]
+
+
+        #--- split in test and validation and traing ---
+
+        # assume fraction
+        if split_test < 1:
+            split_test = int(split_test * len(molecules))
+
+        if split_validation < 1:
+            split_validation = int(split_validation * len(molecules))
+
+
+        self._testing = molecules[-split_test:]
+        self._validation = \
+            molecules[-(split_test + split_validation):-split_validation]
+        self._training = molecules[:-(split_test + split_validation)]
+        #---
+
+    def make_dataset_pairs(self, molecules):
+        """For a given set of molecules fetch all input-target pairs"""
+
+        x, y = [], []
+        for mol in molecules:
+            x += self.input_descriptor.calculate_descriptors(mol)
+            y += self.output_descriptor.calculate_descriptors(mol)
+        
+        return x, y
+
+    @property
+    def training(self):
+        """The input-target pairs for all molecules in self._training.
+        If a mu and std was set (e.g. by calling the make_normalization 
+        function), the inputs will be normalized.
         """
+        if self._training_pairs_cache is None:
+            self._training_pairs_cache = \
+                self.make_dataset_pairs(self._training)
+        return self._training_pairs_cache
 
-        return self.normalize(x, mean=self.x_mean, std=self.x_std)[0]
+    @property
+    def validation(self):
+        """see method training"""
+        if self._validation_pairs_cache is None:
+            self._validation_pairs_cache = \
+                self.make_dataset_pairs(self._validation)
+        return self.make_dataset_pairs(self._validation)
 
-    def inverse_input_transform(self, x):
+    @property
+    def testing(self):
+        """see method testing"""
+        if self._training_pairs_cache is None:
+            self._training_pairs_cache = \
+                self.make_dataset_pairs(self._training)
+        return self.make_dataset_pairs(self._training)
 
-        return self.denormalize(x, self.x_mean, self.x_std)
+    def normalize_pairs(self, x, y):
+        if not self.x_mean is None:
+            x = self.input_transformation(x) 
+        return x, y
+
+    def make_normalization(self):
+        train = self.training[0]
+        validation = self.validation[0]
+        test = self.testing[0]
+
+        _, self.x_mean, self.x_std = \
+            self.normalize(train[0] + validation[0] + test[0])
+        
+        self._training_pairs_cache = \
+            (self.input_transformation(train[0]), train[1])
+        self._validation_pairs_cache = \
+            (self.input_transformation(validation[0]), validation[1])
+        self._testing_pairs_cache = \
+            (self.input_transformation(test[0]), test[1])
+
+    def export(self, save_path, comment=None):
+        """Export the dataset to a numpy binary"""
+        data = [
+            (self._training, self._validation, self._training),
+            #(self.input_descriptor, self.output_descriptor),
+            (self.x_mean, self.x_std),
+            comment
+        ]
+        np.save(save_path, data)
 
 
 
-    @staticmethod
-    def normalize(x, std_tolerance=1e-20, mean=None, std=None):
-        """Will trans form a dataset with elements x_ij, where j is the index
-        that labels the example and i the index that labels to which input
-        the value corresponds, in the following way:
-
-            x_ij = x_ij - mean(x_ij, j) / var(x_ij, j)
-
-        where mean(..., j) and var(..., j) denote operation w.r.t j (i fixed.)
-        """
-
-        if mean is None or std is None:
-            mean = np.average(x, 0)
-            std = np.std(x, 0)
-
-        # handle dvision by zero if std == 0
-        return (
-            (x - mean) / np.where(np.abs(std) < std_tolerance, 1, std),
-            mean,
-            std
-        )
-
-    @staticmethod
-    def denormalize(x, mean, std):
-        """The inverse trans formation to normalize"""
-
-        return x * std + mean
 
 class SCFResultsDataset(object):
     """This class will serve as a gathering of input data needed to train and
@@ -792,8 +835,8 @@ class SCFResultsDataset(object):
 
     def __init__(self, 
         results, 
-        split_test=0.1, 
-        split_validation=0.2
+        split_test=0.2, 
+        split_validation=0.1
         ):
 
 
