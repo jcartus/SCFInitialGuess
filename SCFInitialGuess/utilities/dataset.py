@@ -435,6 +435,10 @@ class Result(object):
            
         return x_list, y_list
 
+def extract_triu_batch(A_batch, dim):
+    return np.array(
+        [extract_triu(A, dim) for A in A_batch]
+    )
 
 def extract_triu(A, dim):
     """Extracts the upper triangular part of the matrix.
