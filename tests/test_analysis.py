@@ -31,7 +31,7 @@ class TestErrorMeasurements(unittest.TestCase):
 
         result = list(measure_absolute_error(
             lhs,
-            dataset=DatasetMock(testing=(None, rhs))
+            rhs
         ))
 
         np.testing.assert_array_equal([0.0, 1.0], result)
