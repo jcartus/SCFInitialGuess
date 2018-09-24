@@ -1,0 +1,76 @@
+##### Analysis of 2018-09-07 10:50:29.190302 #####
+Datafolder: butadien/data/
+Postfix: 
+
+
++++++ H_Core +++++
+--- Absolute Error ---
+3.25666E-01 +- 1.99954E-01
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+7.18539E-16 +- 1.38302E-16
+--- Occupance Error ---
+8.13571E-15 +- 6.47910E-15
+--- HF Energy Error ---
+1.89929E+01 +- 3.70236E-01
+--- Avg. Iterations ---
+1.00000E+02 +- 0.00000E+00
+--- Iterations Damped ---
+1.00000E+02 +- 0.00000E+00
+--- Iterations DIIS ---
+1.28800E+01 +- 3.24962E-01
+
++++++ SAP +++++
+--- Absolute Error ---
+9.08718E-02 +- 2.84174E-02
+--- Symmetry Error ---
+6.62663E-34 +- 2.97316E-34
+--- Idempotence Error ---
+1.09000E-01 +- 2.02777E-03
+--- Occupance Error ---
+2.30926E-15 +- 2.85878E-15
+--- HF Energy Error ---
+4.21249E-01 +- 1.84062E-01
+--- Avg. Iterations ---
+1.49200E+01 +- 1.93742E+00
+--- Iterations Damped ---
+1.38700E+01 +- 4.61628E-01
+--- Iterations DIIS ---
+8.84000E+00 +- 4.84149E-01
+
++++++ MINAO +++++
+--- Absolute Error ---
+8.26334E-02 +- 2.52293E-02
+--- Symmetry Error ---
+4.18881E-19 +- 7.82028E-20
+--- Idempotence Error ---
+1.24716E-01 +- 2.28136E-03
+--- Occupance Error ---
+2.70395E-01 +- 1.35896E-03
+--- HF Energy Error ---
+9.98242E-01 +- 2.06762E-01
+--- Avg. Iterations ---
+1.35400E+01 +- 2.27341E+00
+--- Iterations Damped ---
+1.39500E+01 +- 5.89491E-01
+--- Iterations DIIS ---
+8.99000E+00 +- 5.19519E-01
+
++++++ GWH +++++
+--- Absolute Error ---
+3.89665E-02 +- 9.83497E-03
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+3.36733E-16 +- 4.44677E-17
+--- Occupance Error ---
+6.85674E-15 +- 4.55676E-15
+--- HF Energy Error ---
+4.38310E-01 +- 3.49685E-02
+--- Avg. Iterations ---
+1.85500E+01 +- 2.16968E+00
+--- Iterations Damped ---
+1.74500E+01 +- 1.01366E+00
+--- Iterations DIIS ---
+9.43000E+00 +- 4.95076E-01
