@@ -116,6 +116,9 @@ def do_analysis(network_path, dataset, molecules, s_raw, log_file):
     p_mcw5 = np.array(list(map(lambda x: multi_mc_wheeny(x[0], x[1], n_max=5), zip  (p_batch, s_raw))))
 
     msg.info("Classics", 1)
+    p_1e = np.array([
+        hf.init_guess_by_1e(mol.get_pyscf_molecule()) for mol in molecules[1]
+    ])
     p_sap = np.array([
         hf.init_guess_by_atom(mol.get_pyscf_molecule()) for mol in molecules[1]
     ])
@@ -146,6 +149,13 @@ def do_analysis(network_path, dataset, molecules, s_raw, log_file):
     msg.info("Results McWheeny 5: ", 1)
     measure_and_display(
         p_mcw5.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
+    )
+
+    with open(log_file, "a+") as f:
+        f.write("\n\n+++++ H_Core +++++\n")
+    msg.info("Results H_Core: ", 1)
+    measure_and_display(
+        p_1e.reshape(-1, DIM**2), dataset, molecules, False, log_file, s=s_raw
     )
 
     with open(log_file, "a+") as f:
