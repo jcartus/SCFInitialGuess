@@ -166,6 +166,33 @@ class QChemResultsReader(object):
             results.append(cls.read_file(join(folder, file)))
         return results
 
+    @classmethod
+    def fetch_from_folder(cls, folder, basis, ecp=None):
+    
+        files = [file for file in listdir(folder) if ".out" in file]
+    
+        files.sort()
+
+        mols = []
+        for i, file in enumerate(files):
+            
+            msg.info("Fetching: " + str(i + 1) + "/" + str(len(files)))
+
+            molecules = QChemResultsReader.read_file(folder + file)
+
+            for molecule_values in molecules:
+                mol = Molecule(*molecule_values)
+                mol.basis = basis
+                try:
+                    mol.ecp = ecp
+                except:
+                    pass
+
+                mols.append(mol)
+                
+        return mols
+
+
 class XYZFileReader(object):
     """This will read all the molecules from the database files (which were 
     downloaded from the pyqChem repository) that are in a specified folder"""
