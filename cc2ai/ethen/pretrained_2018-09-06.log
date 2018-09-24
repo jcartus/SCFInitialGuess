@@ -1,0 +1,127 @@
+##### Analysis of 2018-09-06 15:55:03.979909 #####
+
++++++ Plain NN +++++
+--- Absolute Error ---
+1.66543E-03 +- 3.66636E-04
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+2.77754E-03 +- 4.45733E-04
+--- Occupance Error ---
+1.20061E-01 +- 8.19510E-02
+--- HF Energy Error ---
+4.74759E-01 +- 3.23544E-01
+--- Avg. Iterations ---
+1.23600E+01 +- 2.68894E+00
+--- Iterations Damped ---
+1.28800E+01 +- 1.19398E+00
+--- Iterations DIIS ---
+8.04000E+00 +- 3.44093E-01
+
++++++ McW 1 +++++
+--- Absolute Error ---
+8.92304E-04 +- 4.49411E-04
+--- Symmetry Error ---
+1.64733E-17 +- 1.25750E-18
+--- Idempotence Error ---
+6.74433E-05 +- 1.99911E-05
+--- Occupance Error ---
+4.34262E-03 +- 4.16962E-03
+--- HF Energy Error ---
+4.00620E-02 +- 2.27974E-02
+--- Avg. Iterations ---
+1.08000E+01 +- 1.80000E+00
+--- Iterations Damped ---
+1.28800E+01 +- 1.21062E+00
+--- Iterations DIIS ---
+7.58000E+00 +- 5.68859E-01
+
++++++ McW 5 +++++
+--- Absolute Error ---
+8.91350E-04 +- 4.52063E-04
+--- Symmetry Error ---
+2.75534E-17 +- 2.48166E-18
+--- Idempotence Error ---
+1.45748E-17 +- 1.08477E-18
+--- Occupance Error ---
+7.46070E-16 +- 1.42508E-15
+--- HF Energy Error ---
+4.02476E-03 +- 1.28001E-03
+--- Avg. Iterations ---
+1.07200E+01 +- 1.84434E+00
+--- Iterations Damped ---
+1.29000E+01 +- 1.22066E+00
+--- Iterations DIIS ---
+7.56000E+00 +- 5.35164E-01
+
++++++ H_Core +++++
+--- Absolute Error ---
+6.27235E-02 +- 7.03697E-02
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+1.68042E-16 +- 6.51753E-17
+--- Occupance Error ---
+7.14095E-15 +- 5.22732E-15
+--- HF Energy Error ---
+1.38738E+01 +- 8.66921E-01
+--- Avg. Iterations ---
+1.84800E+01 +- 4.60973E+00
+--- Iterations Damped ---
+2.00200E+01 +- 1.14778E+01
+--- Iterations DIIS ---
+1.03000E+01 +- 5.38516E-01
+
++++++ SAP +++++
+--- Absolute Error ---
+1.68612E-02 +- 1.48513E-02
+--- Symmetry Error ---
+5.83060E-20 +- 2.59896E-20
+--- Idempotence Error ---
+2.06723E-02 +- 7.19984E-04
+--- Occupance Error ---
+2.70006E-15 +- 2.71126E-15
+--- HF Energy Error ---
+6.23493E-01 +- 1.96798E-01
+--- Avg. Iterations ---
+1.20200E+01 +- 1.84922E+00
+--- Iterations Damped ---
+1.32200E+01 +- 4.14246E-01
+--- Iterations DIIS ---
+8.34000E+00 +- 4.73709E-01
+
++++++ MINAO +++++
+--- Absolute Error ---
+1.63310E-02 +- 1.46274E-02
+--- Symmetry Error ---
+1.03059E-19 +- 2.93007E-20
+--- Idempotence Error ---
+2.06078E-02 +- 8.41922E-04
+--- Occupance Error ---
+1.37434E-02 +- 8.86009E-05
+--- HF Energy Error ---
+1.99243E-01 +- 1.84598E-01
+--- Avg. Iterations ---
+1.14600E+01 +- 1.91008E+00
+--- Iterations Damped ---
+1.31400E+01 +- 3.46987E-01
+--- Iterations DIIS ---
+8.28000E+00 +- 4.48999E-01
+
++++++ GWH +++++
+--- Absolute Error ---
+1.26053E-02 +- 8.13188E-03
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+5.21321E-17 +- 1.00176E-17
+--- Occupance Error ---
+4.68958E-15 +- 3.60141E-15
+--- HF Energy Error ---
+8.00987E-01 +- 1.19180E-01
+--- Avg. Iterations ---
+1.30200E+01 +- 1.08609E+00
+--- Iterations Damped ---
+1.67800E+01 +- 1.25363E+00
+--- Iterations DIIS ---
+8.82000E+00 +- 4.33128E-01
