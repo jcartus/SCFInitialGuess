@@ -1,1 +1,0 @@
-qchem 16_F3chloromethane-formaldehyde.in 16_F3chloromethane-formaldehyde.out 16_F3chloromethane-formaldehyde.dir 

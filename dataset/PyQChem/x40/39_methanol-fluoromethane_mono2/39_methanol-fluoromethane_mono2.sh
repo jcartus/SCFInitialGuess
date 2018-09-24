@@ -1,1 +1,0 @@
-qchem 39_methanol-fluoromethane_mono2.in 39_methanol-fluoromethane_mono2.out 39_methanol-fluoromethane_mono2.dir 

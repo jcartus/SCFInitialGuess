@@ -1,1 +1,0 @@
-qchem 09_fluoromethane-fluoromethane.in 09_fluoromethane-fluoromethane.out 09_fluoromethane-fluoromethane.dir 

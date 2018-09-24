@@ -1,1 +1,0 @@
-qchem 08_trichloromethane-methane_mono2.in 08_trichloromethane-methane_mono2.out 08_trichloromethane-methane_mono2.dir 

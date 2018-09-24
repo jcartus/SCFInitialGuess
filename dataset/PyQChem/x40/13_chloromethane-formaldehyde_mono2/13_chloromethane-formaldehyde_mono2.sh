@@ -1,1 +1,0 @@
-qchem 13_chloromethane-formaldehyde_mono2.in 13_chloromethane-formaldehyde_mono2.out 13_chloromethane-formaldehyde_mono2.dir 

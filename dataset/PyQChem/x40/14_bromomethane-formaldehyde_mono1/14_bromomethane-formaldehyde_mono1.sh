@@ -1,1 +1,0 @@
-qchem 14_bromomethane-formaldehyde_mono1.in 14_bromomethane-formaldehyde_mono1.out 14_bromomethane-formaldehyde_mono1.dir 

@@ -1,1 +1,0 @@
-qchem 10_chloromethane-chloromethane_mono2.in 10_chloromethane-chloromethane_mono2.out 10_chloromethane-chloromethane_mono2.dir 
