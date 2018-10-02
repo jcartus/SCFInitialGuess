@@ -1,0 +1,76 @@
+##### Analysis of 2018-10-02 12:11:51.418502 #####
+Datafolder: thesis/dataset/TSmall_sto3g
+Postfix: TSmall_sto3g
+
+
++++++ H_Core +++++
+--- Absolute Error ---
+2.98415E-01 +- 1.88087E-01
+--- Symmetry Error ---
+7.92369E-19 +- 3.52272E-19
+--- Idempotence Error ---
+7.36451E-16 +- 1.85870E-16
+--- Occupance Error ---
+8.83760E-15 +- 6.91834E-15
+--- HF Energy Error ---
+1.73643E+01 +- 1.46129E+00
+--- Avg. Iterations ---
+1.00000E+02 +- 0.00000E+00
+--- Iterations Damped ---
+1.00000E+02 +- 0.00000E+00
+--- Iterations DIIS ---
+1.53781E+01 +- 1.62882E+00
+
++++++ SAP +++++
+--- Absolute Error ---
+9.65086E-02 +- 3.12259E-02
+--- Symmetry Error ---
+5.60134E-34 +- 2.39295E-34
+--- Idempotence Error ---
+1.04499E-01 +- 4.97748E-03
+--- Occupance Error ---
+6.16864E-15 +- 2.05154E-15
+--- HF Energy Error ---
+5.89720E-01 +- 3.37333E-01
+--- Avg. Iterations ---
+3.91791E+01 +- 2.49165E+01
+--- Iterations Damped ---
+2.38109E+01 +- 1.07043E+01
+--- Iterations DIIS ---
+1.11443E+01 +- 1.13912E+00
+
++++++ MINAO +++++
+--- Absolute Error ---
+8.94174E-02 +- 3.01097E-02
+--- Symmetry Error ---
+6.78080E-19 +- 1.10418E-19
+--- Idempotence Error ---
+1.21424E-01 +- 5.62755E-03
+--- Occupance Error ---
+2.67637E-01 +- 3.96397E-03
+--- HF Energy Error ---
+7.91162E-01 +- 3.82049E-01
+--- Avg. Iterations ---
+3.86965E+01 +- 2.49637E+01
+--- Iterations Damped ---
+2.41294E+01 +- 1.12958E+01
+--- Iterations DIIS ---
+1.12289E+01 +- 1.17916E+00
+
++++++ GWH +++++
+--- Absolute Error ---
+5.62884E-02 +- 2.18334E-02
+--- Symmetry Error ---
+8.47515E-19 +- 2.76581E-19
+--- Idempotence Error ---
+3.17552E-16 +- 4.01320E-17
+--- Occupance Error ---
+6.73425E-15 +- 4.91567E-15
+--- HF Energy Error ---
+6.99120E-01 +- 1.39165E-01
+--- Avg. Iterations ---
+4.50945E+01 +- 2.51973E+01
+--- Iterations Damped ---
+3.03284E+01 +- 1.66238E+01
+--- Iterations DIIS ---
+1.15274E+01 +- 1.40025E+00
