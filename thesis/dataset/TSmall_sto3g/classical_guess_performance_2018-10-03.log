@@ -1,0 +1,28 @@
+##### Analysis of 2018-10-03 12:35:34.835597 #####
+Datafolder: thesis/dataset/TSmall_sto3g
+Postfix: TSmall_sto3g
+
+
++++++ Converged +++++
+##### Analysis of 2018-10-03 12:36:08.555610 #####
+Datafolder: thesis/dataset/TSmall_sto3g
+Postfix: TSmall_sto3g
+
+
++++++ Converged +++++
+--- Absolute Error ---
+0.00000E+00 +- 0.00000E+00
+--- Symmetry Error ---
+0.00000E+00 +- 0.00000E+00
+--- Idempotence Error ---
+3.03650E-16 +- 4.18674E-17
+--- Occupance Error ---
+6.09794E-15 +- 5.66373E-15
+--- HF Energy Error ---
+1.14535E-14 +- 2.18098E-14
+--- Avg. Iterations ---
+1.00000E+00 +- 0.00000E+00
+--- Iterations Damped ---
+1.00000E+00 +- 0.00000E+00
+--- Iterations DIIS ---
+1.00000E+00 +- 0.00000E+00
