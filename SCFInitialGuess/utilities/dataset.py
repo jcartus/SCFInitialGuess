@@ -88,10 +88,13 @@ def do_scf_runs(molecules):
             mf.verbose = 1
             mf.run()
             
+            if mf.iterations == mf.max_cycle:
+                msg.error("Not converged!!!!!!!!!!!!!!!!!!!")
+
             h = mf.get_hcore(mol)
             s = mf.get_ovlp()
             p = mf.make_rdm1()
-            f = mf.get_fock(h, s, mf.get_veff(mol, p), p)
+            f = fock_from_density(p, s, h, mol)
 
             S.append(s)
             P.append(p)
@@ -277,6 +280,41 @@ class XYZFileReader(object):
                     positions.append(list(map(float, sep[1:])))
 
             return Molecule(species, positions, full_name=name)
+
+
+
+def fock_from_density(p, s, h, mol):
+    return hf.get_fock(
+        None, 
+        h1e=h, 
+        s1e=s, 
+        vhf=hf.get_veff(mol=mol.get_pyscf_molecule(), dm=p), 
+        dm=p
+    )
+
+def fock_from_density_batch(p_batch, s_batch, h_batch, molecules):
+    f = []
+    for p, s, h, mol in zip(p_batch, s_batch, h_batch, molecules):
+        f.append(
+            fock_from_density(p, s, h, mol)
+        )
+
+    return np.array(f)
+
+def density_from_fock(f, s, mol):
+    
+    mo_energy, mo_coeff = hf.eig(f, s)
+    mo_occ = hf.get_occ(mf=hf.SCF(mol), mo_energy=mo_energy, mo_coeff=mo_coeff)
+    
+    return hf.make_rdm1(mo_coeff, mo_occ)
+
+def density_from_fock_batch(f_batch, s_batch, molecules):
+    p = []
+    for (s, f, mol) in zip(s_batch, f_batch, molecules):
+        p.append(density_from_fock(f, s, mol.get_pyscf_molecule()))
+    return np.array(p)
+
+
 
 def produce_randomized_geometries(molecules, amplification):
     """Will create a list of geometries similar to the ones given in molecules
@@ -620,6 +658,18 @@ class AbstractDataset(object):
         """The inverse trans formation to normalize"""
 
         return x * std + mean
+
+
+class StaticDataset(AbstractDataset):
+
+    def __init__(self, train, validation, test, mu, std):
+
+        self.training = train
+        self.validation = validation
+        self.testing = test
+
+        self.x_mean = mu
+        self.x_std = std
 
 
 class Dataset(AbstractDataset):
