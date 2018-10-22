@@ -82,7 +82,7 @@ electronegativities = {
 
 # the number of basis functions in 6-311++G** for a specified element
 number_of_basis_functions = {
-    "6-311++G**": {
+    "6-311++g**": {
         "H": 7,
         "N": 22,
         "F": 22,
