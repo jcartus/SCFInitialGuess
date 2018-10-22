@@ -261,7 +261,7 @@ def measure_idempotence_error(p_batch, s_batch):
 
 def measure_occupance_error(p_batch, s_batch, n_electrons):
     for (p, s) in zip(p_batch, s_batch):
-        yield np.mean(np.abs(np.trace(np.dot(p, s)) - n_electrons))
+        yield np.abs(np.trace(np.dot(p, s)) - n_electrons)
 
 def measure_hf_energy(p_batch, molecules):
 
@@ -344,15 +344,25 @@ def measure_all_quantities(
         )
     ))
 
-    iterations = statistics(list(
-        measure_iterations(
-            mf_initializer, 
-            p_batch.astype('float64'), 
-            molecules
-        )
-    ))
+    iterations = measure_iterations(
+        mf_initializer, 
+        p_batch.astype('float64'), 
+        molecules
+    )
 
-    return err_abs, err_sym, err_idem, err_occ, err_Ehf, iterations
+    return (
+        err_abs, 
+        err_sym, 
+        err_idem, 
+        err_occ, 
+        err_Ehf, 
+        statistics(iterations),
+        np.sum(
+            mf_initializer(
+                molecules[0].get_pyscf_molecule()
+            ).max_cycle == iterations
+        )
+    )
 
 def make_results_str(results):
     """Creates a printable string from results of measure all quantities"""
@@ -387,6 +397,9 @@ def make_results_str(results):
     out += "\n"
     out += "--- Avg. Iterations ---\n"
     out += format_results(results[5])
+    out += "\n"
+    out += "--- Num. Not Convd. ---\n"
+    out += str(results[6])
     out += "\n"
 
     return out
