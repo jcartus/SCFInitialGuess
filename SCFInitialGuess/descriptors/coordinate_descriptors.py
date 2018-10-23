@@ -179,7 +179,7 @@ class AbstractCoordinateDescriptor(object):
         return np.array(descriptors).reshape(len(molecules), -1)
 
     def calculate_all_descriptors(self, molecule):
-        """Calculates all descriptors for all molecules"""
+        """Calculates all descriptors for all atoms in the molecule"""
         
         geometry = molecule.geometry
 
@@ -261,4 +261,18 @@ class NonWeighted(AbstractCoordinateDescriptor):
         return self.apply_coordinate_descriptors(R)
 
 
+class AtomicNumberWeighted(AbstractCoordinateDescriptor):
+    """This class calculates a desriptor of the vectors of the atoms
+    to each other with gaussians in the radial direction.
+    """
+
+    def calculate_atomic_descriptor_contribution(self, geom_i, geom_j):
+        """Calculates the contribution to the atomic descriptor of atom i
+        for the atom j.
+        """
+        from SCFInitialGuess.utilities.constants import atomic_numbers as Z
+
+        R = np.array(geom_i[1]) -  np.array(geom_j[1])
+
+        return self.apply_coordinate_descriptors(R) * Z[geom_j[0]]
 
