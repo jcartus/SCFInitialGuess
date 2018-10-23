@@ -360,7 +360,7 @@ def measure_all_quantities(
         np.sum(
             mf_initializer(
                 molecules[0].get_pyscf_molecule()
-            ).max_cycle == iterations
+            ).max_cycle == np.array(iterations)
         )
     )
 
