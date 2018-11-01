@@ -119,7 +119,7 @@ class Gaussians(object):
 
 class CutOffGaussians(object):
 
-    def __init__(self, r_cutoff, r_s, eta):
+    def __init__(self, r_s, eta, r_cutoff):
         
         # check if list are of equal length of if eta is scalar
         # check if list are of equal length of if eta is scalar
@@ -143,6 +143,45 @@ class CutOffGaussians(object):
         )
         
 
+class PeriodicGaussians(object):
+
+    def __init__(self, r_s, eta, period):
+        """Constructor
+        Args:
+            - r_s list<float>: centers of gaussians.
+            - eta list<float> or float: width of gaussians.
+            - period float: the period after which the 
+                gaussians are repeated.
+        """
+        
+        # check if list are of equal length of if eta is scalar
+        if isinstance(eta, (list, tuple)):
+            if len(r_s) != len(eta) and len(eta) != 1 :
+                raise ValueError("Dimension of r_s and eta do not match")
+
+        self.r_s = np.array(r_s)
+        self.eta = np.array(eta)
+        self.period = period
+        
+        self.number_of_descriptors = len(r_s)
+
+    def calculate_descriptor(self, x):
+        """Returns a descriptor value for an abstract quantity x (e.g. a 
+        distance or an angle). The vector will be list!!!!
+        """
+        return [
+            np.exp(-1 * eta * ((x % self.period) - r_s)**2) + \
+            np.exp(-1 * eta * ((x % self.period) - self.period - r_s)**2) \
+            for (r_s, eta) in zip(self.r_s, self.eta)
+        ]
+    
+    def calculate_inverse_descriptor(self, t, y):
+        """Returns the y- weighted sum of the gaussians,
+        evaluated at values t.
+        """
+        return np.dot(y, np.array(self.calculate_descriptor(t)))
+
+
 class SphericalHarmonics(object):
 
     def __init__(self, r_s, eta):
@@ -161,7 +200,8 @@ class SphericalHarmonics(object):
         """Returns a descriptor value for an abstract quantity x (e.g. a 
         distance or an angle). The vector will be list!!!!
         """
-        return list(np.exp(-self.eta*(x - self.r_s)**2))
+        #return list(np.exp(-self.eta*(x - self.r_s)**2))
+        raise NotImplementedError("This is not really implemented yet!")
 
 
 #-------------------------------------------------------------------------------
