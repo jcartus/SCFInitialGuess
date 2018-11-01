@@ -148,61 +148,7 @@ class Gaussians(object):
         """
         return list(
             np.exp(-1 * self.eta*(x - self.r_s)**2) 
-        )
-
-class CutOffGaussians(object):
-
-    def __init__(self, r_s, eta, r_cutoff):
-        
-        # check if list are of equal length of if eta is scalar
-        # check if list are of equal length of if eta is scalar
-        if isinstance(eta, (list, tuple)):
-            if len(r_s) != len(eta) and len(eta) != 1 :
-                raise ValueError("Dimension of r_s and eta do not match")
-
-        self.R_c = r_cutoff
-        self.r_s = np.array(r_s)
-        self.eta = np.array(eta)
-
-        self.number_of_descriptors = len(r_s)
-
-    def calculate_descriptor(self, x):
-        """Returns a descriptor value for an abstract quantity x (e.g. a 
-        distance or an angle). The vector will be list!!!!
-        """
-        return list(
-            np.exp(-1 * self.eta*(x - self.r_s)**2) * \
-            behler_cutoff_1(x, self.R_c)
-        )
-
-class DampedGaussians(object):
-    """Instead of cutoff an expontantial decay is applied, 
-    with the decay time tau.
-    """
-
-    def __init__(self, r_s, eta, tau):
-        
-        # check if list are of equal length of if eta is scalar
-        # check if list are of equal length of if eta is scalar
-        if isinstance(eta, (list, tuple)):
-            if len(r_s) != len(eta) and len(eta) != 1 :
-                raise ValueError("Dimension of r_s and eta do not match")
-
-        self.tau = tau
-        self.r_s = np.array(r_s)
-        self.eta = np.array(eta)
-
-        self.number_of_descriptors = len(r_s)
-
-    def calculate_descriptor(self, x):
-        """Returns a descriptor value for an abstract quantity x (e.g. a 
-        distance or an angle). The vector will be list!!!!
-        """
-        return list(
-            np.exp(-1 * self.eta*(x - self.r_s)**2) * \
-            np.exp( - x / self.tau)
-        )
-        
+        )        
 
 class PeriodicGaussians(object):
 
