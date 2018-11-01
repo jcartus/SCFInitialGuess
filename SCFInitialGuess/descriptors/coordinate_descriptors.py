@@ -53,6 +53,11 @@ POLAR_GAUSSIAN_MODELS = {
     )
 }
 
+#-------------------------------------------------------------------------------
+#   CutOffs classes
+#-------------------------------------------------------------------------------
+
+
 def behler_cutoff_1(r, R_c): 
     """Cut-off f_c,1 aus 
     J. Behler, Constructing High-Dimensional Neural Network Potentials:
@@ -75,6 +80,34 @@ def behler_cutoff_1(r, R_c):
             out = 0
         
     return out
+
+class AbstractCutoff(object):
+
+    def __init__(self, threshold):
+
+        self.threshold = threshold
+
+    def apply(self, G, r, phi, theta):
+        raise NotImplementedError("AbstractCutoff is an abstract class!")
+
+
+class BehlerCutoff1(AbstractCutoff):
+
+    def __init__(self, threshold):
+
+        self.threshold = threshold
+
+    def apply(self, G, r, phi, theta):
+        """Applies the cutoff to the symmetry vector G
+        (Weights G according to r, phi , theta, the spherical coordinates
+        of the distance vector from atom_i to atom_j)
+        """
+        return G * behler_cutoff_1(r, self.threshold)
+
+
+#-------------------------------------------------------------------------------
+#   Low level descriptor classes
+#-------------------------------------------------------------------------------
 
 
 class AbstractQuantityDescriptor(object):
@@ -140,6 +173,34 @@ class CutOffGaussians(object):
         return list(
             np.exp(-1 * self.eta*(x - self.r_s)**2) * \
             behler_cutoff_1(x, self.R_c)
+        )
+
+class DampedGaussians(object):
+    """Instead of cutoff an expontantial decay is applied, 
+    with the decay time tau.
+    """
+
+    def __init__(self, r_s, eta, tau):
+        
+        # check if list are of equal length of if eta is scalar
+        # check if list are of equal length of if eta is scalar
+        if isinstance(eta, (list, tuple)):
+            if len(r_s) != len(eta) and len(eta) != 1 :
+                raise ValueError("Dimension of r_s and eta do not match")
+
+        self.tau = tau
+        self.r_s = np.array(r_s)
+        self.eta = np.array(eta)
+
+        self.number_of_descriptors = len(r_s)
+
+    def calculate_descriptor(self, x):
+        """Returns a descriptor value for an abstract quantity x (e.g. a 
+        distance or an angle). The vector will be list!!!!
+        """
+        return list(
+            np.exp(-1 * self.eta*(x - self.r_s)**2) * \
+            np.exp( - x / self.tau)
         )
         
 
@@ -217,12 +278,14 @@ class AbstractCoordinateDescriptor(object):
     def __init__(self, 
             radial_descriptor, 
             azimuthal_descriptor,
-            polar_descriptor
+            polar_descriptor, 
+            cut_off
         ):      
 
         self.radial_descriptor = radial_descriptor
         self.azimuthal_descriptor = azimuthal_descriptor
         self.polar_descriptor = polar_descriptor
+        self.cut_off = cut_off
 
     @property
     def number_of_descriptors(self):
@@ -304,7 +367,7 @@ class AbstractCoordinateDescriptor(object):
         G += self.azimuthal_descriptor.calculate_descriptor(phi)
         G += self.polar_descriptor.calculate_descriptor(theta)
 
-        return np.array(G)
+        return np.array(G) * self.cut_off(r)
 
 
 class NonWeighted(AbstractCoordinateDescriptor):
