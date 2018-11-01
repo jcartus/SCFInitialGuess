@@ -37,9 +37,9 @@ RADIAL_GAUSSIAN_MODELS = {
 AZIMUTHAL_GAUSSIAN_MODELS = {
     # 8 gaussians equally distributed, litte overlap
     "Equisitant_1": (
-        5,
         np.arange(1, 8 + 1) * 2 * np.pi / (8+1),
-        2 * np.pi / 8
+        [2 * np.pi / 8]*5,
+        2 * np.pi
     )
 }
 
@@ -47,9 +47,9 @@ AZIMUTHAL_GAUSSIAN_MODELS = {
 POLAR_GAUSSIAN_MODELS = {
     # 2 gaussians equally distributed, little more overlap
     "Equisitant_1": (
-        5,
         np.arange(1, 5 + 1) * np.pi / (5 + 1),
-        (5 / (np.pi))**2
+        [(5 / (np.pi))**2]*5,
+        np.pi
     )
 }
 
@@ -93,7 +93,31 @@ class AbstractQuantityDescriptor(object):
         )
 
 
+
 class Gaussians(object):
+
+    def __init__(self, r_s, eta):
+        
+        # check if list are of equal length of if eta is scalar
+        # check if list are of equal length of if eta is scalar
+        if isinstance(eta, (list, tuple)):
+            if len(r_s) != len(eta) and len(eta) != 1 :
+                raise ValueError("Dimension of r_s and eta do not match")
+
+        self.r_s = np.array(r_s)
+        self.eta = np.array(eta)
+
+        self.number_of_descriptors = len(r_s)
+
+    def calculate_descriptor(self, x):
+        """Returns a descriptor value for an abstract quantity x (e.g. a 
+        distance or an angle). The vector will be list!!!!
+        """
+        return list(
+            np.exp(-1 * self.eta*(x - self.r_s)**2) 
+        )
+
+class CutOffGaussians(object):
 
     def __init__(self, r_cutoff, r_s, eta):
         
@@ -151,17 +175,14 @@ class AbstractCoordinateDescriptor(object):
     """
 
     def __init__(self, 
-        radial_descriptor, 
-        azimuthal_descriptor,
-        polar_descriptor
-        ):
-        
+            radial_descriptor, 
+            azimuthal_descriptor,
+            polar_descriptor
+        ):      
 
         self.radial_descriptor = radial_descriptor
         self.azimuthal_descriptor = azimuthal_descriptor
         self.polar_descriptor = polar_descriptor
-
-
 
     @property
     def number_of_descriptors(self):
