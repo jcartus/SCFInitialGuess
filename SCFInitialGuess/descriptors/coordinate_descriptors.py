@@ -6,6 +6,7 @@ Author:
 """
 
 import numpy as np
+from scipy.special import sph_harm
 
 def carthesian_to_spherical_coordinates(x):
     """Returns the vector x in spherical coordinates."""
@@ -105,6 +106,21 @@ class BehlerCutoff1(AbstractCutoff):
         return G * behler_cutoff_1(r, self.threshold)
 
 
+
+class Damping(AbstractCutoff):
+    """Applies a damping exp(-r/tau), where tau is the thershold"""
+
+    def __init__(self, threshold):
+
+        self.threshold = threshold
+
+    def apply(self, G, r, phi, theta):
+        """Applies the cutoff to the symmetry vector G
+        (Weights G according to r, phi , theta, the spherical coordinates
+        of the distance vector from atom_i to atom_j)
+        """
+        return G * np.exp(- r / self.threshold)
+
 #-------------------------------------------------------------------------------
 #   Low level descriptor classes
 #-------------------------------------------------------------------------------
@@ -190,25 +206,32 @@ class PeriodicGaussians(object):
 
 
 class SphericalHarmonics(object):
+    """
+    Real and Immaginary part of the spherical harmonics 
+    """
 
-    def __init__(self, r_s, eta):
+    def __init__(self, l_max):
         
-        # check if list are of equal length of if eta is scalar
-        if isinstance(eta, (list, tuple)):
-            if len(r_s) != len(eta) and len(eta) != 1 :
-                raise ValueError("Dimension of r_s and eta do not match")
+        
+        self.l_max = l_max
 
-        self.r_s = r_s
-        self.eta = eta
+        self.number_of_descriptors = (l_max + 1)**2 * 2
 
-        self.number_of_descriptors = len(r_s)
-
-    def calculate_descriptor(self, x):
-        """Returns a descriptor value for an abstract quantity x (e.g. a 
-        distance or an angle). The vector will be list!!!!
+    def calculate_descriptor(self, r, phi, theta):
+        """Returns a vector with the spherical harmonics of 
+        the direction specified by phi an theta. The result is a list
+        of first the real and then the imaginary part.
         """
-        #return list(np.exp(-self.eta*(x - self.r_s)**2))
-        raise NotImplementedError("This is not really implemented yet!")
+
+
+        real, imaginary = [], []
+        for l in range(self.l_max + 1):
+            for m in range(-l, l + 1):
+                sph = sph_harm(m, l, theta, phi)
+                real.append(sph.real)
+                imaginary.append(sph.imag)
+        
+        return np.array(real + imaginary)
 
 
 #-------------------------------------------------------------------------------
@@ -313,7 +336,7 @@ class AbstractCoordinateDescriptor(object):
         G += self.azimuthal_descriptor.calculate_descriptor(phi)
         G += self.polar_descriptor.calculate_descriptor(theta)
 
-        return np.array(G) * self.cut_off(r)
+        return self.cut_off.apply(np.array(G), r, phi, theta)
 
 
 class NonWeighted(AbstractCoordinateDescriptor):
