@@ -205,9 +205,40 @@ class PeriodicGaussians(object):
         return np.dot(y, np.array(self.calculate_descriptor(t)))
 
 
-class SphericalHarmonics(object):
+class IndependentAngularDescriptor(object):
+    """Descriptor for the angular part. Here azimuthal and polar 
+    angle are described independently.
     """
-    Real and Immaginary part of the spherical harmonics 
+
+    def __init__(self, azimuthal_descriptor, polar_descriptor):
+        """Constructur.
+
+        Args:
+            - azimuthal_descriptor <AbstractQuantityDescriptor>: can e.g. a 
+            periodic Gaussian.
+            - polar_descriptor <AbstractQuantityDescriptor>: can e.g. a 
+            periodic Gaussian.
+        """
+
+        self.azimuthal_descriptor = azimuthal_descriptor
+        self.polar_descriptor = polar_descriptor
+
+    @property 
+    def number_of_descriptors(self):
+        return self.azimuthal_descriptor.number_of_descriptors + \
+            self.polar_descriptor.number_of_descriptors
+
+    def calculate_descriptor(self, r, phi, theta):
+        """Calculates angular descriptor part. """
+
+        #Azimuthal and polar descriptors must return a list.
+        return self.azimuthal_descriptor.calculate_descriptor(phi) + \
+            self.polar_descriptor.calculate_descriptor(theta)
+
+
+class SPHAngularDescriptor(object):
+    """
+    Real and Imaginary part of the spherical harmonics 
     """
 
     def __init__(self, l_max):
@@ -215,7 +246,10 @@ class SphericalHarmonics(object):
         
         self.l_max = l_max
 
-        self.number_of_descriptors = (l_max + 1)**2 * 2
+    @property
+    def number_of_descriptors(self):
+        return (self.l_max + 1)**2 * 2
+
 
     def calculate_descriptor(self, r, phi, theta):
         """Returns a vector with the spherical harmonics of 
@@ -239,6 +273,7 @@ class SphericalHarmonics(object):
 #-------------------------------------------------------------------------------
 
 
+
 class AbstractCoordinateDescriptor(object):
     """This class takes a SCFInitialGuess.utilities.dataset.Molecule
     and calculates a descriptor vector that captures the atomic environment.
@@ -246,21 +281,18 @@ class AbstractCoordinateDescriptor(object):
 
     def __init__(self, 
             radial_descriptor, 
-            azimuthal_descriptor,
-            polar_descriptor, 
+            angular_descriptor,
             cut_off
         ):      
 
         self.radial_descriptor = radial_descriptor
-        self.azimuthal_descriptor = azimuthal_descriptor
-        self.polar_descriptor = polar_descriptor
+        self.angular_descriptor = angular_descriptor
         self.cut_off = cut_off
 
     @property
     def number_of_descriptors(self):
         return self.radial_descriptor.number_of_descriptors + \
-            self.azimuthal_descriptor.number_of_descriptors + \
-            self.polar_descriptor.number_of_descriptors
+            self.angular_descriptor.number_of_descriptors
 
     def calculate_descriptors_batch(self, molecules):
         """Calculate all descriptors for a batch of molecules"""
@@ -333,10 +365,11 @@ class AbstractCoordinateDescriptor(object):
         G = []
 
         G += self.radial_descriptor.calculate_descriptor(r)
-        G += self.azimuthal_descriptor.calculate_descriptor(phi)
-        G += self.polar_descriptor.calculate_descriptor(theta)
-
+        G += self.angular_descriptor.calculate_descriptor(r, phi, theta)
+        
         return self.cut_off.apply(np.array(G), r, phi, theta)
+
+
 
 
 class NonWeighted(AbstractCoordinateDescriptor):
