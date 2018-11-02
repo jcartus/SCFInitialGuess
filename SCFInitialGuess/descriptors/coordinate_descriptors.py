@@ -8,51 +8,11 @@ Author:
 import numpy as np
 from scipy.special import sph_harm
 
-def carthesian_to_spherical_coordinates(x):
-    """Returns the vector x in spherical coordinates."""
-    r = np.sqrt(np.sum(x**2))
-    phi = np.arctan2(x, x[0])[0]
-    theta = np.arccos(x[2] / r)
-    
-    return r, phi, theta
-
-#-------------------------------------------------------------------------------
-#   Quantity descriptros (coordinates to atomic contribution)
-#-------------------------------------------------------------------------------
-
-# a collection of guassian positioning models (cut_off, r_s, eta)
-RADIAL_GAUSSIAN_MODELS = {
-    "Origin-Centered_1": (
-        5.0,
-        [0.0, 0.0, 0.0, 0.0, 0.0],
-        [1.2, 0.5, 0.2, 0.1, 0.01]
-    ),
-
-    "Equidistant-Broadening_1": (
-        5.0,
-        [0.6, 1.1, 1.6, 2.1, 2.6],
-        [0.9, 0.7, 0.6, 0.5, 0.4]
-    )
-}
-
-AZIMUTHAL_GAUSSIAN_MODELS = {
-    # 8 gaussians equally distributed, litte overlap
-    "Equisitant_1": (
-        np.arange(1, 8 + 1) * 2 * np.pi / (8+1),
-        [2 * np.pi / 8]*5,
-        2 * np.pi
-    )
-}
+from SCFInitialGuess.descriptors.utilities import \
+    carthesian_to_spherical_coordinates
 
 
-POLAR_GAUSSIAN_MODELS = {
-    # 2 gaussians equally distributed, little more overlap
-    "Equisitant_1": (
-        np.arange(1, 5 + 1) * np.pi / (5 + 1),
-        [(5 / (np.pi))**2]*5,
-        np.pi
-    )
-}
+
 
 #-------------------------------------------------------------------------------
 #   CutOffs classes
@@ -162,9 +122,18 @@ class Gaussians(object):
         """Returns a descriptor value for an abstract quantity x (e.g. a 
         distance or an angle). The vector will be list!!!!
         """
-        return list(
-            np.exp(-1 * self.eta*(x - self.r_s)**2) 
-        )        
+        return [
+            np.exp(-1 * eta*(x - r_s)**2) \
+                for (eta, r_s) in zip(self.eta, self.r_s)
+        ]        
+
+
+    def calculate_inverse_descriptor(self, t, y):
+        """Returns the y- weighted sum of the gaussians,
+        evaluated at values t.
+        """
+        return np.dot(y, np.array(self.calculate_descriptor(t)))
+
 
 class PeriodicGaussians(object):
 
@@ -235,6 +204,16 @@ class IndependentAngularDescriptor(object):
         return self.azimuthal_descriptor.calculate_descriptor(phi) + \
             self.polar_descriptor.calculate_descriptor(theta)
 
+    def calculate_inverse_descriptor(self, phi, theta, y):
+
+        return self.azimuthal_descriptor.calculate_inverse_descriptor(
+            phi, 
+            y[:self.azimuthal_descriptor.number_of_descriptors]
+        ) * self.polar_descriptor.calculate_inverse_descriptor(
+            theta, 
+            y[self.azimuthal_descriptor.number_of_descriptors:]
+        )
+
 
 class SPHAngularDescriptor(object):
     """
@@ -266,6 +245,11 @@ class SPHAngularDescriptor(object):
                 imaginary.append(sph.imag)
         
         return np.array(real + imaginary)
+
+    def calculate_inverse_descriptor(self, t, y):
+        raise NotImplementedError(
+            "Inverse Descriptor not available in SPHAngularDescriptor."
+        )
 
 
 #-------------------------------------------------------------------------------
@@ -382,7 +366,7 @@ class NonWeighted(AbstractCoordinateDescriptor):
         for the atom j.
         """
 
-        R = np.array(geom_i[1]) -  np.array(geom_j[1])
+        R = np.array(geom_j[1]) -  np.array(geom_i[1])
 
         return self.apply_coordinate_descriptors(R)
 

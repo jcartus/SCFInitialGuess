@@ -5,10 +5,23 @@ Author:
     Johannes Cartus, QCIEP, TU Graz
 """
 
+import numpy as np
+
 from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
 from SCFInitialGuess.utilities.dataset import extract_triu
 
 # TODO a diagonal extractor, so i can train to just guess the diagonal
+
+
+def carthesian_to_spherical_coordinates(x):
+    """Returns the vector x in spherical coordinates."""
+    r = np.sqrt(np.sum(x**2))
+    phi = np.arctan2(x[1], x[0])
+    theta = np.arccos(x[2] / r)
+    
+    return r, phi % (2*np.pi), theta % np.pi
+
+
 
 class BlockExtractor(object):
     """Extracts all blocks of relevance for atoms of a given species
