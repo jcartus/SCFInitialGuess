@@ -350,6 +350,11 @@ def measure_all_quantities(
         molecules
     )
 
+    max_cycle = mf_initializer(
+        molecules[0].get_pyscf_molecule()
+    ).max_cycle
+
+
     return (
         err_abs, 
         err_sym, 
@@ -357,11 +362,8 @@ def measure_all_quantities(
         err_occ, 
         err_Ehf, 
         statistics(iterations),
-        np.sum(
-            mf_initializer(
-                molecules[0].get_pyscf_molecule()
-            ).max_cycle == np.array(iterations)
-        )
+        statistics(iterations[iterations != max_cycle]),
+        np.sum(max_cycle == np.array(iterations))
     )
 
 def make_results_str(results):
@@ -398,8 +400,11 @@ def make_results_str(results):
     out += "--- Avg. Iterations ---\n"
     out += format_results(results[5])
     out += "\n"
+    out += "--- Avg. Iterations W/O Non Converged ---\n"
+    out += format_results(results[6])
+    out += "\n"
     out += "--- Num. Not Convd. ---\n"
-    out += str(results[6])
+    out += str(results[7])
     out += "\n"
 
     return out
