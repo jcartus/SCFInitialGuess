@@ -354,6 +354,7 @@ class NonWeighted(AbstractCoordinateDescriptor):
         return self.apply_coordinate_descriptors(R)
 
 
+
 class AtomicNumberWeighted(AbstractCoordinateDescriptor):
     """This class calculates a desriptor of the vectors of the atoms
     to each other with gaussians in the radial direction.
@@ -368,4 +369,19 @@ class AtomicNumberWeighted(AbstractCoordinateDescriptor):
         R = np.array(geom_i[1]) -  np.array(geom_j[1])
 
         return self.apply_coordinate_descriptors(R) * Z[geom_j[0]]
+
+class ElectronegativityWeighted(AbstractCoordinateDescriptor):
+    """This class calculates a desriptor of the vectors of the atoms
+    to each other with gaussians in the radial direction.
+    """
+
+    def calculate_atomic_descriptor_contribution(self, geom_i, geom_j):
+        """Calculates the contribution to the atomic descriptor of atom i
+        for the atom j.
+        """
+        from SCFInitialGuess.utilities.constants import electronegativities as Chi
+
+        R = np.array(geom_i[1]) -  np.array(geom_j[1])
+
+        return self.apply_coordinate_descriptors(R) * Chi[geom_j[0]]
 
