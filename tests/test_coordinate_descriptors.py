@@ -77,8 +77,48 @@ class TestPeriodicGaussians(TestGaussians):
 
         return descriptor
 
+class Wrapper(object):
+    class TestAngularDescriptor(unittest.TestCase):
 
-class TestIndependentAngularDescriptr(unittest.TestCase):
+
+        def test_execution(self):
+            
+            descriptor = self._test_initialisation()
+
+            r, phi, theta, values = self._test_forward(descriptor)
+
+            self._test_backward(descriptor, values)
+
+
+        def _test_initialisation(self):
+            raise NotImplementedError("Abstract Test class")
+
+        def _test_forward(self, descriptor):
+
+            try:
+                r, phi, theta = \
+                    np.random.rand(1), np.random.rand(1), np.random.rand(1)
+                values = descriptor.calculate_descriptor(r, phi, theta)
+            except Exception as ex:
+                self.fail("Calculation failed: " + str(ex))
+
+            return r, phi, theta, values
+
+        def _test_backward(self, descriptor, values):
+
+            try:
+                r = np.random.rand(30) * 4
+                phi = np.random.rand(30) * 2 
+                theta = np.random.rand(30) * 2
+                activation = \
+                    descriptor.calculate_inverse_descriptor(r, phi, theta, values)
+            except Exception as ex:
+                self.fail("Inverse calculation failed: " + str(ex))
+
+            return r, phi, theta
+
+
+class TestIndependentAngularDescriptor(Wrapper.TestAngularDescriptor):
 
     def setUp(self):
 
@@ -94,15 +134,6 @@ class TestIndependentAngularDescriptr(unittest.TestCase):
             [1.0, 0.5, 5.0],
             2 
         )
-
-    def test_execution(self):
-        
-        descriptor = self._test_initialisation()
-
-        r, phi, theta, values = self._test_forward(descriptor)
-
-        self._test_backward(descriptor, values)
-
     
     def _test_initialisation(self):
         from SCFInitialGuess.descriptors.coordinate_descriptors import \
@@ -119,29 +150,28 @@ class TestIndependentAngularDescriptr(unittest.TestCase):
 
         return descriptor
 
-    def _test_forward(self, descriptor):
+class TestSPHAngularDescriptor(Wrapper.TestAngularDescriptor):
+
+    def setUp(self):
+
+        self.l_max = 3
+    
+    def _test_initialisation(self):
+        from SCFInitialGuess.descriptors.coordinate_descriptors import \
+            SPHAngularDescriptor
 
         try:
-            r, phi, theta = \
-                np.random.rand(1), np.random.rand(1), np.random.rand(1)
-            values = descriptor.calculate_descriptor(r, phi, theta)
+            descriptor = SPHAngularDescriptor(self.l_max)
+            
         except Exception as ex:
-            self.fail("Calculation failed: " + str(ex))
+            self.fail("Initialisation failed: " + str(ex))
 
-        return r, phi, theta, values
+        return descriptor
 
     def _test_backward(self, descriptor, values):
+        # Not available
+        pass
 
-        try:
-            r = np.random.rand(30) * 4
-            phi = np.random.rand(30) * 2 
-            theta = np.random.rand(30) * 2
-            activation = \
-                descriptor.calculate_inverse_descriptor(r, phi, theta, values)
-        except Exception as ex:
-            self.fail("Inverse calculation failed: " + str(ex))
-
-        return r, phi, theta
 
 if __name__ == '__main__':
     unittest.main()
