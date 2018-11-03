@@ -56,7 +56,7 @@ class TestBehler1(unittest.TestCase):
         np.testing.assert_allclose(
             co.apply(
                 G, 
-                self.R_c / 2
+                self.R_c / 2.0
             ),
             0.5 * G,
         )
