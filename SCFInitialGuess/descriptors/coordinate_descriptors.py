@@ -62,10 +62,13 @@ class Gaussians(object):
         """Returns the y- weighted sum of the gaussians,
         evaluated at values t.
         """
-        return np.dot(y, np.array(self.calculate_descriptor(t)))
+        return np.dot(
+            np.array(y).reshape(-1), 
+            np.array(self.calculate_descriptor(t))
+        )
 
 
-class PeriodicGaussians(object):
+class PeriodicGaussians(Gaussians):
 
     def __init__(self, r_s, eta, period):
         """Constructor
@@ -97,11 +100,6 @@ class PeriodicGaussians(object):
             for (r_s, eta) in zip(self.r_s, self.eta)
         ]
     
-    def calculate_inverse_descriptor(self, t, y):
-        """Returns the y- weighted sum of the gaussians,
-        evaluated at values t.
-        """
-        return np.dot(y, np.array(self.calculate_descriptor(t)))
 
 
 class IndependentAngularDescriptor(object):
