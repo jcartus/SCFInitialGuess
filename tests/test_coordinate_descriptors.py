@@ -172,6 +172,22 @@ class TestSPHAngularDescriptor(Wrapper.TestAngularDescriptor):
         # Not available
         pass
 
+    def test_values_are_real_and_not_nan(self):
+
+        descriptor = self._test_initialisation()
+
+        G = descriptor.calculate_descriptor(
+            np.random.rand(1),
+            np.random.rand(1),
+            np.random.rand(1)
+        )
+
+        # chekc if result is real
+        self.assertFalse(np.iscomplex(G).any())
+
+        # check if result is not nan
+        self.assertFalse(np.isnan(G).any())
+
 
 if __name__ == '__main__':
     unittest.main()
