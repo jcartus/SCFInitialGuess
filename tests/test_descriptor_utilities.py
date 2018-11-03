@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
-from SCFInitialGuess.descriptors.coordinate_descriptors import \
+from SCFInitialGuess.descriptors.utilities import \
     carthesian_to_spherical_coordinates
 
 
