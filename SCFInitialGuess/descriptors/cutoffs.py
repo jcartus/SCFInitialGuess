@@ -54,7 +54,7 @@ class BehlerCutoff1(AbstractCutoff):
 
         self.threshold = threshold
 
-    def apply(self, G, r, phi, theta):
+    def apply(self, G, r, phi=None, theta=None):
         """Applies the cutoff to the symmetry vector G
         (Weights G according to r, phi , theta, the spherical coordinates
         of the distance vector from atom_i to atom_j)
