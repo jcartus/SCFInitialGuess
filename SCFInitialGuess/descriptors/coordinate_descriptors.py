@@ -132,7 +132,7 @@ class IndependentAngularDescriptor(object):
         return  list(self.azimuthal_descriptor.calculate_descriptor(phi)) + \
             list(self.polar_descriptor.calculate_descriptor(theta))
 
-    def calculate_inverse_descriptor(self, phi, theta, y):
+    def calculate_inverse_descriptor(self, r, phi, theta, y):
 
         return self.azimuthal_descriptor.calculate_inverse_descriptor(
             phi, 
@@ -174,7 +174,7 @@ class SPHAngularDescriptor(object):
         
         return np.array(real + imaginary)
 
-    def calculate_inverse_descriptor(self, t, y):
+    def calculate_inverse_descriptor(self, r, phi, theta, y):
         raise NotImplementedError(
             "Inverse Descriptor not available in SPHAngularDescriptor."
         )
