@@ -344,11 +344,11 @@ def measure_all_quantities(
         )
     ))
 
-    iterations = measure_iterations(
+    iterations = np.array(measure_iterations(
         mf_initializer, 
         p_batch.astype('float64'), 
         molecules
-    )
+    ))
 
     max_cycle = mf_initializer(
         molecules[0].get_pyscf_molecule()
