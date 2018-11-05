@@ -29,7 +29,7 @@ class TestRescale(unittest.TestCase):
         p_rescaled = rescale(p, s, n_electrons)
 
         np.testing.assert_almost_equal(
-            np.trace(p_rescaled @ s), 
+            np.trace(np.dot(p_rescaled, s)), 
             n_electrons, 
             decimal=10
         )
@@ -64,7 +64,7 @@ class TestRescaleDiag(TestRescale):
 
 
         np.testing.assert_almost_equal(
-            np.sum(np.trace(p_rescaled @ s)), 
+            np.sum(np.trace(np.dot(p_rescaled, s))), 
             n_electrons, 
             decimal=10
         )

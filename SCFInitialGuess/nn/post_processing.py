@@ -30,7 +30,7 @@ def multi_mc_wheeny(p, s, n_max=4):
 
 #--- rescale whole matrix ---
 def rescale(p, s, n_electrons):
-    return p / np.trace(p @ s) * n_electrons
+    return p / np.trace(np.dot(p, s)) * n_electrons
 
 def rescale_batch(p_batch, s_batch, n_electrons):
     result = []
