@@ -168,10 +168,6 @@ class TestSPHAngularDescriptor(Wrapper.TestAngularDescriptor):
 
         return descriptor
 
-    def _test_backward(self, descriptor, values):
-        # Not available
-        pass
-
     def test_values_are_real_and_not_nan(self):
 
         descriptor = self._test_initialisation()
@@ -188,6 +184,21 @@ class TestSPHAngularDescriptor(Wrapper.TestAngularDescriptor):
         # check if result is not nan
         self.assertFalse(np.isnan(G).any())
 
+    def test_array_forward(self):
+        dim = 10
+
+        descriptor = self._test_initialisation()
+
+        G = descriptor.calculate_descriptor(
+            np.random.rand(dim),
+            np.random.rand(dim),
+            np.random.rand(dim)
+        )
+
+        np.testing.assert_array_equal(
+            (descriptor.number_of_descriptors, dim),
+            G.shape
+        )
 
 if __name__ == '__main__':
     unittest.main()

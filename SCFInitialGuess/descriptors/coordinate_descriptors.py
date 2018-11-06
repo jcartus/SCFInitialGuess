@@ -138,7 +138,7 @@ class SPHAngularDescriptor(object):
 
     @property
     def number_of_descriptors(self):
-        return (self.l_max + 1)**2 * 2
+        return int((self.l_max + 1)**2 * 2)
 
 
     def calculate_descriptor(self, r, phi, theta):
@@ -158,11 +158,18 @@ class SPHAngularDescriptor(object):
         return np.array(real + imaginary)
 
     def calculate_inverse_descriptor(self, r, phi, theta, y):
-        raise NotImplementedError(
-            "Inverse Descriptor not available in SPHAngularDescriptor."
-        )
+        """Y is actually G (symmetry vector)."""
 
-        # todo use absolute value
+        sph = self.calculate_descriptor(r, phi, theta) 
+
+        n_functions = self.number_of_descriptors // 2
+
+        real = np.dot(y[:n_functions].T, sph[:n_functions])
+        imag = np.dot(y[n_functions:].T, sph[n_functions:])
+
+        tmp = np.sqrt(real**2 + imag **2)
+
+        return np.sqrt(real**2 + imag **2).reshape(-1)
 
 
 
