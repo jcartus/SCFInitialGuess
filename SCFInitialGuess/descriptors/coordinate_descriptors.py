@@ -16,23 +16,6 @@ from scipy.special import sph_harm
 #-------------------------------------------------------------------------------
 
 
-class AbstractQuantityDescriptor(object):
-
-    def __init__(self, r_cutoff):
-        
-        self.R_c = r_cutoff
-        self.number_of_descriptors = None
-
-    def calculate_descriptor(self, x):
-        """Returns a descriptor value for an abstract quantity x (e.g. a 
-        distance or an angle). The vetor will be list!!!!
-        """
-        raise NotImplementedError(
-            "AbstractQuantityDescriptor is an abstract class."
-        )
-
-
-
 class Gaussians(object):
 
     def __init__(self, r_s, eta):
@@ -168,7 +151,7 @@ class SPHAngularDescriptor(object):
         real, imaginary = [], []
         for l in range(self.l_max + 1):
             for m in range(-l, l + 1):
-                sph = sph_harm(m, l, theta, phi)
+                sph = sph_harm(m, l, phi, theta)
                 real.append(sph.real)
                 imaginary.append(sph.imag)
         
@@ -178,6 +161,10 @@ class SPHAngularDescriptor(object):
         raise NotImplementedError(
             "Inverse Descriptor not available in SPHAngularDescriptor."
         )
+
+        # todo use absolute value
+
+
 
 
 

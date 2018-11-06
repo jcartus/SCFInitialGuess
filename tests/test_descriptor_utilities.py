@@ -77,5 +77,140 @@ class TestCarthesianToSphericalCoordinates(unittest.TestCase):
         )
 
 
+class TestRealSphericalHarmonics(unittest.TestCase):
+    """Reference value from 
+    https://en.wikipedia.org/wiki/Table_of_spherical_harmonics#Real_spherical_harmonics
+    """
+
+
+    def test_s(self):
+        from SCFInitialGuess.descriptors.utilities import real_spherical_harmonics
+
+        l = 0
+        m = 0
+
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                np.random.rand(),
+                np.random.rand(),
+                l,
+                m
+            )),
+            0.5 * np.sqrt(1/np.pi)
+        )
+
+    def test_p(self):
+        from SCFInitialGuess.descriptors.utilities import \
+            real_spherical_harmonics
+        from scipy.special import sph_harm
+
+        l = 1
+
+        phi = np.random.normal(0, np.pi)
+        theta = np.random.normal(0, np.pi / 2)
+
+        #--- m = 1 -> px ---
+        m = +1
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            np.sqrt(1 / 2) * \
+                (sph_harm(-1, l, phi, theta) - sph_harm(+1, l, phi, theta)),
+            decimal=7 
+
+        )
+        #---
+
+
+        #--- m = 0 -> pz ---
+        m = 0
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            sph_harm(0, l, phi, theta),
+            decimal=7 
+        )
+        #---
+
+        #--- m = -1 -> py ---
+        m = -1
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            1j * np.sqrt(1 / 2) * \
+                (sph_harm(-1, l, phi, theta) + sph_harm(+1, l, phi, theta)),
+            decimal=7 
+        )
+        #---
+
+
+    def test_d(self):
+        from SCFInitialGuess.descriptors.utilities import \
+            real_spherical_harmonics
+        from scipy.special import sph_harm
+
+        l = 2
+
+        phi = np.random.normal(0, np.pi)
+        theta = np.random.normal(0, np.pi / 2)
+
+        #--- m = 2 ---
+        m = +2
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            np.sqrt(1 / 2) * \
+                (sph_harm(-2, l, phi, theta) + sph_harm(+2, l, phi, theta)),
+            decimal=7 
+
+        )
+        #---
+
+        #--- m = 0 ---
+        m = 0
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            sph_harm(0, l, phi, theta),
+            decimal=7 
+        )
+        #---
+
+        #--- m = -1 ---
+        m = -1
+        np.testing.assert_almost_equal(
+            complex(real_spherical_harmonics(
+                phi,
+                theta,
+                l,
+                m
+            )),
+            1j * np.sqrt(1 / 2) * \
+                (sph_harm(-1, l, phi, theta) + sph_harm(+1, l, phi, theta)),
+            decimal=7 
+
+        )
+        #---
+
 if __name__ == '__main__':
     unittest.main()

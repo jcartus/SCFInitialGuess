@@ -21,6 +21,33 @@ def carthesian_to_spherical_coordinates(x):
     
     return r, phi % (2*np.pi), theta % np.pi
 
+def real_spherical_harmonics(phi, theta, l, m):
+    """Real spherical harmonics, also known as tesseral spherical harmonics
+    with condon shortley phase.
+
+    Only for scalar phi and theta!!!
+    """    
+    from scipy.special import lpmn, factorial
+
+    
+    if m == 0:
+        y = np.sqrt(
+            (2 * l + 1) / (4 * np.pi)
+        ) * lpmn(m, l, np.cos(theta))[0][-1][-1]
+    elif m < 0:
+        y = (-1)**m * np.sqrt(2) * np.sqrt(
+            (2 * l + 1) / (4 * np.pi) * \
+            factorial(l - np.abs(m)) / factorial(l + np.abs(m))
+        ) * lpmn(np.abs(m), l, np.cos(theta))[0][-1][-1] * np.sin(np.abs(m) * phi)
+    elif m > 0:
+        y = (-1)**m * np.sqrt(2) * np.sqrt(
+            (2 * l + 1) / (4 * np.pi) * \
+            factorial(l - np.abs(m)) / factorial(l + np.abs(m))
+        ) * lpmn(np.abs(m), l, np.cos(theta))[0][-1][-1] * np.cos(np.abs(m) * phi)
+    
+
+    return y
+    
 
 
 class BlockExtractor(object):
