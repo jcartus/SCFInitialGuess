@@ -15,6 +15,25 @@ from scipy.special import sph_harm
 #   Low level descriptor classes
 #-------------------------------------------------------------------------------
 
+class EmptyGaussians(object):
+
+    def __init__(self):
+        
+        self.number_of_descriptors = 1
+        
+
+    def calculate_descriptor(self, x):
+        """Returns a descriptor value for an abstract quantity x (e.g. a 
+        distance or an angle). The vector will be list!!!!
+        """
+        return [ 1 ]        
+
+
+    def calculate_inverse_descriptor(self, t, y):
+        """Returns the y- weighted sum of the gaussians,
+        evaluated at values t.
+        """
+        return 1
 
 class Gaussians(object):
 
@@ -83,6 +102,28 @@ class PeriodicGaussians(Gaussians):
             for (r_s, eta) in zip(self.r_s, self.eta)
         ]
     
+class ConstantAngularDescriptor(object):
+    """Descriptor for the angular part. Returns no descriptors. Inverse
+    descriptor is always just 1.
+    """
+
+    def __init__(self):
+        """Constructur.
+        """
+
+
+        self.number_of_descriptors = 0
+
+    def calculate_descriptor(self, r, phi, theta):
+        """Calculates angular descriptor part. No values are added 
+        to the symmetry vector"""
+
+        #Azimuthal and polar descriptors must return a list.
+        return  []
+
+    def calculate_inverse_descriptor(self, r, phi, theta, y):
+
+        return 1
 
 
 class IndependentAngularDescriptor(object):
