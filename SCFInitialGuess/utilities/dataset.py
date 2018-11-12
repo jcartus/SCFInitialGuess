@@ -30,6 +30,8 @@ class Molecule(object):
         self.full_name = full_name
 
         self.basis = "6-311++g**"
+
+        self._dim_cache = None 
     
     @property
     def number_of_atoms(self):
@@ -69,6 +71,69 @@ class Molecule(object):
 
         return mol
 
+    @property
+    def dim(self):
+        """Calculates the dimension of e.g. the overlap matrix"""
+        try:
+            if self._dim_cache is None:
+                dim = 0
+                for atom in self.species:
+                    dim += N_BASIS[self.basis][atom] 
+            else:
+                dim = self._dim_cache
+
+        except AttributeError as ex:
+            # For compatibilites with older datasets.
+            dim = 0
+            for atom in self.species:
+                dim += N_BASIS[self.basis][atom] 
+
+        return dim
+
+    def make_atom_mask(self, atom_index):
+        """Creates a mask for the atom with the index atom_index in the molecule
+        """
+
+        #--- calculate the ranges ---
+        current_dim = 0
+        for i in range(atom_index):
+            # calculate block range
+            index_start = current_dim
+            current_dim += N_BASIS[self.basis][self.species[i]] 
+            index_end = current_dim
+        #---
+
+        # calculate logical vector
+        L = np.arange(self.dim)
+        L = np.logical_and(index_start <= L, L < index_end)
+
+        mask = np.logical_and.outer(L, L)
+                
+        
+        return mask
+
+
+    def make_masks_for_species(self, species):
+        """Creates a list of masks for all atoms of species species in the 
+        molecule.
+        """
+        masks = []
+        current_dim = 0
+        for atom in self.species:
+            # calculate block range
+            index_start = current_dim
+            current_dim += N_BASIS[self.basis][atom] 
+            index_end = current_dim
+
+            if atom == species:
+
+                # calculate logical vector
+                L = np.arange(self.dim)
+                L = np.logical_and(index_start <= L, L < index_end)
+
+                masks.append(np.logical_and.outer(L, L))
+                
+        return masks
 
 
 
@@ -1058,3 +1123,100 @@ def assemble_batch(folder_list, species="C", descriptor=None):
 
 
 
+#-------------------------------------------------------------------------------
+# Block Descriptors
+#-------------------------------------------------------------------------------
+
+def extract_center_block_dataset_pairs(descriptor, molecules, p_batch, species):  
+    """Creates pairs of inputs and outputs for all all atoms of the element 
+    species in the molecules to be used to set up a dataset for an NN 
+    for a given descriptor and a target matrix p_batch. 
+    """
+    
+    descriptor_values, blocks = [], []
+    for p, mol in zip(p_batch, molecules):
+
+        dim = mol.dim
+        # make mask to extract central blocks
+        masks = mol.make_masks_for_species(species)
+    
+        
+        #--- calculate symmetry vectors ---
+        for i, atom in enumerate(mol.species):
+            if atom == species:
+                descriptor_values.append(
+                    descriptor.calculate_atom_descriptor(
+                        i, 
+                        mol,
+                        descriptor.number_of_descriptors
+                    )
+                )
+        #---
+
+        #--- extract blocks from target matrices ---
+        for mask in masks:
+            blocks.append(extract_triu(
+                np.asarray(p).reshape(dim, dim).copy()[mask], 
+                N_BASIS[mol.basis][species]
+            ))
+        #---
+
+    return descriptor_values, blocks
+
+def make_center_block_dataset(descriptor, molecules, T, species):
+    """Makes a dataset with blocks and symmetry vectors from all molecules in 
+    molecules. 
+
+    descriptor <SCFInitialGuess.descriptors.high_level.*>: 
+        a high level descriptor object.
+    molecules <list<list<SCFInitialGuess.utilities.dataset.Molecule>>>:
+        List with 3 elements (training data, validation and test). 
+        Each are a list of molecules. 
+    T <list<np.array>> or <list<list<list>>>: 
+        List with training, validation and test data. 
+        each is a numpy array. 
+    species <string>: the element name of the desired species.
+    """
+
+    inputs_test, outputs_test = extract_center_block_dataset_pairs(
+        descriptor,
+        molecules[2], 
+        T[2],
+        species
+    )
+    
+    inputs_validation, outputs_validation = extract_center_block_dataset_pairs(
+        descriptor,
+        molecules[1], 
+        T[1],
+        species
+    )
+
+    inputs_train, outputs_train = extract_center_block_dataset_pairs(
+        descriptor,
+        molecules[0], 
+        T[0],
+        species
+    )
+    
+    
+    _, mu, std = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
+    
+    dataset = StaticDataset(
+        train=(
+            StaticDataset.normalize(inputs_train, mean=mu, std=std)[0], 
+            np.asarray(outputs_train)
+        ),
+        validation=(
+            StaticDataset.normalize(inputs_validation, mean=mu, std=std)[0], 
+            np.asarray(outputs_validation)
+        ),
+        test=(
+            StaticDataset.normalize(inputs_test, mean=mu, std=std)[0], 
+            np.asarray(outputs_test)
+        ),
+        mu=mu,
+        std=std
+    )
+    
+    return dataset
