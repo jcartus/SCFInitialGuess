@@ -14,16 +14,26 @@ import numpy as np
 # a collection of guassian positioning models (cut_off, r_s, eta)
 RADIAL_GAUSSIAN_MODELS = {
     "Origin-Centered_1": (
-        5.0,
         [0.0, 0.0, 0.0, 0.0, 0.0],
         [1.2, 0.5, 0.2, 0.1, 0.01]
     ),
 
     "Equidistant-Broadening_1": (
-        5.0,
         [0.6, 1.1, 1.6, 2.1, 2.6],
         [0.9, 0.7, 0.6, 0.5, 0.4]
+    ),
+
+    "Man": (
+        list(np.linspace(0.2, 0.7, 11))[:-1] + \
+        list(np.linspace(0.7, 2.5, 30)) + \
+        list(np.linspace(2.5, 4, 11))[1:],
+        #
+        [500]*10 + \
+        [1000]*30 + \
+        [200]*10,
     )
+
+
 }
 
 AZIMUTHAL_GAUSSIAN_MODELS = {
