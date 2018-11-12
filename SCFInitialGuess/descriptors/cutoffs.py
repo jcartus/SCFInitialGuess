@@ -48,6 +48,11 @@ class AbstractCutoff(object):
         raise NotImplementedError("AbstractCutoff is an abstract class!")
 
 
+class ConstantCutoff(object):
+
+    def apply(self, G, r, phi, theta):
+        return G
+
 class BehlerCutoff1(AbstractCutoff):
 
     def __init__(self, threshold):
