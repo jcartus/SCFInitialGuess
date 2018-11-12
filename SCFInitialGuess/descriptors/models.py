@@ -44,3 +44,16 @@ POLAR_GAUSSIAN_MODELS = {
         np.pi
     )
 }
+
+def make_uniform(n, R_c=5, eta_max=30, eta_min=10):
+    return (
+        np.linspace(0.1,R_c*0.8, n),
+        np.linspace(eta_max, eta_min, n),
+    )
+
+def make_periodic_uniform(n, period):
+    return (
+        np.linspace(0, period, n),
+        [2*n] * n,
+        period
+    )
