@@ -96,7 +96,7 @@ class Molecule(object):
 
         #--- calculate the ranges ---
         current_dim = 0
-        for i in range(atom_index):
+        for i in range(atom_index + 1):
             # calculate block range
             index_start = current_dim
             current_dim += N_BASIS[self.basis][self.species[i]] 
