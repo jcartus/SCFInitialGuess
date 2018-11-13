@@ -349,13 +349,25 @@ class XYZFileReader(object):
 
 
 def fock_from_density(p, s, h, mol):
-    return hf.get_fock(
-        None, 
-        h1e=h, 
-        s1e=s, 
-        vhf=hf.get_veff(mol=mol.get_pyscf_molecule(), dm=p), 
-        dm=p
-    )
+    try:
+        f = hf.get_fock(
+            None, 
+            h1e=h, 
+            s1e=s, 
+            vhf=hf.get_veff(mol=mol.get_pyscf_molecule(), dm=p), 
+            dm=p
+        )
+
+    except AttributeError:
+        f = hf.get_fock(
+            None, 
+            h1e=h, 
+            s1e=s, 
+            vhf=hf.get_veff(mol, dm=p), 
+            dm=p
+        )
+
+    return 
 
 def fock_from_density_batch(p_batch, s_batch, h_batch, molecules):
     f = []
