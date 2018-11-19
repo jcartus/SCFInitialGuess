@@ -31,3 +31,5 @@ build/
 butadien/notebooks/log/
 
 butadien/notebooks/log2/
+
+thesis/dataset/**
