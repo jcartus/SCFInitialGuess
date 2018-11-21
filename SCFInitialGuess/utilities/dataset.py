@@ -20,7 +20,7 @@ from .usermessages import Messenger as msg
 class Molecule(object):
     """Class that contains all relevant data about a molecule"""
 
-    def __init__(self, species, positions, full_name=""):
+    def __init__(self, species, positions, full_name="", basis="6-311++g**"):
         
         if len(species) != len(positions):
             raise ValueError("There have to be as many positions as atoms!")
@@ -29,7 +29,7 @@ class Molecule(object):
         self.positions = positions
         self.full_name = full_name
 
-        self.basis = "6-311++g**"
+        self.basis = basis
 
         self._dim_cache = None 
     
@@ -286,7 +286,7 @@ class XYZFileReader(object):
         return molecules
 
     @classmethod
-    def read_folder(cls, folder):
+    def read_folder(cls, folder, basis="sto-3g"):
         """This method locates all xyz files in a folder and creates a molecule
         for each of it (returned as a list). All other files or subfolders are
         ignored.
@@ -307,7 +307,10 @@ class XYZFileReader(object):
         for file_name in files:
             try:
                 molecules.append(
-                    cls.read_molecule_from_file(join(folder, file_name))
+                    cls.read_molecule_from_file(
+                        join(folder, file_name), 
+                        basis=basis
+                    )
                 )
             except Exception as ex:
                 msg.error(
@@ -318,12 +321,14 @@ class XYZFileReader(object):
         return molecules            
 
     @staticmethod                
-    def read_molecule_from_file(file_name, name=""):
+    def read_molecule_from_file(file_name, name="", basis="sto-3g"):
 
         if not isfile(file_name):
             raise OSError(
-                "File could not be read. It does not exist at {0}!".format(file_name)
+                "File could not be read. " + \
+                "It does not exist at {0}!".format(file_name)
             )
+
 
         # use file name if nothing specified
         if not name:
@@ -341,8 +346,9 @@ class XYZFileReader(object):
 
                 # if not an empty line
                 if len(sep) > 0:
-                    species.append(sep[0])
-                    positions.append(list(map(float, sep[1:])))
+                    if re.match("^[A-Z][a-z]?$", sep[0]):
+                        species.append(sep[0])
+                        positions.append(list(map(float, sep[1:4])))
 
             return Molecule(species, positions, full_name=name)
 
@@ -367,7 +373,7 @@ def fock_from_density(p, s, h, mol):
             dm=p
         )
 
-    return 
+    return f
 
 def fock_from_density_batch(p_batch, s_batch, h_batch, molecules):
     f = []
