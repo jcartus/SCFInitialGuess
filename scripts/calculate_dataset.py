@@ -24,13 +24,6 @@ FOLDER = "thesis/dataset/QM9/dsgdb9nsd.xyz"
 INDEX = None
 PREFIX = "QM9-300"
 FRACTION = 10000
-
-
-BASIS = "sto-3g"
-FOLDER = "thesis/dataset/EthenT/"
-INDEX = None
-PREFIX = "Test"
-FRACTION = 100
 #---
 
 
