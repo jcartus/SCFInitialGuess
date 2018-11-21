@@ -35,8 +35,8 @@ def main():
     index_file=INDEX
 
     msg.info("Fetching molecules", 2)
-    molecules = QChemResultsReader.fetch_from_folder(data_folder, BASIS)
-    #molecules = XYZFileReader.read_folder(data_folder, basis=BASIS)[:300] # todo calculate full list!!
+    #molecules = QChemResultsReader.fetch_from_folder(data_folder, BASIS)
+    molecules = XYZFileReader.read_folder(data_folder, basis=BASIS)[:300] # todo calculate full list!!
 
 
     msg.info("Starting SCF Calculation", 2)
