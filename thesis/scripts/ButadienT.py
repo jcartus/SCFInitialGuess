@@ -85,11 +85,20 @@ for mol in molecules:
     )
 G = np.asarray(G)
 
-g_train, g_test = G[:ind], G[ind:]
+# normalize
+G_norm, mu, std = AbstractDataset.normalize(G)
+np.save("thesis/models/ButadienTDescriptor/normalisation.npy", (mu, std))
 
-msg.info("Descriptros shape: " + str(
+
+g_train, g_test = G_norm[:ind], G_norm[ind:]
+
+msg.info("Descriptors shape: " + str(
 G.shape))
 #-------------------------------------------------------------------------------
+
+
+
+
 
 
 #-------------------------------------------------------------------------------
@@ -176,7 +185,7 @@ checkpoint = keras.callbacks.ModelCheckpoint(
     period=1
 )
 
-log_dir = "./thesis/log/ButadienT" 
+log_dir = "./thesis/log//ButadienT" 
 tensorboard = keras.callbacks.TensorBoard(
     log_dir=log_dir, 
     histogram_freq=1, 
@@ -205,7 +214,8 @@ while True:
         callbacks=[
             early_stopping, 
             reduce_lr, 
-            checkpoint
+            checkpoint,
+            tensorboard
         ]
     )
     
