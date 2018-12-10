@@ -10,26 +10,33 @@ result/*
 log/*
 pathtable
 
+
+_Notebooks/
+
+# pycache
 *.pyc
+
+# jupyter notebook temps
+*-checkpoint.ipynb
+
+# dataset files
+thesis/dataset/**
+butadien/data/data/*.inp
+butadien/data/data/*.out
+notebooks/tmp*
+notebooks/log/*
 *.mol
 *.npy
 *.out
 *.inp
 *.tar.gz
 
-_Notebooks/
-butadien/data/data/*.inp
-butadien/data/data/*.out
-notebooks/tmp*
-notebooks/log/*
-*-checkpoint.ipynb
-
 database/
 tmp*
 build/
 
+# tensorboard logs
+*tfevents*
 butadien/notebooks/log/
-
 butadien/notebooks/log2/
 
-thesis/dataset/**

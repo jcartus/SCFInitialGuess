@@ -240,9 +240,16 @@ def measure_iterations(mf_initializer, guesses, molecules):
         msg.info("Iteration calculation: " + str(i))
 
         mf = mf_initializer(molecule.get_pyscf_molecule())
-        mf.kernel(dm0=p)
 
-        iterations.append(mf.iterations)
+        try:
+            mf.kernel(dm0=p)
+
+            iterations.append(mf.iterations)
+
+        except Exception as ex:
+            msg.warn("SCF calculation failed: " + str(ex))
+
+            iterations.append(mf.max_cycle)
 
     return iterations
 

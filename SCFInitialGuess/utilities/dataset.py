@@ -1238,3 +1238,115 @@ def make_center_block_dataset(descriptor, molecules, T, species):
     )
     
     return dataset
+
+
+class Data(object):
+    """This class is used to automatically fetch data (i.e. collection 
+    of molecules, overlap and density matrices etc.)
+    """
+
+    def __init__(self):
+        
+        self._P = [
+            [], # train
+            [], # val
+            []  # test
+        ]
+        self._S = [
+            [], 
+            [], 
+            []
+        ]
+        self._molecules =[
+            [], 
+            [], 
+            []
+        ]
+    
+    @classmethod
+    def fetch_data(cls, data_path, postfix):
+        """Fetches MD run results from a folder"""
+
+        S = np.load(join(data_path, "S" + postfix + ".npy"))
+        P = np.load(join(data_path, "P" + postfix + ".npy"))
+
+        molecules = np.load(join(data_path, "molecules" + postfix + ".npy"))
+        
+        return S, P, molecules
+    
+    def _package_and_append(
+            self, 
+            S, 
+            P, 
+            molecules, 
+            split_test, 
+            split_validation
+        ):
+        
+        ind_test = int(split_test * len(molecules))
+        ind_val = int(split_validation * ind_test)
+        
+        self._S[0] += list(S[:ind_val])
+        self._S[1] += list(S[ind_val:ind_test])
+        self._S[2] += list(S[ind_test:])
+        
+        self._P[0] += list(P[:ind_val])
+        self._P[1] += list(P[ind_val:ind_test])
+        self._P[2] += list(P[ind_test:])
+        
+        self._molecules[0] += list(molecules[:ind_val])
+        self._molecules[1] += list(molecules[ind_val:ind_test])
+        self._molecules[2] += list(molecules[ind_test:])
+        
+    
+    def include(
+        self, 
+        data_path, 
+        postfix, 
+        split_test=0.8, 
+        split_validation=0.8
+    ):
+        """Fetches data and packages it in train, validation and test."""
+        
+        self._package_and_append(
+            *self.fetch_data(data_path, postfix), 
+            split_test=split_test,
+            split_validation=split_validation
+        )
+        
+    @property
+    def molecules(self):
+        return self._molecules
+    
+    @property
+    def S(self):
+        return self._S
+    
+    @property
+    def P(self):
+        return self._P
+    
+    @property
+    def p_test(self):
+        return self._P[2]
+    
+    @property
+    def p_val(self):
+        return self._P[1]
+    
+    @property
+    def p_train(self):
+        return self._P[0]
+    
+    @property
+    def s_test(self):
+        return self._S[2]
+    
+    @property
+    def s_val(self):
+        return self._S[1]
+    
+    @property
+    def s_train(self):
+        return self._S[0]
+    
