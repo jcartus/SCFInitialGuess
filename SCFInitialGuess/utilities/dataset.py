@@ -1247,11 +1247,12 @@ class Data(object):
 
     def __init__(self):
         
-        self._P = [
+        self._T = [
             [], # train
             [], # val
             []  # test
         ]
+
         self._S = [
             [], 
             [], 
@@ -1264,11 +1265,11 @@ class Data(object):
         ]
     
     @classmethod
-    def fetch_data(cls, data_path, postfix):
+    def fetch_data(cls, data_path, postfix, target="P"):
         """Fetches MD run results from a folder"""
 
         S = np.load(join(data_path, "S" + postfix + ".npy"))
-        P = np.load(join(data_path, "P" + postfix + ".npy"))
+        P = np.load(join(data_path, target + postfix + ".npy"))
 
         molecules = np.load(join(data_path, "molecules" + postfix + ".npy"))
         
@@ -1277,11 +1278,16 @@ class Data(object):
     def _package_and_append(
             self, 
             S, 
-            P, 
+            T, 
             molecules, 
             split_test, 
             split_validation
         ):
+        """S ... overlap matrix,
+            T... target matrix,
+            molecules ... molecules list,
+            TODO
+        """
         
         ind_test = int(split_test * len(molecules))
         ind_val = int(split_validation * ind_test)
@@ -1290,9 +1296,9 @@ class Data(object):
         self._S[1] += list(S[ind_val:ind_test])
         self._S[2] += list(S[ind_test:])
         
-        self._P[0] += list(P[:ind_val])
-        self._P[1] += list(P[ind_val:ind_test])
-        self._P[2] += list(P[ind_test:])
+        self._T[0] += list(T[:ind_val])
+        self._T[1] += list(T[ind_val:ind_test])
+        self._T[2] += list(T[ind_test:])
         
         self._molecules[0] += list(molecules[:ind_val])
         self._molecules[1] += list(molecules[ind_val:ind_test])
@@ -1303,10 +1309,13 @@ class Data(object):
         self, 
         data_path, 
         postfix, 
+        target="P",
         split_test=0.8, 
         split_validation=0.8
     ):
-        """Fetches data and packages it in train, validation and test."""
+        """Fetches data and packages it in train, validation and test.
+        Target matrix is specified by target.
+        """
         
         self._package_and_append(
             *self.fetch_data(data_path, postfix), 
@@ -1323,20 +1332,20 @@ class Data(object):
         return self._S
     
     @property
-    def P(self):
-        return self._P
+    def T(self):
+        return self._T
     
     @property
-    def p_test(self):
-        return self._P[2]
+    def t_test(self):
+        return self._T[2]
     
     @property
-    def p_val(self):
-        return self._P[1]
+    def t_val(self):
+        return self._T[1]
     
     @property
-    def p_train(self):
-        return self._P[0]
+    def t_train(self):
+        return self._T[0]
     
     @property
     def s_test(self):
