@@ -58,7 +58,7 @@ from SCFInitialGuess.descriptors.high_level import     AtomicNumberWeighted
 from SCFInitialGuess.descriptors.coordinate_descriptors import     Gaussians, SPHAngularDescriptor
 from SCFInitialGuess.descriptors.cutoffs import     BehlerCutoff1
 from SCFInitialGuess.descriptors.models import     RADIAL_GAUSSIAN_MODELS, make_uniform
-    
+import pickle     
 descriptor = AtomicNumberWeighted(
     Gaussians(*make_uniform(100, 100, 30)),
     #Gaussians(*RADIAL_GAUSSIAN_MODELS["Man"]),
@@ -66,7 +66,7 @@ descriptor = AtomicNumberWeighted(
     BehlerCutoff1(5)
 )
 
-np.save("thesis/models/ButadienTDescriptor/descriptor.npy", descriptor)
+pickle.dump(descriptor, open("thesis/models/ButadienTDescriptor/descriptor.npy", "wb"))
 
 msg.info("Numer of descriptors per atom: " + \
     str(descriptor.number_of_descriptors))
@@ -165,7 +165,7 @@ early_stopping = keras.callbacks.EarlyStopping(
 )
 
 reduce_lr = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss', 
+    monitor='val_mean_squared_error', 
     factor=0.5, 
     patience=50, 
     verbose=1, 
@@ -177,7 +177,7 @@ reduce_lr = keras.callbacks.ReduceLROnPlateau(
 
 checkpoint = keras.callbacks.ModelCheckpoint(
     filepath, 
-    monitor='val_loss', 
+    monitor='val_mean_squared_error', 
     verbose=1, 
     save_best_only=False, 
     save_weights_only=False, 
