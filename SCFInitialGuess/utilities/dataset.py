@@ -136,6 +136,7 @@ class Molecule(object):
         return masks
 
 
+class SCFNotConvergedError(object)
 
 
 def do_scf_runs(molecules):
@@ -154,7 +155,7 @@ def do_scf_runs(molecules):
             mf.run()
             
             if mf.iterations == mf.max_cycle:
-                msg.error("Not converged!!!!!!!!!!!!!!!!!!!")
+                raise AssertionError("Sample could not be converged!")
 
             h = mf.get_hcore(mol)
             s = mf.get_ovlp()
