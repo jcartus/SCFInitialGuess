@@ -136,8 +136,6 @@ class Molecule(object):
         return masks
 
 
-class SCFNotConvergedError(object)
-
 
 def do_scf_runs(molecules):
     """Do scf calculation for molecules in molecules and extract all relevant 
