@@ -2,9 +2,17 @@
 testing.
 """
 
+import sys
+
 import tensorflow as tf
 
 import unittest
+
+
+def assert_python3(test):
+    """Renders tests inconclusive if python2.x is current python version"""
+    if sys.version_info[0] < 3:
+        test.skipTest("Test is can not be run with python2.")
 
 class AbstractTest(unittest.TestCase):
 

@@ -82,9 +82,14 @@ class TestRealSphericalHarmonics(unittest.TestCase):
     https://en.wikipedia.org/wiki/Table_of_spherical_harmonics#Real_spherical_harmonics
     """
 
+    def assert_python3(self):
+        from helper import assert_python3
+        assert_python3(self)
 
     def test_s(self):
         from SCFInitialGuess.descriptors.utilities import real_spherical_harmonics
+
+        self.assert_python3()
 
         l = 0
         m = 0
@@ -103,6 +108,9 @@ class TestRealSphericalHarmonics(unittest.TestCase):
         from SCFInitialGuess.descriptors.utilities import \
             real_spherical_harmonics
         from scipy.special import sph_harm
+
+
+        self.assert_python3()
 
         l = 1
 
@@ -160,6 +168,8 @@ class TestRealSphericalHarmonics(unittest.TestCase):
         from SCFInitialGuess.descriptors.utilities import \
             real_spherical_harmonics
         from scipy.special import sph_harm
+
+        self.assert_python3()
 
         l = 2
 
