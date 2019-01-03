@@ -21,7 +21,8 @@ def init_guess_by_wolfsberg_helmholtz(mol):
 
     M. Wolfsberg and L. Helmholz, J. Chem. Phys. 20, 837 (1952). 
     """
-    from pyscf.scf.hf import *
+    from pyscf.scf.hf import eig, get_hcore, get_ovlp, get_occ, make_rdm1, SCF
+    import numpy
 
     H = numpy.diag(get_hcore(mol))
 
