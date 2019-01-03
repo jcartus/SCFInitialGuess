@@ -18,11 +18,13 @@ setup(
         name + '.utilities', 
         name + '.nn',
         name + '.descriptors', 
+        name + '.construction'
     ],
     package_dir={
         name: 'SCFInitialGuess',
         name + '.utilities': 'SCFInitialGuess/utilities',
         name + '.nn': 'SCFInitialGuess/nn',
-        name + '.descriptors': 'SCFInitialGuess/descriptors'
+        name + '.descriptors': 'SCFInitialGuess/descriptors',
+        name + '.construction': 'SCFInitialGuess/construction',
     }
 )
