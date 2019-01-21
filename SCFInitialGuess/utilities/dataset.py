@@ -42,6 +42,11 @@ class Molecule(object):
         """The geometries as used by A. Fuchs in his NN Project """
         return [x for x in zip(self.species, self.positions)]
 
+    @property
+    def number_of_electrons(self):
+        from SCFInitialGuess.utilities.constants import atomic_numbers as Z
+        return np.sum([Z[atom] for atom in self.species])
+
     def get_sum_formula(self):
         raise NotImplementedError("Sum formula not available yet!")
 
@@ -1357,4 +1362,15 @@ class Data(object):
     @property
     def s_train(self):
         return self._S[0]
+    
+    @property
+    def numer_of_samples(self):
+        return (
+            len(self._molecules[0]),
+            len(self._molecules[1]),
+            len(self._molecules[2]),
+        )
+    @property
+    def number_of_samples_total(self):
+        return np.sum(self.number_of_samples)
     
