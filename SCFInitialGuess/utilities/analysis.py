@@ -288,6 +288,9 @@ def measure_hf_energy_error(p_batch, p_dataset_batch, molecules):
     for (e_nn, e_ds) in zip(E_nn, E_ds):
         yield np.abs(e_nn -  e_ds)
         
+
+
+
 def measure_all_quantities(
         p,
         dataset,
@@ -416,3 +419,71 @@ def make_results_str(results):
 
     return out
 
+
+
+
+def analyze_raw(p, p_ref, s, mol):
+    """Calculate error and properties sample by sample. Advantage: can be 
+    done in a loop for samples of differnt dimension!
+    
+    Args:
+        p <np.array>: density to be analzed
+        p_ref <np.array>: converged density of the same sample
+        s <np.array>: overlap matrix of molecule.
+        mol <SCFInitialGuess.utilities.dataset.Molecule>: the sample
+    """
+
+    # reshape (make sure quadratic matrices)
+    s_batch = s.reshape(-1, int(np.sqrt(np.prod(s.shape))))
+    p_ref_batch = p_ref.reshape(s_batch.shape)
+    p_batch = p.reshape(s_batch.shape)
+    
+    # measure
+    err_abs = np.mean(np.abs(p_batch - p_ref_batch))
+    err_hf = next(measure_hf_energy_error([p_batch], [p_ref_batch], [mol]))
+    err_idem = next(measure_idempotence_error([p_batch], [s_batch]))
+    try: 
+        n = mol.n_electrons()
+    except:
+        from SCFInitialGuess.utilities.constants import atomic_numbers as Z
+        n = np.sum([Z[atom] for atom in mol.species])
+    
+    err_occ = next(measure_occupance_error([p_batch], [s_batch], n))
+    
+    return (
+        err_abs,
+        err_hf,
+        err_idem,
+        err_occ
+    )
+    
+    
+def analyze_raw_batch(P, P_ref, S, molecules):
+    """Batch version of analyze raw"""
+    
+    n_samples = len(P)
+    
+    errors = []
+    for i, (p, p_ref, s, mol) in enumerate(zip(P, P_ref, S, molecules)):
+        msg.info(str(i+1) + " / " + str(n_samples))
+        errors.append(analyze_raw(p, p_ref, s, mol))
+    
+    errors = np.array(errors)
+    
+    return (
+        statistics(errors[:,0]), # abs
+        statistics(errors[:,1]), # hf
+        statistics(errors[:,2]), # idem
+        statistics(errors[:,3]) # occ
+    )
+
+def format_raw(results):
+    """Mate a formatted string for logging/printing from results of 
+    analyze_raw_batch"""
+
+    msg = ""
+    msg += "AbsError: {:0.5E} +- {:0.5E}\n".format(*(results[0]))
+    msg += "EhfError: {:0.5E} +- {:0.5E}\n".format(*(results[1]))
+    msg += "IdemEror: {:0.5E} +- {:0.5E}\n".format(*(results[2]))
+    msg += "OccError: {:0.5E} +- {:0.5E}\n".format(*(results[3]))
+    return msg
