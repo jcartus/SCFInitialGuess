@@ -1373,4 +1373,58 @@ class Data(object):
     @property
     def number_of_samples_total(self):
         return np.sum(self.number_of_samples)
+
+from SCFInitialGuess.utilities.dataset import Data
+
+class ScreenedData(Data):
+    """Dataset, that is screened for broken molecules, by checking 
+    to largest C-H distance"""
+
+
+    def __init__(self, r_max):
+        
+        self.r_max = r_max
+        
+        super(ScreenedData, self).__init__()
+    
+    def calculate_max_CH_distance(self, mol):
+        """Retunes the greatest distance between any H 
+        and any C atom in the Molecule"""
+        
+        r = []
+    
+        for i, geom_i in enumerate(mol.geometry):
+            for j, geom_j in enumerate(mol.geometry):
+
+                # avoid duplicates
+                if i < j:
+                    continue
+
+                # only count C-H distances
+                if set([geom_i[0], geom_j[0]]) == set(["H", "C"]):
+                    r.append(
+                        np.sqrt(np.sum((np.array(geom_i[1]) - np.array(geom_j[1]))**2))
+                    )
+        return r
+    
+    def select(self, S, P, molecules):
+        
+        is_selected = np.array([
+            np.max(self.calculate_max_CH_distance(mol)) < self.r_max \
+                for mol in molecules
+        ])
+        
+        return S[is_selected], P[is_selected], molecules[is_selected]
+    
+    def fetch_data(self, data_path, postfix, target="P"):
+        """Fetches MD run results from a folder"""
+
+        S = np.load(join(data_path, "S" + postfix + ".npy"))
+        P = np.load(join(data_path, target + postfix + ".npy"))
+
+        molecules = np.load(join(data_path, "molecules" + postfix + ".npy"))
+        
+        
+        
+        return self.select(S, P, molecules)
     
