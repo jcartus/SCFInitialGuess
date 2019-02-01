@@ -20,10 +20,10 @@ from SCFInitialGuess.utilities.dataset import do_scf_runs
 
 #--- inputs ---
 BASIS = "6-311++g**"
-FOLDER = "thesis/dataset/QM9/dsgdb9nsd.xyz"
+FOLDER = "thesis/dataset/EthanT6/"
 INDEX = None
-PREFIX = "QM9-300"
-FRACTION = 10000
+PREFIX = "EthanT6"
+FRACTION = 2000
 #---
 
 
@@ -35,8 +35,8 @@ def main():
     index_file=INDEX
 
     msg.info("Fetching molecules", 2)
-    #molecules = QChemResultsReader.fetch_from_folder(data_folder, BASIS)
-    molecules = XYZFileReader.read_folder(data_folder, basis=BASIS)[:300] # todo calculate full list!!
+    molecules = QChemResultsReader.fetch_from_folder(data_folder, BASIS)
+    #molecules = XYZFileReader.read_folder(data_folder, basis=BASIS)[:300] # todo calculate full list!!
 
 
     msg.info("Starting SCF Calculation", 2)
