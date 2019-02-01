@@ -6,6 +6,7 @@ Author:
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
 from SCFInitialGuess.utilities.dataset import extract_triu
@@ -47,6 +48,43 @@ def real_spherical_harmonics(phi, theta, l, m):
     
 
     return y
+    
+
+def plot_normal_model(model, t):
+    """Plot a model of Gaussians for values t"""
+    for r_s, eta in zip(model[0], model[1]):
+        plt.plot(t, np.exp(-1 * eta*(t - r_s)**2))
+        
+def plot_periodic_model(model, t):
+    """Plot a model of Periodic Gaussians for values t"""
+    period = model[2]
+    for r_s, eta in zip(model[0], model[1]):
+        plt.plot(t,
+            np.exp(-1 * eta * ((t % period) - r_s)**2) + \
+            np.exp(-1 * eta * ((t % period) - period - r_s)**2)
+        )
+
+
+def plot_radial_activation(r, descriptor, mol, label, **kwargs):
+    """Calculates and plots radial activation for descriptor model 
+    for a molecule mol."""
+    values = descriptor.calculate_atom_descriptor(
+        0,
+        mol,
+        descriptor.number_of_descriptors
+    )
+    
+    n_radial = descriptor.radial_descriptor.number_of_descriptors
+    radial_values = values[:n_radial]
+    
+    inverse_values = descriptor.radial_descriptor.calculate_inverse_descriptor(r, radial_values)
+    
+    plt.plot(
+        r, 
+        inverse_values / np.max(inverse_values),
+        label=label,
+        **kwargs
+    )
     
 
 
