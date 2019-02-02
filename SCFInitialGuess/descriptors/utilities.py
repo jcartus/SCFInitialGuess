@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 from SCFInitialGuess.utilities.constants import number_of_basis_functions as N_BASIS
 from SCFInitialGuess.utilities.dataset import extract_triu
-
-# TODO a diagonal extractor, so i can train to just guess the diagonal
+from SCFInitialGuess.descriptors.coordinate_descriptors \
+    import periodic_gaussian
 
 
 def carthesian_to_spherical_coordinates(x):
@@ -59,10 +59,7 @@ def plot_periodic_model(model, t):
     """Plot a model of Periodic Gaussians for values t"""
     period = model[2]
     for r_s, eta in zip(model[0], model[1]):
-        plt.plot(t,
-            np.exp(-1 * eta * ((t % period) - r_s)**2) + \
-            np.exp(-1 * eta * ((t % period) - period - r_s)**2)
-        )
+        plt.plot(t, periodic_gaussian(t, r_s, eta, period))
 
 
 def plot_radial_activation(r, descriptor, mol, label, **kwargs):

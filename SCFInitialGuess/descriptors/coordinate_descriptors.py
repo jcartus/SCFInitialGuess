@@ -70,6 +70,15 @@ class Gaussians(object):
         )
 
 
+def periodic_gaussian(x, r_s, eta, period):
+    """Gaussian that with width eta, centered at r_s, periodic with period 
+    period, evaluated at x"""
+    return np.maximum(
+        np.exp(-1 * eta * ((x - r_s) % period)**2),
+        np.exp(-1 * eta * (((x-r_s) % period) - period)**2) 
+    )
+            
+
 class PeriodicGaussians(Gaussians):
 
     def __init__(self, r_s, eta, period):
@@ -97,8 +106,7 @@ class PeriodicGaussians(Gaussians):
         distance or an angle). The vector will be list!!!!
         """
         return [
-            np.exp(-1 * eta * ((x % self.period) - r_s)**2) + \
-            np.exp(-1 * eta * ((x % self.period) - self.period - r_s)**2) \
+            periodic_gaussian(x, r_s, eta, self.period) \
             for (r_s, eta) in zip(self.r_s, self.eta)
         ]
     

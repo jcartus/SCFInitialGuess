@@ -77,6 +77,41 @@ class TestPeriodicGaussians(TestGaussians):
 
         return descriptor
 
+    
+    def test_normalisation(self):
+        """Check if all values are < 1 (tests the underlying function)"""
+        from SCFInitialGuess.descriptors.coordinate_descriptors \
+            import periodic_gaussian
+        
+
+        period = np.random.rand() * 10
+        eta = np.random.rand() * 5
+        rs = np.random.rand() * period
+        
+        t = np.linspace(-period, 3* period, 1000)
+        np.testing.assert_array_less(
+            periodic_gaussian(t, rs, eta, period),
+            1.0
+        )
+
+    def test_periodicity(self):
+        """Check if gaussians are actually periodic 
+        (tests the underlying function)"""
+        from SCFInitialGuess.descriptors.coordinate_descriptors \
+            import periodic_gaussian
+        
+
+        period = np.random.rand() * 10
+        eta = np.random.rand() * 5
+        rs = np.random.rand() * period
+        
+        t = np.linspace(-period, 3* period, 1000)
+        np.testing.assert_allclose(
+            periodic_gaussian(t, rs, eta, period),
+            periodic_gaussian(t + period, rs, eta, period)
+        )
+
+
 class Wrapper(object):
     class TestAngularDescriptor(unittest.TestCase):
 
@@ -116,6 +151,7 @@ class Wrapper(object):
                 self.fail("Inverse calculation failed: " + str(ex))
 
             return r, phi, theta
+
 
 
 class TestIndependentAngularDescriptor(Wrapper.TestAngularDescriptor):
