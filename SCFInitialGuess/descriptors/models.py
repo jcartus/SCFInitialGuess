@@ -63,7 +63,7 @@ def make_uniform(n, R_c=5, eta_max=30, eta_min=10):
 
 def make_periodic_uniform(n, period):
     return (
-        np.linspace(0, period, n),
-        [2*n] * n,
+        np.arange(n) * period / n,
+        [1 / (2 * (0.5 * period / n)**2) ] * n,
         period
     )
