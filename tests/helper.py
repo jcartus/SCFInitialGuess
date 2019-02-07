@@ -152,3 +152,27 @@ class DescriptorMock(object):
         
     def calculate_atom_descriptor(self, index, mol, number_of_descriptors):
         return [index, mol.species[index]]
+
+class DescriptorMockSum(DescriptorMock):
+    
+    def calculate_atom_descriptor(self, index, mol, number_of_descriptors):
+        return [index]
+
+
+class DataMock(object):
+    """Mock for SCFInitialGuess.utilities.Data"""
+
+    def __init__(self, molecules_test, T_test):
+        
+        self.molecules = [
+            [],
+            [],
+            molecules_test
+        ]
+
+        self.T = [
+            [],
+            [],
+            T_test
+        ]
+        

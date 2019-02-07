@@ -1357,6 +1357,63 @@ def make_center_block_dataset(descriptor, molecules, T, species):
     return dataset
 
 
+def make_block_dataset(descriptor, molecules, T, species, extractor_callback):
+    """Makes a dataset with blocks and symmetry vectors from all molecules in 
+    molecules. 
+
+    descriptor <SCFInitialGuess.descriptors.high_level.*>: 
+        a high level descriptor object.
+    molecules <list<list<SCFInitialGuess.utilities.dataset.Molecule>>>:
+        List with 3 elements (training data, validation and test). 
+        Each are a list of molecules. 
+    T <list<np.array>> or <list<list<list>>>: 
+        List with training, validation and test data. 
+        each is a numpy array. 
+    species <string>: the element name of the desired species.
+    """
+
+    inputs_test, outputs_test = extractor_callback(
+        descriptor,
+        molecules[2], 
+        T[2],
+        species
+    )
+    
+    inputs_validation, outputs_validation = extractor_callback(
+        descriptor,
+        molecules[1], 
+        T[1],
+        species
+    )
+
+    inputs_train, outputs_train = extractor_callback(
+        descriptor,
+        molecules[0], 
+        T[0],
+        species
+    )
+    
+    _, mu, std = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
+    
+    dataset = StaticDataset(
+        train=(
+            StaticDataset.normalize(inputs_train, mean=mu, std=std)[0], 
+            np.asarray(outputs_train)
+        ),
+        validation=(
+            StaticDataset.normalize(inputs_validation, mean=mu, std=std)[0], 
+            np.asarray(outputs_validation)
+        ),
+        test=(
+            StaticDataset.normalize(inputs_test, mean=mu, std=std)[0], 
+            np.asarray(outputs_test)
+        ),
+        mu=mu,
+        std=std
+    )
+    
+    return dataset
+
 class Data(object):
     """This class is used to automatically fetch data (i.e. collection 
     of molecules, overlap and density matrices etc.)

@@ -10,7 +10,8 @@ from os.path import normpath, join
 import numpy as np
 
 import unittest
-from helper import AbstractTest, make_target_matrix_mock, DescriptorMock
+from helper import \
+    AbstractTest, make_target_matrix_mock, DescriptorMock, DataMock, DescriptorMockSum
 
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
@@ -389,6 +390,86 @@ class TestDatasetBlockExtractorCallBacks(unittest.TestCase):
         self._assert_results_ok(G, T, pair)
             
     
+class TestMakeBlockDataset(unittest.TestCase):
+
+    def setUp(self):
+
+        # our test molecule will by H2O
+        self.mol = Molecule(
+            ["O", "H", "H"],
+            [
+                [0, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0]
+            ]
+        )
+
+        self.mol.basis = "sto-3g"
+
+        self.T = np.ones((7,7))
+
+        self.descriptor = DescriptorMockSum()
+
+    def test_center_works_like_deprecated_H(self):
+        """Make sure generic function works like deprecated special function 
+        for center blocks"""
+        from SCFInitialGuess.utilities.dataset import \
+            make_center_block_dataset, make_block_dataset, \
+                extract_center_block_dataset_pairs
+
+
+        data = DataMock(
+            molecules_test=self.mol,
+            T_test=self.T
+        )
+
+        expected = make_center_block_dataset(
+            self.descriptor,
+            [[], [], [self.mol]],
+            [[], [], [self.T]],
+            "H"
+        )
+
+        actual = make_block_dataset(
+            self.descriptor,
+            [[], [], [self.mol]],
+            [[], [], [self.T]],
+            "H",
+            extract_center_block_dataset_pairs
+        )
+
+        #--- testing ---
+        np.testing.assert_allclose(
+            actual.testing[0],
+            expected.testing[0]
+        )
+        np.testing.assert_allclose(
+            actual.testing[1],
+            expected.testing[1]
+        )
+        #---
+
+        #--- validation ---
+        np.testing.assert_allclose(
+            actual.validation[0],
+            expected.validation[0]
+        )
+        np.testing.assert_allclose(
+            actual.validation[1],
+            expected.validation[1]
+        )
+        #---
+
+        #--- training ---
+        np.testing.assert_allclose(
+            actual.training[0],
+            expected.training[0]
+        )
+        np.testing.assert_allclose(
+            actual.training[1],
+            expected.training[1]
+        )
+        #---
 
 
 if __name__ == '__main__':
