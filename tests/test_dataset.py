@@ -10,12 +10,14 @@ from os.path import normpath, join
 import numpy as np
 
 import unittest
-from helper import AbstractTest
+from helper import AbstractTest, make_target_matrix_mock, DescriptorMock
 
 from SCFInitialGuess.utilities import Molecule, XYZFileReader
 from SCFInitialGuess.utilities.usermessages import Messenger as msg
 from SCFInitialGuess.utilities.dataset import Dataset, QChemResultsReader
 from SCFInitialGuess.utilities.dataset import extract_triu, reconstruct_from_triu
+from SCFInitialGuess.utilities.constants import \
+    number_of_basis_functions as N_BASIS
 
 
     
@@ -209,6 +211,139 @@ class TestDataset(AbstractTest):
             delta=self.tolerance
         )
         #---
+
+
+class TestDatasetBlockExtractorCallBacks(unittest.TestCase):
+
+    def setUp(self):
+        # our test molecule will by H2O
+        self.mol = Molecule(
+            ["O", "H", "H"],
+            [
+                [0, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0]
+            ]
+        )
+
+        self.mol.basis = "sto-3g"
+
+        # target matrix mock
+        self.T = make_target_matrix_mock(self.mol)
+
+        # standard descriptor
+        self.descriptor = DescriptorMock()
+
+    def _make_expected_symmetry_vector(self, pairs):
+        
+        G_expected = []
+
+        for p in pairs:
+
+            # check if center block of off-diag is required
+            if isinstance(p, int):
+                G_expected.append(
+                    [p, self.mol.species[p]]
+                )
+            else:
+                G_expected.append(
+                    [p[0], self.mol.species[p[0]], p[1], self.mol.species[p[1]]]
+                )
+
+        return G_expected
+
+    def _assert_results_ok(self, G, T, pair):
+        """pair marks the expected regions. With descritor and target matrix mock
+        the expected results are clear."""
+        from SCFInitialGuess.construction.utilities import \
+            make_atom_pair_mask
+
+        # check symmetry vector G
+        self.assertListEqual(G, self._make_expected_symmetry_vector(pair))
+
+        # check matrix
+        for (p, t) in zip(pair, T):
+            if isinstance(p, int):
+                mask = make_atom_pair_mask(self.mol, p, p)
+                
+                np.testing.assert_equal(
+                    extract_triu(
+                        self.T.copy()[mask], 
+                        N_BASIS[self.mol.basis][self.mol.species[p]]
+                    ),
+                    t
+                )
+            else:
+                mask = make_atom_pair_mask(self.mol, p[0], p[1])
+                np.testing.assert_equal(self.T[mask], t)
+
+    
+
+    def test_extract_center_blocks_H(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_center_block_dataset_pairs
+
+        species = "H"
+        G, T = extract_center_block_dataset_pairs(
+            self.descriptor, 
+            [self.mol], 
+            [self.T],
+            species
+        )
+
+        pair = [1,2]
+
+        self._assert_results_ok(G, T, pair)
+
+    def test_extract_center_blocks_O(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_center_block_dataset_pairs
+
+        species = "O"
+        G, T = extract_center_block_dataset_pairs(
+            self.descriptor, 
+            [self.mol], 
+            [self.T],
+            species
+        )
+
+        pair = [0,]
+
+        self._assert_results_ok(G, T, pair)
+
+    def test_extract_HOMO_blocks_H(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_HOMO_block_dataset_pairs
+
+        species = "H"
+        G, T = extract_HOMO_block_dataset_pairs(
+            self.descriptor, 
+            [self.mol], 
+            [self.T],
+            species
+        )
+
+        pair = [[2,1]]
+
+        self._assert_results_ok(G, T, pair)
+
+    def test_extract_HOMO_blocks_O(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_HOMO_block_dataset_pairs
+
+        species = "O"
+        G, T = extract_HOMO_block_dataset_pairs(
+            self.descriptor, 
+            [self.mol], 
+            [self.T],
+            species
+        )
+
+        self.assertEqual([], G)
+        self.assertEqual([], T)
+        
+            
+
 
 
 if __name__ == '__main__':

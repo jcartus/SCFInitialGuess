@@ -1185,6 +1185,58 @@ def extract_center_block_dataset_pairs(descriptor, molecules, p_batch, species):
 
     return descriptor_values, blocks
 
+def extract_HOMO_block_dataset_pairs(descriptor, molecules, p_batch, species):  
+    """Creates pairs of inputs and outputs for all all atoms of the element 
+    species in the molecules to be used to set up a dataset for an NN 
+    for a given descriptor and a target matrix p_batch. 
+    The output are the (off-diagonal) homo-nuclear overlap blocks.
+    """
+    from SCFInitialGuess.construction.utilities import \
+        make_atom_pair_mask  
+    
+    descriptor_values, blocks = [], []
+    for p, mol in zip(p_batch, molecules):
+
+        dim = mol.dim
+        # make mask to extract central blocks
+        masks = mol.make_masks_for_species(species)
+    
+        
+        for i, atom_i in enumerate(mol.species):
+            for j, atom_j in enumerate(mol.species):
+                if i <= j:
+                    continue
+                    
+                if atom_j == species and atom_i == species:
+                    
+                    #--- calculate symmetry vectors ---
+                    descriptor_values.append(
+                        list(
+                            descriptor.calculate_atom_descriptor(
+                                i, 
+                                mol,
+                                descriptor.number_of_descriptors
+                            )
+                        ) + list(
+                            descriptor.calculate_atom_descriptor(
+                                j, 
+                                mol,
+                                descriptor.number_of_descriptors
+                            )
+                        )
+                    )
+                    #---
+                    
+                    #--- extract blocks from target matrices ---
+                    mask = make_atom_pair_mask(mol, i, j)
+                    blocks.append(np.asarray(p).reshape(dim, dim).copy()[mask])
+                    #---
+                
+
+    return descriptor_values, blocks
+
+
+
 def make_center_block_dataset(descriptor, molecules, T, species):
     """Makes a dataset with blocks and symmetry vectors from all molecules in 
     molecules. 
@@ -1374,7 +1426,6 @@ class Data(object):
     def number_of_samples_total(self):
         return np.sum(self.number_of_samples)
 
-from SCFInitialGuess.utilities.dataset import Data
 
 class ScreenedData(Data):
     """Dataset, that is screened for broken molecules, by checking 

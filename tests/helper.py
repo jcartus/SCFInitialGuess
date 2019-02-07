@@ -5,8 +5,12 @@ testing.
 import sys
 
 import tensorflow as tf
+import numpy as np
 
 import unittest
+
+from SCFInitialGuess.utilities.constants import \
+    number_of_basis_functions as N_BASIS
 
 
 def assert_python3(test):
@@ -110,3 +114,41 @@ class NeuralNetworkMock(object):
         """Evaluate the neural network"""
         return session.run(self._graph, feed_dict={self.input_tensor: inputs})
 
+
+def make_target_matrix_mock(mol):
+    """This function creates a matrix of strings that can be used to 
+    debug matrix block extractions. Its values e.g. for element (i,j) are 
+    <spies_i><i>-<species_j><j>.
+    """
+    from SCFInitialGuess.construction.utilities import make_atom_pair_mask
+
+    dim = mol.dim
+    
+    T = np.zeros((dim, dim), dtype="object")
+    
+    for i, atom_i in enumerate(mol.species):
+        for j, atom_j in enumerate(mol.species):
+            mask = make_atom_pair_mask(mol, i, j)
+            
+            m = atom_i + str(i) + "-" + atom_j + str(j)
+            
+            if N_BASIS[mol.basis][atom_i] * N_BASIS[mol.basis][atom_j] :
+                T[mask] = m
+            else:
+                T[mask] = np.array(
+                    [
+                        [
+                            m
+                        ] * N_BASIS[mol.basis][atom_j]
+                    ] * N_BASIS[mol.basis][atom_i],
+                    dtype="object"
+                )
+    return T
+
+class DescriptorMock(object):
+    
+    def __init__(self):
+        self.number_of_descriptors = 1
+        
+    def calculate_atom_descriptor(self, index, mol, number_of_descriptors):
+        return [index, mol.species[index]]
