@@ -164,3 +164,55 @@ def make_hetero_mask(mol):
                 mask = np.logical_or(mask, m)
 
     return mask
+
+
+def make_atom_pair_mask(mol, index_i , index_j):
+    """Create the mask that corresponds to the atom pair (index_i, index_j).
+    E.g. (0,0) would be the self-overlap of the first atom in the molecule.
+    
+    mol <SCFInitialGuess.utilities.dataset.Molecule>: molecule that determines 
+        basis set and composition.
+    """
+
+    dim = mol.dim
+
+    current_dim_i = 0
+    for i, atom_i in enumerate(mol.species):
+        
+        
+        # calculate block range
+        index_start_i = current_dim_i
+        current_dim_i += N_BASIS[mol.basis][atom_i] 
+        index_end_i = current_dim_i
+        
+        if i < index_i:
+            continue
+        else:
+
+            current_dim_j = 0
+            for j, atom_j in enumerate(mol.species):
+
+
+                # calculate block range
+                index_start_j = current_dim_j
+                current_dim_j += N_BASIS[mol.basis][atom_j] 
+                index_end_j = current_dim_j
+
+                if j < index_j:
+                    continue
+                else:
+                
+                    # calculate logical vector
+                    L_i = np.arange(dim)
+                    L_i = np.logical_and(index_start_i <= L_i, L_i < index_end_i)
+
+                    # calculate logical vector
+                    L_j = np.arange(dim)
+                    L_j = np.logical_and(index_start_j <= L_j, L_j < index_end_j)
+
+
+                    mask = np.logical_and.outer(L_i, L_j)
+                
+                break
+            break
+    return mask

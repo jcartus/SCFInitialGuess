@@ -97,6 +97,7 @@ number_of_basis_functions = {
     },
     "sto-3g": {
         "H": 1,
+        "O": 5,
         "C": 5,
     },
     "3-21g*": {
