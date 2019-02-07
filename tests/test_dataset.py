@@ -274,7 +274,9 @@ class TestDatasetBlockExtractorCallBacks(unittest.TestCase):
                     t
                 )
             else:
-                mask = make_atom_pair_mask(self.mol, p[0], p[1])
+
+                # exptract block from LOWER triu (thus min/max)
+                mask = make_atom_pair_mask(self.mol, np.max(p), np.min(p))
                 np.testing.assert_equal(self.T[mask], t)
 
     
@@ -343,7 +345,50 @@ class TestDatasetBlockExtractorCallBacks(unittest.TestCase):
         self.assertEqual([], T)
         
             
+    def test_extract_Hetero_blocks_OH(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_HETERO_block_dataset_pairs
 
+        species = ["O", "H"]
+        #random order of species
+        ind = np.arange(2)
+        #np.random.shuffle(ind)
+
+        G, T = extract_HETERO_block_dataset_pairs(
+            [self.descriptor, self.descriptor], 
+            [self.mol], 
+            [self.T],
+            species
+            #[species[ind[0]], species[ind[1]]]
+        )
+
+        pair = [[1, 0], [2, 0]]
+
+        self._assert_results_ok(G, T, pair)
+        
+
+    def test_extract_Hetero_blocks_HO(self):
+        from SCFInitialGuess.utilities.dataset import \
+            extract_HETERO_block_dataset_pairs
+
+        species = ["H", "O"]
+        #random order of species
+        ind = np.arange(2)
+        #np.random.shuffle(ind)
+
+        G, T = extract_HETERO_block_dataset_pairs(
+            [self.descriptor, self.descriptor], 
+            [self.mol], 
+            [self.T],
+            species
+            #[species[ind[0]], species[ind[1]]]
+        )
+
+        pair = [[0, 1], [ 0, 2]]
+
+        self._assert_results_ok(G, T, pair)
+            
+    
 
 
 if __name__ == '__main__':

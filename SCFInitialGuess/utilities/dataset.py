@@ -1198,9 +1198,6 @@ def extract_HOMO_block_dataset_pairs(descriptor, molecules, p_batch, species):
     for p, mol in zip(p_batch, molecules):
 
         dim = mol.dim
-        # make mask to extract central blocks
-        masks = mol.make_masks_for_species(species)
-    
         
         for i, atom_i in enumerate(mol.species):
             for j, atom_j in enumerate(mol.species):
@@ -1236,6 +1233,70 @@ def extract_HOMO_block_dataset_pairs(descriptor, molecules, p_batch, species):
     return descriptor_values, blocks
 
 
+def extract_HETERO_block_dataset_pairs(descriptors, molecules, p_batch, species):  
+    """Creates pairs of inputs and outputs for all all atoms of the element 
+    species in the molecules to be used to set up a dataset for an NN 
+    for a given descriptor and a target matrix p_batch. 
+    The output are the (off-diagonal) hetero-nuclear overlap blocks.
+    
+    Args:
+        descriptors <list> list of descriptors
+        species <list<str>> list of species
+    """
+    from SCFInitialGuess.construction.utilities import \
+        make_atom_pair_mask
+    
+    descriptor_values, blocks = [], []
+    for p, mol in zip(p_batch, molecules):
+
+        dim = mol.dim
+    
+        
+        for i, atom_i in enumerate(mol.species):
+            for j, atom_j in enumerate(mol.species):
+                
+                # only check lower triu
+                if i <= j:
+                    continue
+                    
+                if (atom_j in species and atom_i in species and atom_i != atom_j):
+                    
+                    
+                    #--- calculate symmetry vectors ---
+                    # make sure descriptor[0] describes atom [1], regardless 
+                    # of storage order of atoms in molecule
+                    # by using aliases ii and jj
+                    if atom_i == species[1]:
+                        ii = i
+                        jj = j
+                    else:
+                        ii = j
+                        jj = i
+                        
+                    
+                    descriptor_values.append(
+                        list(
+                            descriptors[0].calculate_atom_descriptor(
+                                ii, 
+                                mol,
+                                descriptors[0].number_of_descriptors
+                            )
+                        ) + list(
+                            descriptors[1].calculate_atom_descriptor(
+                                jj, 
+                                mol,
+                                descriptors[1].number_of_descriptors
+                            )
+                        )
+                    )
+                    #---
+                    
+                    #--- extract blocks from target matrices ---
+                    mask = make_atom_pair_mask(mol, i, j)
+                    blocks.append(np.asarray(p).reshape(dim, dim).copy()[mask])
+                    #---
+                
+    return descriptor_values, blocks
 
 def make_center_block_dataset(descriptor, molecules, T, species):
     """Makes a dataset with blocks and symmetry vectors from all molecules in 
