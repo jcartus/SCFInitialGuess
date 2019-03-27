@@ -9,7 +9,6 @@ from functools import reduce
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import tensorflow as tf
 
 from pandas import DataFrame
 from pyscf.scf import hf
