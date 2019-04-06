@@ -236,5 +236,75 @@ class TestSPHAngularDescriptor(Wrapper.TestAngularDescriptor):
             G.shape
         )
 
+
+class TestSphereSectionDescriptor(Wrapper.TestAngularDescriptor):
+
+    def setUp(self):
+        from SCFInitialGuess.descriptors.models import make_uniform
+        
+        
+        self.radial_model = make_uniform(5)
+        self.number_polar_sections = 2
+        self.number_azimuthal_sections = 2
+    
+    def _test_initialisation(self):
+
+        from SCFInitialGuess.descriptors.coordinate_descriptors import \
+            SphereSectionDescriptor, Gaussians
+
+        try:
+            descriptor = SphereSectionDescriptor(
+                self.number_polar_sections,
+                self.number_azimuthal_sections,
+                Gaussians(*self.radial_model)
+            )
+            
+        except Exception as ex:
+            self.fail("Initialisation failed: " + str(ex))
+
+        return descriptor
+
+        
+    def test_with_fixed_radius(self):
+
+
+        r = 1
+        phi = np.random.rand(30) * 7 % 2 * np.pi
+        theta = np.random.rand(30) * 4 % np.pi
+
+        try:
+            descriptor = self._test_initialisation()
+            
+            values = descriptor.calculate_descriptor(r, phi[0], theta[0])
+
+            activation = \
+                descriptor.calculate_inverse_descriptor(r, phi, theta, values)
+        except Exception as ex:
+            self.fail("Inverse calculation failed: " + str(ex))
+
+        return r, phi, theta
+
+    def test_with_fixed_theta(self):
+
+        r = np.random.rand(30) * 10
+        phi = np.random.rand(30) * 7 % 2 * np.pi
+        theta = np.pi / 2
+
+        R, Phi = np.meshgrid(r, phi)
+        R = R.reshape(-1)
+        Phi = Phi.reshape(-1)
+
+        try:
+            descriptor = self._test_initialisation()
+            
+            values = descriptor.calculate_descriptor(r[0], phi[0], theta)
+
+            activation = \
+                descriptor.calculate_inverse_descriptor(R, Phi, theta, values)
+        except Exception as ex:
+            self.fail("Inverse calculation failed: " + str(ex))
+
+        return r, phi, theta
+
 if __name__ == '__main__':
     unittest.main()

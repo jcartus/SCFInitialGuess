@@ -64,7 +64,7 @@ class AbstractCoordinateDescriptor(object):
 
     def calculate_atom_descriptor(self, index_atom, molecule, number_of_descriptors):
         """Calculates the descriptor of the atom with index index_atom in the 
-        molecule
+        molecule.
         """
 
         geometry = molecule.geometry
