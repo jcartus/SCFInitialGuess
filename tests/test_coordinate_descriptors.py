@@ -306,5 +306,76 @@ class TestSphereSectionDescriptor(Wrapper.TestAngularDescriptor):
 
         return r, phi, theta
 
+    def test_calculate_section(self):
+        from SCFInitialGuess.descriptors.coordinate_descriptors import \
+            SphereSectionDescriptor
+
+        # context: period=4, number of sections = 4, lets test values and check
+        # if they end up in the expected sections
+
+        #--- section 1---
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(0, 4, 4.0)
+        )
+        
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(0.4, 4, 4.0)
+        )
+        #---
+
+        #--- other sections ---
+        self.assertEqual(
+            1,
+            SphereSectionDescriptor._calculate_section(0.5, 4, 4.0)
+        )
+        
+        self.assertEqual(
+            1,
+            SphereSectionDescriptor._calculate_section(1.0, 4, 4.0)
+        )
+
+        self.assertEqual(
+            2,
+            SphereSectionDescriptor._calculate_section(2.0, 4, 4.0)
+        )
+
+        self.assertEqual(
+            3,
+            SphereSectionDescriptor._calculate_section(3.0, 4, 4.0)
+        )
+        #---
+
+        #--- check periodicity ---
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(3.5, 4, 4.0)
+        )
+
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(4.0, 4, 4.0)
+        )
+
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(4.4, 4, 4.0)
+        )
+        #---
+
+        #--- negative values ---
+        self.assertEqual(
+            0,
+            SphereSectionDescriptor._calculate_section(-0.4, 4, 4.0)
+        )
+
+        self.assertEqual(
+            2,
+            SphereSectionDescriptor._calculate_section(-2.0, 4, 4.0)
+        )
+        #---
+
+
 if __name__ == '__main__':
     unittest.main()

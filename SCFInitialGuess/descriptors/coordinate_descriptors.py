@@ -238,16 +238,10 @@ class SphereSectionDescriptor(object):
 
         #--- polar ---
         self.number_polar_sections = number_polar_sections
-        
-        # size of polar section
-        self.d_theta = np.pi / self.number_polar_sections
         #---
 
         #--- azimuthal ---
         self.number_azimuthal_sections = number_azimuthal_sections
-        
-        # size of polar section
-        self.d_phi = 2 * np.pi / self.number_azimuthal_sections
         #--- 
 
         # radial
@@ -259,15 +253,35 @@ class SphereSectionDescriptor(object):
                 self.number_azimuthal_sections * \
                     self.radial_descriptor.number_of_descriptors
     
+    @staticmethod
+    def _calculate_section(x, number_of_sections, period_x):
+        """Calculates section for an abstract value x, periodic with period_x,
+        which is sectioned in parts of dx.
+
+        The first section is centered at 0, i.e. it goes from [-dx, dx).
+        """
+        
+        dx = period_x / number_of_sections
+
+        return int(np.floor(((x+0.5*dx) % period_x) / dx))
+    
     def _calculate_index_polar(self, theta):
         """Calculates which polar section (from 0 to number of polar sections-1)
         the angle theta would fall into."""
-        return int(np.floor((theta % np.pi) / self.d_theta))
+        return self._calculate_section(
+            theta, 
+            self.number_polar_sections, 
+            np.pi
+        )
 
     def _calculate_index_azimuthal(self, phi):
         """Calculates which azimuthal section (from 0 to number of azimuthal 
         sections-1) the angle phi would fall into."""
-        return int(np.floor((phi % (2*np.pi)) / self.d_phi))
+        return self._calculate_section(
+            phi,
+            self.number_azimuthal_sections,
+            2 * np.pi
+        )
     
     def _calculate_symmetry_vector_range(self, index_polar, index_azimuthal):
         """Calculate the range (start, end) of elements in the symmetry 
