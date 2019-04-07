@@ -55,9 +55,9 @@ POLAR_GAUSSIAN_MODELS = {
     )
 }
 
-def make_uniform(n, R_c=5, eta_max=30, eta_min=10):
+def make_uniform(n, R_c=5, eta_max=30, eta_min=10, R_min=0.1):
     return (
-        np.linspace(0.1,R_c*0.8, n),
+        np.linspace(R_min, R_c*0.8, n),
         np.linspace(eta_max, eta_min, n),
     )
 
