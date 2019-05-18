@@ -598,6 +598,11 @@ def extract_triu(A, dim):
     """
     return A.reshape(dim, dim)[np.triu_indices(dim)]
 
+def reconstruct_from_triu_batch(A_batch, dim):
+    return np.array(
+        [reconstruct_from_triu(A, dim) for A in A_batch]
+    )
+
 def reconstruct_from_triu(A_flat, dim):
     """Reconstructus the full symmetric matrix (dim x dim, not
     flattened out) from the flattend elements of the upper 
@@ -749,7 +754,7 @@ class AbstractDataset(object):
 
 class StaticDataset(AbstractDataset):
 
-    def __init__(self, train, validation, test, mu, std):
+    def __init__(self, train, validation, test, mu, std, mu_y=None, std_y=None):
 
         self.training = train
         self.validation = validation
@@ -757,6 +762,8 @@ class StaticDataset(AbstractDataset):
 
         self.x_mean = mu
         self.x_std = std
+        self.y_mean = mu_y
+        self.y_std = std_y
 
 
 class Dataset(AbstractDataset):
@@ -1298,7 +1305,13 @@ def extract_HETERO_block_dataset_pairs(descriptors, molecules, p_batch, species)
                 
     return descriptor_values, blocks
 
-def make_center_block_dataset(descriptor, molecules, T, species):
+def make_center_block_dataset(
+    descriptor, 
+    molecules, 
+    T, 
+    species, 
+    normalize_output=False
+):
     """Makes a dataset with blocks and symmetry vectors from all molecules in 
     molecules. 
 
@@ -1311,6 +1324,7 @@ def make_center_block_dataset(descriptor, molecules, T, species):
         List with training, validation and test data. 
         each is a numpy array. 
     species <string>: the element name of the desired species.
+    normalize_output <bool>: flag whether the output should be normalized.
     """
 
     inputs_test, outputs_test = extract_center_block_dataset_pairs(
@@ -1335,29 +1349,61 @@ def make_center_block_dataset(descriptor, molecules, T, species):
     )
     
     
-    _, mu, std = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
-    
-    dataset = StaticDataset(
-        train=(
-            StaticDataset.normalize(inputs_train, mean=mu, std=std)[0], 
-            np.asarray(outputs_train)
-        ),
-        validation=(
-            StaticDataset.normalize(inputs_validation, mean=mu, std=std)[0], 
-            np.asarray(outputs_validation)
-        ),
-        test=(
-            StaticDataset.normalize(inputs_test, mean=mu, std=std)[0], 
-            np.asarray(outputs_test)
-        ),
-        mu=mu,
-        std=std
-    )
+    _, mu_x, std_x = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
+    _, mu_y, std_y = StaticDataset.normalize(outputs_train + outputs_validation + outputs_test)
+
+
+    if normalize_output:
+        dataset = StaticDataset(
+            train=(
+                StaticDataset.normalize(inputs_train, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_train, mean=mu_y, std=std_y)[0]
+            ),
+            validation=(
+                StaticDataset.normalize(inputs_validation, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_validation, mean=mu_y, std=std_y)[0]
+            ),
+            test=(
+                StaticDataset.normalize(inputs_test, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_test, mean=mu_y, std=std_y)[0]
+            ),
+            mu=mu_x,
+            std=std_x,
+            mu_y=mu_y,
+            std_y=std_y
+        )
+
+    else:
+        dataset = StaticDataset(
+            train=(
+                StaticDataset.normalize(inputs_train, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_train)
+            ),
+            validation=(
+                StaticDataset.normalize(inputs_validation, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_validation)
+            ),
+            test=(
+                StaticDataset.normalize(inputs_test, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_test)
+            ),
+            mu=mu_x,
+            std=std_x,
+            mu_y=mu_y,
+            std_y=std_y
+        )
     
     return dataset
 
 
-def make_block_dataset(descriptor, molecules, T, species, extractor_callback):
+def make_block_dataset(
+    descriptor, 
+    molecules, 
+    T, 
+    species, 
+    extractor_callback,
+    normalize_output=False
+):
     """Makes a dataset with blocks and symmetry vectors from all molecules in 
     molecules. 
 
@@ -1370,6 +1416,7 @@ def make_block_dataset(descriptor, molecules, T, species, extractor_callback):
         List with training, validation and test data. 
         each is a numpy array. 
     species <string>: the element name of the desired species.
+    normalize_output <bool>: flag whether the output should be normalized.
     """
 
     inputs_test, outputs_test = extractor_callback(
@@ -1393,25 +1440,51 @@ def make_block_dataset(descriptor, molecules, T, species, extractor_callback):
         species
     )
     
-    _, mu, std = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
-    
-    dataset = StaticDataset(
-        train=(
-            StaticDataset.normalize(inputs_train, mean=mu, std=std)[0], 
-            np.asarray(outputs_train)
-        ),
-        validation=(
-            StaticDataset.normalize(inputs_validation, mean=mu, std=std)[0], 
-            np.asarray(outputs_validation)
-        ),
-        test=(
-            StaticDataset.normalize(inputs_test, mean=mu, std=std)[0], 
-            np.asarray(outputs_test)
-        ),
-        mu=mu,
-        std=std
-    )
-    
+    _, mu_x, std_x = StaticDataset.normalize(inputs_train + inputs_validation + inputs_test)
+    _, mu_y, std_y = StaticDataset.normalize(outputs_train + outputs_validation + outputs_test)
+
+
+    if normalize_output:
+        dataset = StaticDataset(
+            train=(
+                StaticDataset.normalize(inputs_train, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_train, mean=mu_y, std=std_y)[0]
+            ),
+            validation=(
+                StaticDataset.normalize(inputs_validation, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_validation, mean=mu_y, std=std_y)[0]
+            ),
+            test=(
+                StaticDataset.normalize(inputs_test, mean=mu_x, std=std_x)[0], 
+                StaticDataset.normalize(outputs_test, mean=mu_y, std=std_y)[0]
+            ),
+            mu=mu_x,
+            std=std_x,
+            mu_y=mu_y,
+            std_y=std_y
+        )
+
+    else:
+        dataset = StaticDataset(
+            train=(
+                StaticDataset.normalize(inputs_train, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_train)
+            ),
+            validation=(
+                StaticDataset.normalize(inputs_validation, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_validation)
+            ),
+            test=(
+                StaticDataset.normalize(inputs_test, mean=mu_x, std=std_x)[0], 
+                np.asarray(outputs_test)
+            ),
+            mu=mu_x,
+            std=std_x,
+            mu_y=mu_y,
+            std_y=std_y
+        )
+        
+
     return dataset
 
 class Data(object):
